@@ -1,10 +1,10 @@
 # Claude-skills-research v2.0 — Unified MCP Skill
 
-🚀 **All skills consolidated into ONE optimized `/mcp` command!**
+🚀 **All skills consolidated into ONE optimized `/start-mcp` command!**
 
 All-in-one MCP server research, deployment, error recovery, and project auditing — unified into a single fast, efficient skill. Research MCP servers with security scoring, conditionally deploy locally, recover from errors inline, and audit projects for compliance. Everything you need in one command.
 
-**v2.0 Highlights:** 4x faster loading • 82% less code • Zero feature loss • Single `/mcp` command • 100% functionality preserved • Production ready ✅
+**v2.0 Highlights:** 4x faster loading • 82% less code • Zero feature loss • Single `/start-mcp` command • 100% functionality preserved • Production ready ✅
 
 ---
 
@@ -20,7 +20,7 @@ cd Claude-skills-research
 ### What's Included
 
 - **1 Unified Skill** (consolidated from 4 separate skills)
-  - `/mcp` - All-in-one: research + attributes + setup + error recovery + audit
+  - `/start-mcp` - All-in-one: research + attributes + setup + error recovery + audit
     - Merged: `mcp-researcher` + `attribute-researcher` + `project-reviewer` + `error-handling`
     - 533 lines (down from 2,900+)
     - 4x faster loading
@@ -44,30 +44,30 @@ cd Claude-skills-research
 
 ## Usage
 
-### Single `/mcp` Command for Everything
+### Single `/start-mcp` Command for Everything
 
 ```bash
 # Research MCP servers
-/mcp "Research the GitHub MCP server"
+/start-mcp "Research the GitHub MCP server"
 
 # Setup locally
-/mcp "Set up this MCP locally"
-/mcp "Clone and install the Slack MCP"
+/start-mcp "Set up this MCP locally"
+/start-mcp "Clone and install the Slack MCP"
 
 # Error recovery
-/mcp "The server won't connect"
-/mcp "I'm getting a 401 error from my MCP server"
+/start-mcp "The server won't connect"
+/start-mcp "I'm getting a 401 error from my MCP server"
 
 # Audit project
-/mcp "Review the project"
-/mcp "Is this ready to commit?"
+/start-mcp "Review the project"
+/start-mcp "Is this ready to commit?"
 
 # Document attributes
-/mcp "Document attributes for the GitHub MCP server"
-/mcp "Catalogue this MCP server"
+/start-mcp "Document attributes for the GitHub MCP server"
+/start-mcp "Catalogue this MCP server"
 ```
 
-### What `/mcp` Does
+### What `/start-mcp` Does
 
 1. **Research** — Full attribute documentation with evidence backing
 2. **Score** — 10-attribute CCI security score (0–53 scale)
@@ -83,7 +83,7 @@ cd Claude-skills-research
 ```
 Claude-skills-research/
 ├── .claude-plugin/
-│   ├── plugin.json                  # Single skill registration (/mcp)
+│   ├── plugin.json                  # Single skill registration (/start-mcp)
 │   └── .gitignore
 ├── skills/
 │   ├── unified-mcp-skill/
@@ -135,7 +135,7 @@ Claude-skills-research/
 ```
 User Input (MCP Server / Request)
     ↓
-🎯 /mcp (Unified Skill - All-in-One)
+🎯 /start-mcp (Unified Skill - All-in-One)
     │
     ├─ 📊 Research Phase
     │   ├─ Input classification (endpoint/GitHub/name)
@@ -212,9 +212,9 @@ User Input (MCP Server / Request)
    - Skills auto-load from `.claude-plugin/plugin.json`
    - Ready to use immediately
 
-3. **Start with `/mcp`:**
+3. **Start with `/start-mcp`:**
    ```
-   /mcp "Research the GitHub MCP server"
+   /start-mcp "Research the GitHub MCP server"
    ```
 
 ---
@@ -222,7 +222,7 @@ User Input (MCP Server / Request)
 ## Release Information
 
 - **Current Version:** 2.0.0 (Production Ready ✅)
-- **Latest Changes:** All skills consolidated into single `/mcp` command
+- **Latest Changes:** All skills consolidated into single `/start-mcp` command
 - **Performance:** 4x faster, 82% less code, 100% functionality preserved
 - **Commit:** a4a4589
 
