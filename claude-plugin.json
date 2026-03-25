@@ -1,0 +1,92 @@
+{
+  "name": "Claude Skills - MCP Research Suite",
+  "id": "claude-skills-mcp-research",
+  "version": "2.0.0",
+  "type": "skills-collection",
+  "description": "Consolidated all-in-one MCP server research suite with built-in deployment, error recovery, and security scoring.",
+  "author": {
+    "name": "Claude Skills Team",
+    "email": "contact@example.com"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Srinath-Palani/Claude-skills-research"
+  },
+  "skills": [
+    {
+      "id": "mcp-researcher",
+      "name": "MCP Researcher",
+      "type": "primary",
+      "description": "All-in-one MCP research: attributes + local setup + error recovery",
+      "path": "skills/mcp-researcher"
+    },
+    {
+      "id": "attribute-researcher",
+      "name": "Attribute Researcher",
+      "type": "support",
+      "description": "Deep attribute research with rule enforcement",
+      "path": "skills/attribute-researcher"
+    },
+    {
+      "id": "project-reviewer",
+      "name": "Project Reviewer",
+      "type": "validation",
+      "description": "Quality audit and compliance checks",
+      "path": "skills/project-reviewer"
+    },
+    {
+      "id": "evals",
+      "name": "Evals",
+      "type": "testing",
+      "description": "Test framework and evaluation cases",
+      "path": "skills/evals"
+    }
+  ],
+  "requirements": {
+    "claude-version": "2025-03",
+    "features": [
+      "error-recovery",
+      "conditional-execution",
+      "security-scoring",
+      "self-learning"
+    ]
+  },
+  "documentation": {
+    "readme": "skills/README.md",
+    "guide": "OPTIMIZATION_GUIDE.md",
+    "skills": "skills/*/SKILL.md",
+    "workflows": "skills/*/workflow.md"
+  },
+  "consolidation": {
+    "version": "2.0",
+    "merged-skills": [
+      {
+        "name": "error-handling",
+        "lines": 753,
+        "merged-into": "mcp-researcher",
+        "as": "Phases 1-6 error recovery"
+      },
+      {
+        "name": "repo-clone",
+        "lines": 433,
+        "merged-into": "mcp-researcher",
+        "as": "Step 3 conditional local setup"
+      }
+    ],
+    "total-savings": "1,186 lines"
+  },
+  "metadata": {
+    "category": "developer-tools",
+    "tags": [
+      "mcp",
+      "research",
+      "deployment",
+      "security",
+      "error-recovery",
+      "consolidated"
+    ],
+    "created": "2026-03-25",
+    "updated": "2026-03-25",
+    "status": "production"
+  }
+}
