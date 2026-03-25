@@ -99,37 +99,85 @@ Inspect the input before doing any research. Classify it as one of:
   Then continue Steps 1–13 for all remaining attributes (research vendor docs, enumerate tools, etc.).
   At Step 14: use the **Remote Endpoint Auth and Connection** section — skip `Authentication and Environment Setup`.
 
-- **GitHub URL** (`github.com/...`) or **plain server name** — treat as STDIO initially.
+- **GitHub URL** (`github.com/...`) or **plain server name** — prioritize finding remote endpoint; if none exists, ask for GitHub repo.
 
-  Pre-set these attributes immediately (no research needed for them):
+  **Sub-step: Search for Remote Endpoint (ALWAYS DO THIS FIRST)**
+
+  Before treating this as STDIO, proactively search for a vendor-hosted remote endpoint:
+  1. Check if the input is a server name or GitHub URL
+  2. Use GitHub API to search the repo for keywords: `remote endpoint`, `hosted endpoint`, `https://mcp`, `https://[vendor-name].mcp`, `.env.example`, `README`
+  3. If the repo README links to vendor docs, fetch those docs and search for endpoint URLs
+  4. Look for patterns: `https://mcp.vendor.com`, `https://mcp-*.vendor.com`, `https://[server-name].vendor.com/sse`, `https://[server-name].vendor.com/mcp`
+  5. Check for `--endpoint` or `--url` command-line parameters in the README (indicates remote endpoint support)
+
+  **If a remote endpoint URL is discovered**:
+
+  Show the user exactly:
+  ```
+  Remote endpoint found for this server:
+    <discovered-endpoint-url>
+
+  You can research this server two ways:
+    1. Remote endpoint  — research via vendor-hosted URL (TLS verified, SaaS Vendor)
+    2. GitHub / STDIO   — research local deployment from GitHub
+
+  Which would you prefer?
+  Enter 1 or 2:
+  ```
+
+  - **Answer 1 (Remote endpoint):** Switch to Remote path. Pre-set Remote Endpoint transport/deployment/TLS/hosting attributes (Remote = Yes, HTTP/SSE or StreamableHttp, SaaS Vendor, TLS verification). **Do NOT override STDIO/Local/GitHub pre-sets** — keep them (dual-deployment). At Step 14, use **Remote Endpoint Auth and Connection**.
+  - **Answer 2 (GitHub / STDIO):** Continue standard STDIO research flow, Steps 1–15.
+
+  **If no remote endpoint is found**:
+
+  If only a server name was provided (not a GitHub URL):
+  ```
+  I couldn't find a remote endpoint or GitHub repository for "<server-name>".
+
+  To proceed with research, please provide one of:
+    1. GitHub repository URL (e.g., https://github.com/org/repo)
+    2. Remote MCP endpoint URL (e.g., https://mcp.vendor.com/sse)
+    3. Vendor documentation URL
+
+  Enter the URL:
+  ```
+
+  If a GitHub URL was provided but no remote endpoint exists in the repo:
+  Continue standard STDIO research flow, Steps 1–15.
+
+  **Pre-set these attributes** (permanent for GitHub input):
   - Transport: `STDIO = Yes`
   - Deployment: `Local = Yes`
   - Hosting Provider: `GitHub = Yes`
 
   ⚠ These three pre-sets are **permanent** — they are NOT overridden if the user later chooses the Remote endpoint path. A server that lives on GitHub is always STDIO-capable and locally deployable, regardless of whether a remote endpoint also exists.
 
-  After reading the README (Step 3) and vendor documentation page (Step 1), scan both for any mention of a remote endpoint URL:
-  - Look for URLs matching the remote endpoint pattern: `https://mcp.vendor.com/sse`, `https://*.mcp.*/sse`, `/mcp` paths, or phrases like "remote MCP endpoint", "hosted endpoint", "connect via URL", "cloud-hosted MCP".
-  - Check the vendor docs page directly if the README links to one.
+---
 
-  **If a remote endpoint URL is found**, pause and show the user exactly:
+**Step 0.5 — Remote Endpoint Discovery (for GitHub/server-name inputs)**
 
-  ```
-  A remote endpoint is available for this server:
-    <discovered-endpoint-url>
+If a GitHub URL or server name was provided AND no remote endpoint was found in Step 0, run this proactive search:
 
-  You can connect in two ways:
-    1. Remote endpoint  — connect directly via URL (no local install needed)
-    2. GitHub / STDIO   — clone and run the server locally
+1. **Search the GitHub repository for endpoint references**:
+   - Keywords: `remote endpoint`, `hosted endpoint`, `cloud-hosted`, `https://mcp`, `endpoint url`, `host:` with `https://`
+   - Files to check: `README.md`, `.env.example`, `config.json`, `setup.md`, any linked vendor docs
 
-  Which would you prefer?
-  Enter 1 or 2:
-  ```
+2. **Extract endpoint pattern from README**:
+   - If README shows `--endpoint` or `--url` parameters → indicates remote endpoint support exists
+   - If README links to vendor docs → fetch those docs and search for endpoint URLs
 
-  - **Answer 1 (Remote endpoint):** Switch to Remote path. Pre-set the Remote Endpoint transport/deployment/TLS/hosting attributes (Remote = Yes, HTTP/SSE or StreamableHttp, SaaS Vendor, TLS verification). **Do NOT override the GitHub pre-sets** — STDIO = Yes, Local = Yes, and GitHub = Yes remain. At Step 14, use **Remote Endpoint Auth and Connection**.
-  - **Answer 2 (GitHub / STDIO):** Continue the standard STDIO research flow, Steps 1–15.
+3. **Construct likely endpoint URL from server name**:
+   - Pattern 1: `https://mcp.[vendor].com/sse` or `/mcp`
+   - Pattern 2: `https://mcp-[servername].[vendor].com/sse`
+   - Pattern 3: `https://[servername].mcp.[vendor].com/sse`
+   - Try curl to verify if endpoint exists (even if returns 401, endpoint exists)
 
-  **If no remote endpoint is found**: continue standard STDIO research flow, Steps 1–15.
+4. **If endpoint found**: Return to Step 0 user choice prompt with discovered URL
+5. **If no endpoint found**: Proceed with STDIO research (Steps 1–15)
+
+**Do not skip this step for GitHub inputs** — many servers have remote endpoints not prominently featured in README.
+
+---
 
 1. Find the official vendor documentation page for the MCP server.
 2. Find the GitHub (or other) source code repository.
@@ -176,12 +224,19 @@ Inspect the input before doing any research. Classify it as one of:
     - **Developer and Coding Tools** — primary purpose is supporting software development workflows (e.g., GitHub, GitLab, CI/CD, code search, IDEs, package managers)
     - **Data and Information Retrieval** — primary purpose is querying, searching, or extracting structured or unstructured data (e.g., databases, search engines, APIs, web scraping, analytics)
     - **Productivity and Communication** — primary purpose is task management, messaging, scheduling, or team collaboration (e.g., Slack, Notion, Jira, email, calendar)
-13. Final review: every Yes has evidence; every No is justified; version, description, and category are all filled in.
-14. Proceed to the connection setup section that matches the input type (from Step 0):
+13. **Fill in GitHub Repository and Endpoint URL**:
+    - **GitHub Repository**: Populate with the source repo URL if discovered during Step 0.5 or from initial GitHub input. Write `N/A` if not applicable (pure remote vendor-hosted, no GitHub).
+    - **Endpoint URL**: Populate with the remote endpoint URL if researching a remote server. Write `N/A` for STDIO-only local servers.
+    - These fields are mandatory and help users quickly identify where to find source code and how to connect.
+
+14. Final review: every Yes has evidence; every No is justified; version, description, category, GitHub repo, and endpoint URL are all filled in.
+
+15. Proceed to the connection setup section that matches the input type (from Step 0):
     - **Remote Endpoint URL** → use the **Remote Endpoint Auth and Connection** section below.
     - **GitHub URL / server name (STDIO)** → use the **Authentication and Environment Setup** section below.
     Apply the SECURITY MANDATE throughout — never ask for credentials in chat, always use placeholders, always direct the user to edit the file themselves.
-15. After connection setup is complete, trigger the **CCI MCP-server Scoring** section. The CSV is saved there as the final step — with or without score rows depending on the user's answer.
+
+16. After connection setup is complete, trigger the **CCI MCP-server Scoring** section. The CSV is saved there as the final step — with or without score rows depending on the user's answer.
 
 ---
 
@@ -195,6 +250,24 @@ If you cannot confirm from the priority sources, mark **No**.
 
 **Common error — TLS for STDIO servers**: Local STDIO servers have no network transport, so TLS 1.3/1.2/Lower = **No** (not N/A).
 This applies to ALL local-only servers regardless of whether they internally call HTTPS endpoints.
+
+---
+
+### MCP Info Fields
+
+**GitHub Repository** — Always populate if the server has a GitHub source repository:
+- **Remote endpoints only**: Populate with the GitHub URL if source code exists on GitHub (e.g., `https://github.com/awslabs/mcp`)
+- **Local STDIO servers**: Populate with the GitHub repository URL where the source is hosted
+- **No GitHub**: Write `N/A` if the server is not distributed via GitHub
+- **Example**: `https://github.com/awslabs/mcp/tree/main/src/aurora-dsql-mcp-server`
+- **Source**: GitHub search results, vendor docs, or repository URL discovery during Step 0.5
+
+**Endpoint URL** — Always populate for remote servers; mark N/A for STDIO-only servers:
+- **Remote endpoints**: Write the full HTTPS endpoint URL (e.g., `https://xmfe3hc3pk.execute-api.us-east-2.amazonaws.com`)
+- **STDIO-only servers (no remote)**: Write `N/A` (local deployment, no URL)
+- **Dual-deployment servers**: Write the primary remote endpoint URL (the one used for this research)
+- **Important**: This is the URL users connect to via Claude Code's `"url"` config key, not the `--cluster_endpoint` or other user-provided parameters
+- **Source**: Discovered in Step 0.5 endpoint discovery or provided by user as input in Step 0
 
 ---
 
@@ -312,6 +385,8 @@ Sources: vendor auth docs, source code connection/auth modules, environment vari
 
 ### Data Protection — TLS
 
+**⚠️ Critical: TLS applies ONLY to the MCP transport layer, not to underlying database/API connections**
+
 Apply this rule strictly based on deployment type:
 
 - **Remote** (vendor-hosted HTTPS endpoint): **ALWAYS verify** TLS support by running both commands against the endpoint. Mark each version Yes ONLY if the connection succeeds.
@@ -337,7 +412,10 @@ Apply this rule strictly based on deployment type:
   - Report the TLS values that apply to the Remote endpoint only
 
 - **Local only** (STDIO subprocess, no network): TLS 1.3 = No, TLS 1.2 = No (no network encryption).
-- **Container** (self-hosted local Docker): TLS = No unless vendor docs explicitly mention TLS. If docs mention TLS, run the verification commands above.
+  - Note: A STDIO server may establish TLS-encrypted connections to upstream services (databases, APIs) internally, but this is an **implementation detail**, not part of the MCP transport layer. Do NOT mark TLS = Yes based on upstream connections.
+  - Example: An MCP server that runs locally and connects to a remote PostgreSQL database with `sslmode=require` still has TLS 1.3=No, TLS 1.2=No because the MCP transport itself (STDIO) has no encryption.
+
+- **Container** (self-hosted local Docker): TLS = No unless vendor docs explicitly mention TLS for the MCP transport layer itself. If docs mention TLS, run the verification commands above.
 - Lower versions = Yes only if vendor docs confirm unencrypted or legacy TLS access is allowed.
 
 ---
@@ -608,6 +686,8 @@ Category,Attribute,Status
 MCP Info,Description,"[3–4 line description of the server]"
 MCP Info,Git Repo Version,[v1.2.0 - Brief description of version/release focus (optional emoji)]
 MCP Info,Category,[one of the four categories]
+MCP Info,GitHub Repository,[https://github.com/org/repo or N/A if not applicable]
+MCP Info,Endpoint URL,[https://mcp.vendor.com/sse for remote servers, or N/A for STDIO-only servers]
 Distribution Type,Official,Yes/No
 Distribution Type,Community,Yes/No
 MCP Protocol Version,2025-11-25,Yes/No
@@ -1157,12 +1237,15 @@ If failed: hand off to the **error-handling** skill with the full error output.
 - Marking SaaS Vendor = Yes for a local STDIO server just because the upstream API is vendor-hosted
 - Marking HTTP/SSE or StreamableHttp = Yes when the server has no remote endpoint (STDIO only)
 - Marking HTTP/SSE = Yes because `fastapi` or `uvicorn` appear in dependencies — always verify these are used for MCP transport, not for a separate webhook receiver or internal HTTP utility. Check the actual `mcp.run()` call and transport parameter in source code
-- Marking TLS = Yes based on upstream API calls (e.g. the server calls `https://api.vendor.com`) — TLS only applies to the MCP transport layer itself, not to the vendor API the server connects to
+- Marking TLS = Yes based on upstream API calls or database connections (e.g. the server calls `https://api.vendor.com` or connects to PostgreSQL with `sslmode=require`) — TLS only applies to the MCP transport layer itself, not to upstream services the server connects to. A STDIO server that connects to a TLS-encrypted database internally still has TLS 1.3=No, TLS 1.2=No for the MCP layer.
 - Marking Remote = Yes because ngrok or a webhook URL appears in the code — ngrok for receiving inbound API callbacks is not the same as a vendor-hosted MCP endpoint. Remote = Yes only if the vendor hosts an MCP server at a public URL for clients to connect to
+- **Skipping remote endpoint discovery for GitHub/server-name inputs** — ALWAYS run Step 0.5 to search for remote endpoints even if not mentioned in the README title. Many servers have vendor-hosted remote endpoints that aren't prominently featured. Check vendor docs, `.env.example` files, and likely URL patterns.
 - Stopping at the GitHub repo when the README says "see vendor docs for our remote MCP" or "we offer a hosted/remote MCP implementation" — always follow that link and check the vendor docs for a remote endpoint URL before finalising Transport, TLS, Hosting Provider, and Deployment. The repo may only show the local STDIO mode while the vendor separately hosts a StreamableHttp endpoint over HTTPS
 - Marking Remote = Yes without a confirmed public endpoint URL
-- Marking TLS = Yes for local STDIO servers that have no network transport
-- Marking TLS = No for remote HTTPS vendor-hosted servers
+- **Assuming STDIO-only without checking for remote endpoint** — just because a server is open-source on GitHub does NOT mean it's STDIO-only. Always run endpoint discovery before deciding deployment type is Local-only.
+- Marking TLS = Yes for local STDIO servers that have no network transport — even if the server internally uses TLS for upstream connections
+- Marking TLS = No for remote HTTPS vendor-hosted servers — for Remote deployments, ALWAYS verify with curl/openssl before marking TLS
+- **Requiring a remote endpoint URL to mark TLS = Yes** — TLS assessment is only meaningful for remote MCP endpoints. For STDIO-only servers (no vendor-hosted endpoint), mark all TLS versions as No, regardless of how the server internally connects to databases/APIs
 - Marking all three Tools Operations rows as Yes instead of only the highest applicable
 - Marking Resources = Yes based only on source code when vendor docs say tools-only
 - Marking multiple MCP protocol versions as Yes instead of only the latest
@@ -1176,3 +1259,7 @@ If failed: hand off to the **error-handling** skill with the full error output.
 - Marking `OAuth 2.1 Authorization Code Flow = Yes` for a remote endpoint without checking `/.well-known/oauth-authorization-server` — always fetch the discovery document to confirm
 - Skipping the README and vendor page endpoint scan for GitHub URLs — always scan both before assuming STDIO; if a remote endpoint is found, always ask the user which mode they prefer
 - Marking `HTTP/SSE = Yes` for a `/mcp` endpoint or `StreamableHttp = Yes` for a `/sse` endpoint — path ending determines transport: `/sse` → HTTP/SSE, `/mcp` or `/mcp/` → StreamableHttp
+- **Leaving GitHub Repository blank** — Always populate this field. Use the GitHub URL if source exists on GitHub, or `N/A` if not applicable. Never leave it empty.
+- **Leaving Endpoint URL blank** — Always populate this field. For remote servers: use the endpoint URL. For STDIO-only: write `N/A`. Never leave it empty.
+- **Confusing user-provided parameters with the MCP endpoint** — For servers like Aurora DSQL with `--cluster_endpoint` parameter: the user provides their own cluster endpoint, but the MCP Server itself connects at `https://xmfe3hc3pk.execute-api.us-east-2.amazonaws.com`. The latter goes in Endpoint URL.
+- **Writing the wrong endpoint for dual-deployment servers** — For servers with BOTH remote endpoint AND GitHub STDIO: choose ONE endpoint URL (the one researched). If researching remote, use remote endpoint. If researching STDIO, use `N/A`. Do NOT list both.
