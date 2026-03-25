@@ -25,7 +25,6 @@ cd Claude-skills-research
 
 - **Documentation**
   - `skills/README.md` - Complete navigation guide with use cases
-  - `OPTIMIZATION_GUIDE.md` - Template for future optimizations
   - `marketplace.json` - Skills metadata and discovery
   - `claude-plugin.json` - Plugin descriptor
 
@@ -68,7 +67,7 @@ Claude-skills-research/
 │   └── README.md                    # Detailed navigation
 ├── marketplace.json                 # Skills metadata
 ├── claude-plugin.json               # Plugin descriptor
-├── OPTIMIZATION_GUIDE.md            # Template for optimization
+├── CLAUDE.md                        # Project documentation
 └── README.md                        # This file
 ```
 
@@ -132,8 +131,8 @@ User Input (MCP Server)
 ## Documentation
 
 - **For Users:** Start with `skills/README.md` for complete navigation and use cases
-- **For Developers:** See `OPTIMIZATION_GUIDE.md` for implementation guidelines
 - **For Discovery:** Check `marketplace.json` and `claude-plugin.json` for metadata
+- **For Project Details:** See `CLAUDE.md` for complete project documentation
 
 ---
 
