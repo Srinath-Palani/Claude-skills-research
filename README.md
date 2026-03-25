@@ -240,4 +240,135 @@ git pull origin main
 
 ---
 
-Made with 🤖 Claude | Last Updated: 2026-03-25 | Status: Production Ready
+---
+
+## Latest Release (2026-03-26) — v2.0.1 Hotfix ✅
+
+### ✨ Major Improvements
+
+**Skill Registry Integration**
+- ✅ Unified-mcp-skill now globally registered in `~/.claude/skills/`
+- ✅ Fully discoverable and invocable via `Skill("unified-mcp-skill", args="...")`
+- ✅ Works seamlessly with both `/start-mcp` command and Skill() tool
+- ✅ No more fallback to separate mcp-research skill
+
+**Complete Telnyx MCP Research**
+- ✅ 46 tools enumerated across 12 categories
+- ✅ Security scoring: 17/53 (CCI methodology)
+- ✅ Protocol detection: FastMCP 0.4.0 → 2024-11-05
+- ✅ CSV report: `~/Desktop/MCP_reports/telnyx-mcp-server.csv`
+- ✅ Configuration template: `.claude/settings.json` (ready for API key)
+
+**Enhanced Learning & Documentation**
+- ✅ Framework Priority learning: FastMCP > Framework > SDK
+- ✅ Endpoint Verification strategy: 3-step methodology (GET/POST/format)
+- ✅ Common mistakes documented: 18+ error patterns explained
+- ✅ Complete example: Telnyx MCP embedded in SKILL.md
+
+**New Registry Documentation**
+- ✅ SKILL_REGISTRY_GUIDE.md — 10-step process guide
+- ✅ REGISTRY_VISUAL_FLOW.md — Flowcharts and architecture diagrams
+- ✅ FINAL_REGISTRY_EXPLANATION.md — Comprehensive explanation
+- ✅ COMPLETION_CHECKLIST.md — Verification checklist
+- All guides saved to: `.claude/projects/.../memory/`
+
+### 📊 Performance Metrics (v2.0.1)
+
+| Metric | v2.0 | v2.0.1 | Status |
+|--------|------|--------|--------|
+| **Unified Skills** | 1 | 1 | ✅ Enhanced |
+| **Global Registration** | No | Yes ✅ | FIXED |
+| **Registry Conflicts** | Yes | No ✅ | RESOLVED |
+| **Learning Docs** | 3 | 7+ ✅ | EXPANDED |
+| **Example Servers** | 1 | 2+ ✅ | ADDED |
+| **Production Ready** | Yes | Yes ✅ | VERIFIED |
+
+### 🔍 What's New
+
+1. **Skill Registry System** — Explained in detail with 7-step process
+2. **Registry Guides** — 4 comprehensive markdown files for developers
+3. **Telnyx Learning** — Framework priority + endpoint verification strategies
+4. **Security Score** — CCI-based 10-attribute scoring with examples
+5. **Project Memory** — Auto-saved learnings for future sessions
+6. **Workflow Documentation** — Commit template for always updating docs
+
+---
+
+## 📋 Development Workflow
+
+**Before committing, always update:**
+
+```bash
+# 1. Update documentation files
+# CLAUDE.md — Project instructions and features
+# README.md — Quick start and latest release notes
+# SKILL.md — Core skill documentation and learnings
+
+# 2. Commit with proper template
+git add CLAUDE.md README.md skills/unified-mcp-skill/SKILL.md
+git commit -m "Feature: Brief description
+
+Updates:
+- CLAUDE.md: [sections]
+- README.md: [sections]
+- SKILL.md: [learnings/features]
+
+Co-Authored-By: Claude Haiku 4.5 <noreply@anthropic.com>"
+
+# 3. Verify and push
+git log -1 --stat
+git push origin main
+```
+
+---
+
+## 🚀 Getting Started (Updated)
+
+### For New Team Members
+
+```bash
+# 1. Clone repository
+git clone https://github.com/Srinath-Palani/Claude-skills-research.git
+cd Claude-skills-research
+
+# 2. Register unified skill globally (one-time setup)
+cp -r skills/unified-mcp-skill ~/.claude/skills/unified-mcp-skill
+
+# 3. Restart Claude Code (registry reloads automatically)
+
+# 4. Start using
+/start-mcp "Research any MCP server"
+# OR
+Skill("unified-mcp-skill", args="https://github.com/org/repo")
+```
+
+### For Updates
+
+```bash
+# Get latest version
+git pull origin main
+
+# Sync unified skill to global registry
+cp -r skills/unified-mcp-skill ~/.claude/skills/unified-mcp-skill
+
+# Restart Claude Code
+```
+
+---
+
+## 📚 Documentation Files
+
+| File | Purpose | Status |
+|------|---------|--------|
+| **CLAUDE.md** | Project instructions & features | ✅ Updated |
+| **README.md** | Quick start & release notes | ✅ Updated |
+| **SKILL.md** | Core skill documentation | ✅ Enhanced |
+| **SKILL_REGISTRY_GUIDE.md** | Registry process (10 steps) | ✅ New |
+| **REGISTRY_VISUAL_FLOW.md** | Diagrams & architecture | ✅ New |
+| **FINAL_REGISTRY_EXPLANATION.md** | Deep dive explanation | ✅ New |
+| **COMPLETION_CHECKLIST.md** | Verification checklist | ✅ New |
+| **marketplace.json** | Skills metadata | ✅ Ready |
+
+---
+
+Made with 🤖 Claude | Last Updated: 2026-03-26 | Version: 2.0.1 | Status: Production Ready ✅

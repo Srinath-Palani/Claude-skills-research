@@ -139,11 +139,81 @@ When team members clone this repo:
 
 ---
 
+## Latest Updates (2026-03-26)
+
+### Skill Registry Integration ✅
+- **Unified-mcp-skill is now globally registered** in `~/.claude/skills/`
+- Fully invocable via `Skill("unified-mcp-skill", args="...")`
+- No longer falls back to separate mcp-research skill
+- Works seamlessly with `/start-mcp` command and Skill() tool
+
+### Telnyx MCP Server Research ✅
+- Comprehensive research report: `~/Desktop/MCP_reports/telnyx-mcp-server.csv`
+- 46 tools across 12 categories documented
+- Security score: 17/53 (CCI scoring)
+- Configuration template ready at: `.claude/settings.json`
+- All learnings integrated into SKILL.md
+
+### Key Learnings Integrated
+- **Framework Priority:** FastMCP > Framework > SDK (for protocol detection)
+- **Endpoint Verification:** 3-step methodology (GET/POST/response format analysis)
+- **Common Mistakes:** All documented and explained in detail
+- **Complete Examples:** Telnyx MCP server CSV report included in SKILL.md
+
+### Documentation Enhancements
+- 4 comprehensive registry guides created and saved to project memory
+- SKILL_REGISTRY_GUIDE.md — 10-step process explanation
+- REGISTRY_VISUAL_FLOW.md — Diagrams and architecture
+- FINAL_REGISTRY_EXPLANATION.md — Complete deep dive
+- COMPLETION_CHECKLIST.md — Verification checklist
+
+---
+
 ## Support & Feedback
 
 For issues:
 1. Use `/start-mcp` with error message to diagnose (built-in error recovery)
 2. Check `skills/unified-mcp-skill/references/learned-fixes.md` for known solutions
 3. Run project audit: `/start-mcp` → "Review the project"
+4. Review registry guides in `.claude/projects/memory/` for skill system questions
 
 For feedback on Claude Code, visit: https://github.com/anthropics/claude-code/issues
+
+---
+
+## Development & Contribution Workflow
+
+**Always update these files when committing changes:**
+
+1. **CLAUDE.md** — Update if:
+   - New features added to unified skill
+   - Project structure changes
+   - New documentation files created
+   - Setup instructions need updates
+
+2. **README.md** — Update if:
+   - Version number changes
+   - Performance metrics change
+   - New consolidation opportunities
+   - Getting started instructions need updates
+
+3. **Commit Template:**
+   ```bash
+   git add CLAUDE.md README.md skills/unified-mcp-skill/SKILL.md
+   git commit -m "$(cat <<'EOF'
+   [Feature]: Brief description of what changed
+
+   Updates:
+   - CLAUDE.md: [specific sections updated]
+   - README.md: [specific sections updated]
+   - SKILL.md: [learnings/features added]
+
+   Co-Authored-By: Claude Haiku 4.5 <noreply@anthropic.com>
+   EOF
+   )"
+   ```
+
+---
+
+## Last Updated: 2026-03-26
+**Status:** Production Ready ✅ | **Version:** 2.0.0 | **Commit:** ccf6af6
