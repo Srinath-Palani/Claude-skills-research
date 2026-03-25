@@ -1,5 +1,5 @@
 ---
-name: mcp-server
+name: mcp-researcher
 user-invocable: true
 description: >
   Research, verify, document, and security-score every attribute of an MCP (Model Context Protocol)
