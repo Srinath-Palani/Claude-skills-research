@@ -12,12 +12,24 @@ USER INPUT
         │
         ▼
 ┌─────────────────────────────────────┐
-│ STEP 0 — Config & Input Type        │
+│ STEP 0 — Config & Path Selection    │
 │                                     │
-│ First-time:                         │
-│  ? Save path? [~/Desktop/MCP_...]   │
-│  ? Clone path? [~/MCP_repos/]       │
-│  → Store in .claude/settings.json   │
+│ First Time:                         │
+│  [Open Folder Picker]               │
+│  User chooses/creates folder        │
+│  ↓                                  │
+│ Second Time:                        │
+│  Show path + "Make default?"        │
+│  Yes → Save to settings.json        │
+│  No  → Open picker again            │
+│  ↓                                  │
+│ Future Sessions:                    │
+│  Show saved default                 │
+│  Use it? Yes/No                     │
+│                                     │
+│ Same flow for:                      │
+│  • Reports path                     │
+│  • Clone path                       │
 │                                     │
 │ Classify input:                     │
 │  ├─ https://... → Type A (endpoint) │

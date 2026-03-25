@@ -60,12 +60,52 @@ description: >
 
 ### Step 0 — Configuration & Input Classification
 
-**First-time setup:**
+**Path Configuration (Simple 2-Step Process):**
+
+**Step 0a - First Time (or if no saved path):**
 ```
-Where save MCP reports? [default: ~/Desktop/MCP_reports/]
-Where clone MCP repos? [default: ~/MCP_repos/]
+Where to save MCP reports?
+
+Open folder picker to choose/create location:
+  [Open Folder Picker Button]
+
+User selects folder → Skill uses that path for this session
 ```
-Store in `.claude/settings.json` for future use. On return, show paths and ask "Use defaults?"
+
+**Step 0b - Second Time (after first use):**
+```
+Saved path: /Users/yourname/Desktop/MCP_reports
+
+Make this your default?
+  [Yes - Save as default]
+  [No - Choose different path]
+
+If Yes → Saved to .claude/settings.json for future use
+If No  → Open folder picker to choose new path
+```
+
+**Step 0c - Future Sessions (if default exists):**
+```
+Using saved default: /Users/yourname/Desktop/MCP_reports
+
+Use this path?
+  [Yes - Continue]
+  [No - Choose different path]
+
+If Yes → Use saved default
+If No  → Open folder picker for one-time different path (not saved)
+```
+
+**Same Flow for Clone Location:**
+- Same simple 2-step process
+- Open folder picker → Choose location
+- Second time: Ask to save as default
+
+**Benefits:**
+- No confusing options
+- Simple: Open picker → Choose → Done
+- Second use: Save as default option
+- Clean & intuitive
 
 **Classify input:**
 
