@@ -60,29 +60,31 @@ description: >
 
 ## Usage
 
+**Invoke with:** `/start-mcp`
+
 ```
 RESEARCH
-"Research the GitHub MCP server"
-"Get full report on the Slack MCP server"
-"Document this MCP server: https://github.com/org/repo"
-"What does the Linear MCP server support?"
-"Analyze and score this MCP: https://mcp.example.com"
+/start-mcp "Research the GitHub MCP server"
+/start-mcp "Get full report on the Slack MCP server"
+/start-mcp "Document this MCP server: https://github.com/org/repo"
+/start-mcp "What does the Linear MCP server support?"
+/start-mcp "Analyze and score this MCP: https://mcp.example.com"
 
 LOCAL SETUP
-"Set up the GitHub MCP server locally"
-"Clone and get the Slack MCP running"
-"Install this MCP server from GitHub"
+/start-mcp "Set up the GitHub MCP server locally"
+/start-mcp "Clone and get the Slack MCP running"
+/start-mcp "Install this MCP server from GitHub"
 
 ERROR RECOVERY (automatic)
-"The MCP server won't connect"
-"I'm getting a 401 error from my MCP server"
-[paste stack trace or error message]
+/start-mcp "The MCP server won't connect"
+/start-mcp "I'm getting a 401 error from my MCP server"
+/start-mcp [paste stack trace or error message]
 
 PROJECT AUDIT
-"Review the project"
-"Audit all skills for alignment"
-"Is this ready to commit?"
-"Check if my changes meet requirements"
+/start-mcp "Review the project"
+/start-mcp "Audit all skills for alignment"
+/start-mcp "Is this ready to commit?"
+/start-mcp "Check if my changes meet requirements"
 ```
 
 ---
