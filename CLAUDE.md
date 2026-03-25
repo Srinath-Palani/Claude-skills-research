@@ -11,15 +11,15 @@ git clone <repo-url> Claude-skills-research
 cd Claude-skills-research
 ```
 
-Then invoke the unified MCP skill with `/mcp` in Claude Code.
+Then invoke the unified MCP skill with `/start-mcp` in Claude Code.
 
 ---
 
-## Unified Skill: `/mcp`
+## Unified Skill: `/start-mcp`
 
 **The all-in-one MCP skill** — research servers with security scoring, document attributes, conditionally set up locally, diagnose errors inline, and audit projects — all in one optimized execution path.
 
-**Invocation:** `/mcp`
+**Invocation:** `/start-mcp`
 
 Use this skill for any MCP-related task:
 
@@ -85,7 +85,7 @@ All skills enforce strict security rules:
 
 ### Scenario: Research and set up an MCP server
 
-**Use `/mcp` for everything:**
+**Use `/start-mcp` for everything:**
 
 ```
 "Research the GitHub MCP server and set it up locally"
@@ -110,7 +110,7 @@ When team members clone this repo:
 
 1. They get the unified skill automatically (in `skills/unified-mcp-skill/`)
 2. CLAUDE.md loads and shows available skills
-3. They can invoke `/mcp` immediately
+3. They can invoke `/start-mcp` immediately
 4. All functionality consolidated — no version conflicts
 
 **No additional setup needed.**
@@ -142,8 +142,8 @@ When team members clone this repo:
 ## Support & Feedback
 
 For issues:
-1. Use `/mcp` with error message to diagnose (built-in error recovery)
+1. Use `/start-mcp` with error message to diagnose (built-in error recovery)
 2. Check `skills/unified-mcp-skill/references/learned-fixes.md` for known solutions
-3. Run project audit: `/mcp` → "Review the project"
+3. Run project audit: `/start-mcp` → "Review the project"
 
 For feedback on Claude Code, visit: https://github.com/anthropics/claude-code/issues
