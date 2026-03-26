@@ -190,3 +190,35 @@ What next?
    - Verify before writing to CSV
 
 See "Learned Fixes" section in SKILL.md for detailed error examples and prevention checklist.
+
+---
+
+## Final Report Format (for Multi-Server Batch Research & Sessions)
+
+When generating final reports for multi-server research projects, use this format:
+
+```
+╔════════════════════════════════════════════════════════════════════════════════════════╗
+║                                                                                        ║
+║                    ✅ ✅ ✅  REPORT SUCCESSFULLY GENERATED  ✅ ✅ ✅                 ║
+║                                                                                        ║
+║                                                                                        ║
+║                                FILE LOCATION:                                         ║
+║                                                                                        ║
+║              /path/to/report/REPORT_NAME_DATE.txt                                     ║
+║                                                                                        ║
+║                                                                                        ║
+╚════════════════════════════════════════════════════════════════════════════════════════╝
+```
+
+**Format Features:**
+- Large, bold text (visible in all IDEs and terminals)
+- Clear file location path with full file path
+- Works across all platforms and editors
+- Supports terminal and IDE display
+
+**Usage:**
+- Use for multi-server batch research final reports
+- Use for project audit completions
+- Use for session summaries
+- Customize file location path as needed
