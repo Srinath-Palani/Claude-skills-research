@@ -4,9 +4,10 @@
   "description": "Unified MCP skill for research, deployment, error recovery, and project auditing — optimized for speed and token efficiency",
   "skills": [
     {
-      "name": "start-mcp",
+      "name": "unified-mcp-skill-new",
       "path": "/Users/srinathp/My-work-dir/Claude-skills-research/skills/unified-mcp-skill-new/SKILL.md",
-      "user-invocable": true
+      "user-invocable": true,
+      "command": "/unified-mcp-skill-new"
     }
   ]
 }
