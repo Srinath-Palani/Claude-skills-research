@@ -303,8 +303,8 @@ Skip local setup, proceed to attribute research.
 |-----------|---------|
 | Distribution | Official OR Community |
 | Pricing | Free OR Paid |
-| Hosting Provider | Choose: SaaS / GitHub |
-| Transport Protocol | Choose: STDIO / HTTP/SSE / StreamableHttp |
+| Hosting Provider | Choose: SaaS Vendor / 3rd Party SaaS / GitHub / GitLab / Bitbucket / SourceHut/Gitea/Gogs |
+| Transport Protocol | Choose: STDIO / HTTP/SSE / StreamableHttp / FastAPI |
 | Tools Operations | Choose HIGHEST: Read-only / R+Update / R+Update+Delete |
 
 **Evidence-Backed Attributes:**
@@ -405,21 +405,91 @@ DEPLOYMENT APPROACH VERIFICATION CHECKLIST:
 
 ---
 
-### Step 6 — Tools & Capabilities
+### Step 5.4 — Hosting Provider Verification
 
-Extract from source code:
-- Find `@mcp.tool()` decorators
-- Group by logical category
-- List non-read-only operations (write/delete)
-- Check capabilities: Tools only
+**Detection Context — Determine where the MCP server is hosted:**
 
-**Format (CSV cell):**
+```
+HOSTING PROVIDER DETECTION CHECKLIST:
+□ Step 1: Is it offered by the official vendor as SaaS? → SaaS Vendor = Yes
+□ Step 2: Is it hosted by a third-party SaaS provider? (e.g., Vercel, Heroku, AWS) → 3rd Party SaaS = Yes
+□ Step 3: Is the source code on GitHub? → GitHub = Yes
+□ Step 4: Is the source code on GitLab? → GitLab = Yes
+□ Step 5: Is the source code on Bitbucket? → Bitbucket = Yes
+□ Step 6: Is the source code on SourceHut/Gitea/Gogs? → SourceHut/Gitea/Gogs = Yes
+□ Step 7: Multiple sources possible → mark ALL applicable platforms
+```
+
+**Detection Patterns:**
+- **SaaS Vendor:** Vendor's own domain (https://api.vendor.com) OR vendor docs state "managed service"
+- **3rd Party SaaS:** Deployed URL on Vercel, Netlify, Heroku, AWS, Azure, etc. (visible in README/docs)
+- **GitHub:** Repository URL path contains `github.com`
+- **GitLab:** Repository URL path contains `gitlab.com`
+- **Bitbucket:** Repository URL path contains `bitbucket.org`
+- **SourceHut/Gitea/Gogs:** Repository URL contains `sr.ht`, custom Gitea/Gogs instance
+
+**Note:** Hosting Provider is NOT mutually exclusive — mark all platforms where the server is available.
+
+---
+
+### Step 6 — Transport Protocol & Capabilities Verification
+
+**Transport Protocol Detection:**
+
+Check for these transports in source code and documentation:
+```
+TRANSPORT PROTOCOL VERIFICATION CHECKLIST:
+□ Step 1: Does README mention stdin/stdout or STDIO? → STDIO = Yes
+□ Step 2: Is there an HTTP endpoint with GET (Content-Type: text/event-stream)? → HTTP/SSE = Yes
+□ Step 3: Is there an HTTP endpoint with POST (JSON-RPC streaming)? → StreamableHttp = Yes
+□ Step 4: Is the server built with FastAPI or similar async web framework? → FastAPI = Yes
+□ Step 5: Check for @app.post(), @app.get(), async def patterns
+□ Step 6: Mark ALL applicable transport protocols (not mutually exclusive)
+```
+
+**Capabilities Detection:**
+
+Extract from source code and README (not mutually exclusive — mark all that apply):
+```
+CAPABILITIES VERIFICATION CHECKLIST:
+□ Step 1: Does server expose @mcp.tool() decorators? → Tools = Yes
+□ Step 2: Does server expose @mcp.resource() decorators? → Resources = Yes
+□ Step 3: Does server expose @mcp.prompt() decorators? → Prompts = Yes
+□ Step 4: Does server expose sampling/completion methods? → Sampling = Yes
+```
+
+**Format for Capabilities - Tools (CSV cell):**
 ```
 Category Name
     •    tool_name – Description
 
 Another Category
     •    tool_name – Description
+```
+
+**Format for Capabilities - Resources (CSV cell):**
+```
+Resource Category
+    •    resource_uri – Description (resource type: text/image/document)
+
+Another Category
+    •    resource_uri – Description
+```
+
+**Format for Capabilities - Prompts (CSV cell):**
+```
+Prompt Category
+    •    prompt_name – Description (inputs: param1, param2)
+
+System Prompts
+    •    system_prompt – System instruction template for Claude
+```
+
+**Format for Capabilities - Sampling (CSV cell):**
+```
+Model Capabilities
+    •    model_name – Sampling support (temperature, top_p, max_tokens)
+    •    completion_method – Inference optimization details
 ```
 
 ---
@@ -937,15 +1007,18 @@ MCP Info
 Distribution Type (Official / Community)
 MCP Protocol Version (2025-11-25 / 2025-06-18 / 2025-03-26 / 2024-11-05)
 Pricing (Free / Paid)
-Hosting Provider (SaaS / GitHub)
+Hosting Provider (SaaS Vendor / 3rd Party SaaS / GitHub / GitLab / Bitbucket / SourceHut/Gitea/Gogs)
 Authentication (OAuth 2.1 AuthCode / OAuth 2.1 Client Creds / Bearer / PAT / API Token)
 Data Protection (TLS 1.3 / TLS 1.2 / Lower versions or no encryption)
-Transport Protocol (STDIO / HTTP/SSE / StreamableHttp)
+Transport Protocol (STDIO / HTTP/SSE / StreamableHttp / FastAPI)
 Tools Operations (Read-only / R+Update / R+Update+Delete)
 Deployment Approach (Local / Container / Remote)
 Compliance & Certifications (HIPAA / GDPR / SOC 2 / FedRAMP)
-Capabilities (Tools)
+Capabilities (Tools / Resources / Prompts / Sampling)
 Capabilities - Tools (detailed_info with categories and bullet points)
+Capabilities - Resources (detailed_info with resource types and descriptions)
+Capabilities - Prompts (detailed_info with prompt templates and use cases)
+Capabilities - Sampling (detailed_info with sampling models and capabilities)
 Non-Read-Only Tools (detailed_info with categories OR "None — all tools are read-only")
 ```
 
@@ -1045,7 +1118,11 @@ MCP Protocol Version,2024-11-05,No
 Pricing,Free,Yes
 Pricing,Paid,No
 Hosting Provider,SaaS Vendor,No
+Hosting Provider,3rd Party SaaS,No
 Hosting Provider,GitHub,Yes
+Hosting Provider,GitLab,No
+Hosting Provider,Bitbucket,No
+Hosting Provider,SourceHut/Gitea/Gogs,No
 Authentication,OAuth 2.1 - Authorization Code Flow,No
 Authentication,OAuth 2.1 - Client Credentials Flow,No
 Authentication,Bearer Token,No
@@ -1057,6 +1134,7 @@ Data Protection,Lower versions or no encryption,No
 Transport Protocol,STDIO,Yes
 Transport Protocol,HTTP/SSE,No
 Transport Protocol,StreamableHttp,No
+Transport Protocol,FastAPI,No
 Tools Operations,Read-only operations,No
 Tools Operations,Read-only and/or update operations,No
 Tools Operations,Read-only update and/or delete operations,Yes
@@ -1068,6 +1146,9 @@ Compliance & Certifications,GDPR,No
 Compliance & Certifications,SOC 2,No
 Compliance & Certifications,FedRAMP,No
 Capabilities,Tools,Yes
+Capabilities,Resources,Yes
+Capabilities,Prompts,No
+Capabilities,Sampling,No
 Capabilities - Tools,detailed_info,"AI Assistants
     •    create_assistant – Create a new AI assistant with custom instructions and configurations
     •    list_assistants – List all existing AI assistants
@@ -1127,6 +1208,17 @@ Secrets Manager
 Webhooks
     •    webhook_configuration – Configure webhook receivers for Telnyx events
     •    webhook_management – Manage active webhooks via ngrok integration"
+Capabilities - Resources,detailed_info,"API Configuration Resources
+    •    webhook_receiver – Webhook endpoint configuration (resource type: JSON document)
+    •    integration_secret – Integration credentials storage (resource type: encrypted document)
+    •    call_recording – Audio recording artifact (resource type: audio/wav)
+
+Cloud Storage
+    •    bucket_content – Cloud storage bucket contents (resource type: directory listing)
+    •    file_object – File object with metadata (resource type: binary/document)
+    •    embeddings_index – Vector embedding index (resource type: data structure)"
+Capabilities - Prompts,No
+Capabilities - Sampling,No
 Non-Read-Only Tools,detailed_info,"AI Assistants
     •    create_assistant – Creates new AI assistant (write operation)
     •    update_assistant – Modifies existing assistant (write operation)
