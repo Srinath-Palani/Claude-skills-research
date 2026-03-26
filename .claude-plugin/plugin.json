@@ -1,6 +1,6 @@
 {
   "name": "Claude-skills-research",
-  "version": "2.0.2",
+  "version": "3.0.0",
   "description": "Unified MCP skill for research, deployment, error recovery, and project auditing — optimized for speed and token efficiency",
   "skills": [
     {
