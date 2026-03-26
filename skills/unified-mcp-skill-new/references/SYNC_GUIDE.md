@@ -224,14 +224,14 @@ Track sync updates here:
 ## 🔗 FILES INVOLVED
 
 **Must Stay Synchronized:**
-- `/skills/unified-mcp-skill/SKILL.md` — Main skill (source of truth)
-- `/skills/unified-mcp-skill/references/multi-server.md` — Multi-server workflow (dependent)
+- `/skills/unified-mcp-skill-new/SKILL.md` — Main skill (source of truth)
+- `/skills/unified-mcp-skill-new/references/multi-server.md` — Multi-server workflow (dependent)
 
 **Update if major changes:**
 - `/CLAUDE.md` — Project documentation
 - `/README.md` — Release notes
 - `/.claude/projects/memory/MEMORY.md` — Persistent learnings
-- `/skills/unified-mcp-skill/references/learned-fixes.md` — Error patterns
+- `/skills/unified-mcp-skill-new/references/learned-fixes.md` — Error patterns
 
 ---
 
