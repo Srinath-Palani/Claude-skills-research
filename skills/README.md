@@ -1,28 +1,28 @@
 # Claude Skills — Unified MCP Skill (v2.0)
 
 > Last updated: 2026-03-26
-> **NEW:** All 4 skills consolidated into 1 unified skill — `/start-mcp`
+> **NEW:** All 4 skills consolidated into 1 unified skill — `/unified-mcp-skill`
 > Structure: Unified all-in-one workflow (research, setup, error recovery, audit)
 
 ---
 
-## 🚀 The Unified MCP Skill — `/start-mcp`
+## 🚀 The Unified MCP Skill — `/unified-mcp-skill`
 
 **All-in-one skill that replaces 4 separate skills:**
 
 ```
-/start-mcp "your request"
+/unified-mcp-skill "your request"
 ```
 
 ### What It Does
 
 | Task | Command |
 |------|---------|
-| 🔍 **Research** | `/start-mcp "Research the GitHub MCP server"` |
-| 📋 **Document** | `/start-mcp "Document this MCP: https://github.com/org/repo"` |
-| 🔧 **Setup** | `/start-mcp "Set up the Slack MCP server locally"` |
-| 🐛 **Fix Errors** | `/start-mcp "The MCP server won't connect"` |
-| ✅ **Audit Project** | `/start-mcp "Review the project"` |
+| 🔍 **Research** | `/unified-mcp-skill "Research the GitHub MCP server"` |
+| 📋 **Document** | `/unified-mcp-skill "Document this MCP: https://github.com/org/repo"` |
+| 🔧 **Setup** | `/unified-mcp-skill "Set up the Slack MCP server locally"` |
+| 🐛 **Fix Errors** | `/unified-mcp-skill "The MCP server won't connect"` |
+| ✅ **Audit Project** | `/unified-mcp-skill "Review the project"` |
 
 ### Key Features
 
@@ -79,7 +79,7 @@ skills/
 
 ```
 ┌──────────────────────────────────────────────────────┐
-│  USER: /start-mcp "your request"                     │
+│  USER: /unified-mcp-skill "your request"                     │
 └──────────────────┬───────────────────────────────────┘
                    │
                    ▼
@@ -238,10 +238,10 @@ Time:   VARIES (depends on scope)
 **All requests use the same command:**
 
 ```bash
-/start-mcp "Research the GitHub MCP server"
-/start-mcp "Set up the Slack MCP server locally"
-/start-mcp "The MCP server won't connect"
-/start-mcp "Review the project"
+/unified-mcp-skill "Research the GitHub MCP server"
+/unified-mcp-skill "Set up the Slack MCP server locally"
+/unified-mcp-skill "The MCP server won't connect"
+/unified-mcp-skill "Review the project"
 ```
 
 **That's it.** One skill. One command. All functionality.
@@ -314,7 +314,7 @@ git push origin main
 - Context-switching: Never
 
 ⚡ **Better user experience**
-- Single command: `/start-mcp`
+- Single command: `/unified-mcp-skill`
 - One entry point, all scenarios
 - Automatic error recovery (inline)
 - Self-learning over time

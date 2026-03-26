@@ -1,10 +1,10 @@
 # Claude-skills-research v2.0 — Unified MCP Skill
 
-🚀 **All skills consolidated into ONE optimized `/start-mcp` command!**
+🚀 **All skills consolidated into ONE optimized `/unified-mcp-skill` command!**
 
 All-in-one MCP server research, deployment, error recovery, and project auditing — unified into a single fast, efficient skill. Research MCP servers with security scoring, conditionally deploy locally, recover from errors inline, and audit projects for compliance. Everything you need in one command.
 
-**v2.0 Highlights:** 4x faster loading • 82% less code • Zero feature loss • Single `/start-mcp` command • 100% functionality preserved • Production ready ✅
+**v2.0 Highlights:** 4x faster loading • 82% less code • Zero feature loss • Single `/unified-mcp-skill` command • 100% functionality preserved • Production ready ✅
 
 ---
 
@@ -20,7 +20,7 @@ cd Claude-skills-research
 ### What's Included
 
 - **1 Unified Skill** (consolidated from 4 separate skills)
-  - `/start-mcp` - All-in-one: research + attributes + setup + error recovery + audit
+  - `/unified-mcp-skill` - All-in-one: research + attributes + setup + error recovery + audit
     - Merged: `mcp-researcher` + `attribute-researcher` + `project-reviewer` + `error-handling`
     - 533 lines (down from 2,900+)
     - 4x faster loading
@@ -44,30 +44,30 @@ cd Claude-skills-research
 
 ## Usage
 
-### Single `/start-mcp` Command for Everything
+### Single `/unified-mcp-skill` Command for Everything
 
 ```bash
 # Research MCP servers
-/start-mcp "Research the GitHub MCP server"
+/unified-mcp-skill "Research the GitHub MCP server"
 
 # Setup locally
-/start-mcp "Set up this MCP locally"
-/start-mcp "Clone and install the Slack MCP"
+/unified-mcp-skill "Set up this MCP locally"
+/unified-mcp-skill "Clone and install the Slack MCP"
 
 # Error recovery
-/start-mcp "The server won't connect"
-/start-mcp "I'm getting a 401 error from my MCP server"
+/unified-mcp-skill "The server won't connect"
+/unified-mcp-skill "I'm getting a 401 error from my MCP server"
 
 # Audit project
-/start-mcp "Review the project"
-/start-mcp "Is this ready to commit?"
+/unified-mcp-skill "Review the project"
+/unified-mcp-skill "Is this ready to commit?"
 
 # Document attributes
-/start-mcp "Document attributes for the GitHub MCP server"
-/start-mcp "Catalogue this MCP server"
+/unified-mcp-skill "Document attributes for the GitHub MCP server"
+/unified-mcp-skill "Catalogue this MCP server"
 ```
 
-### What `/start-mcp` Does
+### What `/unified-mcp-skill` Does
 
 1. **Research** — Full attribute documentation with evidence backing
 2. **Score** — 10-attribute CCI security score (0–53 scale)
@@ -83,7 +83,7 @@ cd Claude-skills-research
 ```
 Claude-skills-research/
 ├── .claude-plugin/
-│   ├── plugin.json                  # Single skill registration (/start-mcp)
+│   ├── plugin.json                  # Single skill registration (/unified-mcp-skill)
 │   └── .gitignore
 ├── skills/
 │   ├── unified-mcp-skill/
@@ -135,7 +135,7 @@ Claude-skills-research/
 ```
 User Input (MCP Server / Request)
     ↓
-🎯 /start-mcp (Unified Skill - All-in-One)
+🎯 /unified-mcp-skill (Unified Skill - All-in-One)
     │
     ├─ 📊 Research Phase
     │   ├─ Input classification (endpoint/GitHub/name)
@@ -212,9 +212,9 @@ User Input (MCP Server / Request)
    - Skills auto-load from `.claude-plugin/plugin.json`
    - Ready to use immediately
 
-3. **Start with `/start-mcp`:**
+3. **Start with `/unified-mcp-skill`:**
    ```
-   /start-mcp "Research the GitHub MCP server"
+   /unified-mcp-skill "Research the GitHub MCP server"
    ```
 
 ---
@@ -222,7 +222,7 @@ User Input (MCP Server / Request)
 ## Release Information
 
 - **Current Version:** 2.0.0 (Production Ready ✅)
-- **Latest Changes:** All skills consolidated into single `/start-mcp` command
+- **Latest Changes:** All skills consolidated into single `/unified-mcp-skill` command
 - **Performance:** 4x faster, 82% less code, 100% functionality preserved
 - **Commit:** a4a4589
 
@@ -249,7 +249,7 @@ git pull origin main
 **Skill Registry Integration**
 - ✅ Unified-mcp-skill now globally registered in `~/.claude/skills/`
 - ✅ Fully discoverable and invocable via `Skill("unified-mcp-skill", args="...")`
-- ✅ Works seamlessly with both `/start-mcp` command and Skill() tool
+- ✅ Works seamlessly with both `/unified-mcp-skill` command and Skill() tool
 - ✅ No more fallback to separate mcp-research skill
 
 **Complete Telnyx MCP Research**
@@ -365,7 +365,7 @@ cp -r skills/unified-mcp-skill ~/.claude/skills/unified-mcp-skill
 # 3. Restart Claude Code (registry reloads automatically)
 
 # 4. Start using
-/start-mcp "Research any MCP server"
+/unified-mcp-skill "Research any MCP server"
 # OR
 Skill("unified-mcp-skill", args="https://github.com/org/repo")
 ```
