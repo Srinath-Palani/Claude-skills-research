@@ -1,61 +1,15 @@
+<!-- SKILL_VERSION: 3.0.0 — must match SKILL.md version -->
 # Multi-Server Parallel Research
 
-⚠️ **IMPORTANT NOTE: unified-mcp-skill-new AND multi-server.md MUST FOLLOW THESE RULES**
+🚫 **ZERO-ASSUMPTION POLICY applies to EVERY server in the batch.**
 
-**BEFORE CREATING ANY FINAL REPORT CSV FOR EACH SERVER:**
-
-🔒 **RULE 1: VERIFY ALL ATTRIBUTES WITH SOURCE DOCUMENTATION**
-- Do NOT assume, invent, or create category titles randomly
-- Check README, source code, API documentation for actual category names
-- Use category titles EXACTLY as shown in source
-- For Capabilities - Tools: Extract from documented source (e.g., "Team & Workspace Metadata", NOT "Task Management")
-- For Non-Read-Only Tools: Extract actual operation categories from source
-- Example of WRONG: ❌ "Video Generation & Management" (invented), ❌ "Image Generation" (assumed)
-- Example of CORRECT: ✅ "Project Management" (from source), ✅ "Import/Export Tools" (from source)
-
-🔒 **RULE 2: CHECK WORKFLOW AND RULES REFERENCE**
-- Verify all attributes against learned-fixes.md error patterns
-- Verify Protocol Version with numeric comparison (NOT assumption)
-- Verify TLS only for remote transports (STDIO = No)
-- Verify Pricing based on server licensing (NOT service costs or API key requirement)
-- Verify Hosting Provider priority (SaaS Vendor takes precedence over GitHub)
-- Verify Git Repo Version from actual source (Releases → Tags → package.json)
-- Verify Authentication rules (Bearer Token ≠ TLS encryption, multiple auth types can be Yes)
-
-🔒 **RULE 3: CHECK ENTIRE INSTRUCTION SET**
-- Review all 8 Learnings in SKILL.md before finalizing report
-- Review all Prevention Checklists in learned-fixes.md
-- Review all Formatting Rules (Capabilities - Tools uses –, Non-Read-Only Tools uses :)
-- Review all Integration Rules before committing
-
-🔒 **RULE 4: FINAL VERIFICATION BEFORE CSV CREATION**
-- Do NOT create CSV until all attributes verified against source
-- Do NOT use invented category titles
-- Do NOT assume transport/TLS relationships
-- Do NOT confuse authentication with pricing
-- Do NOT mix category title formats
-- Use SYNC_GUIDE.md red-flag check before finalizing
-
-🔒 **RULE 5: UPGRADE_v2.0.2.md VERIFICATION**
-- Check that all attributes in final CSV align with current learnings/knowledge
-- Verify no assumptions were made in any attribute
-- Verify all category titles came from source documentation
-- Verify all authentication, TLS, pricing attributes follow current rules
-- Document any new learnings in learned-fixes.md before finalizing
-
----
-
-🔒 **CRITICAL SYNC RULE** (LOCKED)
-> This file must stay synchronized with `SKILL.md`
-> Whenever SKILL.md is updated → verify this file needs updates too
-> See `SYNC_GUIDE.md` for verification checklist before committing.
-
-🎓 **SELF-LEARNING INTEGRATION (Unified MCP Skill 2.0)**
-> Before each batch research:
-> 1. Read `learned-fixes.md` — Error Patterns #1-8 (Protocol, Auth, Tools Ops, Deployment, TLS, Pricing, etc.)
-> 2. Apply verification checklists during research
-> 3. Use pre-submission checklist before finalizing reports
-> This prevents recurring mistakes across multi-server batches.
+🔒 **MANDATORY before any batch research:**
+> 1. Follow SKILL.md Gates 1-4 (Evidence Ledger, Connection Verification, Learning Gate, Self-Improvement)
+> 2. Read SKILL.md Learnings 1-8 for authoritative attribute rules
+> 3. Read `learned-fixes.md` error patterns #1-#8 for real case studies
+> 4. Each Layer 1 agent MUST build its own Evidence Ledger — no attribute without source proof
+> 5. If an agent cannot verify an attribute → return `"UNVERIFIED"` not `"unknown"`
+> SKILL.md is the single source of truth — rules are not duplicated here.
 
 **Trigger:** Auto-detected via Step 0-M (see below). No explicit command needed.
 
@@ -143,9 +97,14 @@ Each agent runs the **existing Step 0.5 dual-source workflow** (5 concurrent thr
 
 **Agent rules:**
 - Output JSON only — no explanations, no markdown
-- If data missing → use `"unknown"` not null
-- If repo inaccessible → set `errors: ["repo not found"]`, return partial data
+- **ZERO-ASSUMPTION:** If data missing → use `"UNVERIFIED"` not `"unknown"` — never guess
+- If repo inaccessible → set `errors: ["repo not found"]`, return partial data with UNVERIFIED fields
 - Do not call other agents or tools outside README + file search + endpoint probe
+- **Evidence required:** Every attribute value MUST include source in `"evidence"` array (file + line or URL)
+- **Learning gate:** Apply all 8 Learnings from SKILL.md (especially L1 protocol, L3 TLS, L5 tools ops)
+- **SSRF protection:** Validate all probe URLs against SKILL.md Security Mandate blocklist before probing
+- **Curl safety:** All probes use `--connect-timeout 5 --max-time 10 --max-redirs 3`
+- **Rate limit:** Max 3 attempts per endpoint, 2-second delay between retries
 
 ---
 
@@ -194,76 +153,18 @@ What next?
 ## Error Handling
 - Server unreachable → log error, continue batch, mark as "ERROR" in summary
 - Duplicate servers in list → deduplicate silently, note once
-- New error patterns found → append to "Learned Fixes" section in SKILL.md
+- New error patterns found → append to `learned-fixes.md`
 
 ---
 
-## Key Learnings Applied (Updated 2026-03-26)
+## Key Learnings Reference
 
-**🔒 LOCKED RULES** — Use these for every multi-server research:
-
-1. **TLS ≠ Bearer Token**
-   - TLS only for HTTP/SSE/StreamableHttp endpoints
-   - STDIO servers → TLS = STDIO N/A
-   - Bearer Token in code ≠ automatic TLS presence
-
-2. **Pricing = Server Licensing (Not Services)**
-   - Free/Paid reflects MCP server itself
-   - Don't confuse with downstream service costs
-   - Ask: "Is the MCP server itself paid?"
-
-3. **Tools Operations — Mark Highest Level Only**
-   - Identify all operations present
-   - Mark ONLY: Delete (highest) > Update > Read-only (lowest)
-   - Other levels = No
-
-4. **Capabilities Categories from User Research**
-   - Use EXACT categories from research documentation
-   - Never reorganize or rename
-   - Priority: User research > README > Source code
-
-5. **Non-Read-Only Tools — Include Only If Researched**
-   - Don't fabricate this row
-   - Include only if documented
-   - Text: "None — all tools are read-only" if applicable
-
-6. **Protocol Version — Numeric Comparison (Not Assumption)**
-   - Extract exact version from source (package.json, pyproject.toml)
-   - **DO NUMERIC COMPARISON** against SKILL.md mapping ranges
-   - Example: SDK 1.7.0 < 1.8? YES → 2024-11-05 (NOT 2025-06-18)
-   - **NEVER proceed without explicit verification**
-   - Verify before writing to CSV
-
-See "Learned Fixes" section in SKILL.md for detailed error examples and prevention checklist.
+> **All 8 Learnings are defined in SKILL.md (Learnings 1-8).** They are the single source of truth.
+> **All error case studies are in `learned-fixes.md` (Errors #1-#4, #7-#8).**
+> Read both before starting any multi-server batch research. Do not duplicate rules here.
 
 ---
 
-## Final Report Format (for Multi-Server Batch Research & Sessions)
+## Final Report Format
 
-When generating final reports for multi-server research projects, use this format:
-
-```
-╔════════════════════════════════════════════════════════════════════════════════════════╗
-║                                                                                        ║
-║                    ✅ ✅ ✅  REPORT SUCCESSFULLY GENERATED  ✅ ✅ ✅                 ║
-║                                                                                        ║
-║                                                                                        ║
-║                                FILE LOCATION:                                         ║
-║                                                                                        ║
-║              /path/to/report/REPORT_NAME_DATE.txt                                     ║
-║                                                                                        ║
-║                                                                                        ║
-╚════════════════════════════════════════════════════════════════════════════════════════╝
-```
-
-**Format Features:**
-- Large, bold text (visible in all IDEs and terminals)
-- Clear file location path with full file path
-- Works across all platforms and editors
-- Supports terminal and IDE display
-
-**Usage:**
-- Use for multi-server batch research final reports
-- Use for project audit completions
-- Use for session summaries
-- Customize file location path as needed
+> Use the Final Report Format box defined in SKILL.md for all batch research reports.
