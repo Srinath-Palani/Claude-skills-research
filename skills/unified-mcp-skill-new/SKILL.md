@@ -13,6 +13,53 @@ description: >
 > See `references/SYNC_GUIDE.md` for verification checklist before committing.
 > Both files are tightly coupled and must stay synchronized.
 
+---
+
+⚠️ **IMPORTANT NOTE: unified-mcp-skill-new AND multi-server.md MUST FOLLOW THESE RULES**
+
+**BEFORE CREATING ANY FINAL REPORT CSV:**
+
+🔒 **RULE 1: VERIFY ALL ATTRIBUTES WITH SOURCE DOCUMENTATION**
+- Do NOT assume, invent, or create category titles randomly
+- Check README, source code, API documentation for actual category names
+- Use category titles EXACTLY as shown in source
+- For Capabilities - Tools: Extract from documented source (e.g., "Team & Workspace Metadata", NOT "Task Management")
+- For Non-Read-Only Tools: Extract actual operation categories from source
+- Example of WRONG: ❌ "Video Generation & Management" (invented), ❌ "Image Generation" (assumed)
+- Example of CORRECT: ✅ "Project Management" (from source), ✅ "Import/Export Tools" (from source)
+
+🔒 **RULE 2: CHECK WORKFLOW AND RULES REFERENCE**
+- Verify all attributes against learned-fixes.md error patterns
+- Verify Protocol Version with numeric comparison (NOT assumption)
+- Verify TLS only for remote transports (STDIO = No)
+- Verify Pricing based on server licensing (NOT service costs or API key requirement)
+- Verify Hosting Provider priority (SaaS Vendor takes precedence over GitHub)
+- Verify Git Repo Version from actual source (Releases → Tags → package.json)
+- Verify Authentication rules (Bearer Token ≠ TLS encryption, multiple auth types can be Yes)
+
+🔒 **RULE 3: CHECK ENTIRE INSTRUCTION SET**
+- Review all 8 Learnings in SKILL.md before finalizing report
+- Review all Prevention Checklists in learned-fixes.md
+- Review all Formatting Rules (Capabilities - Tools uses –, Non-Read-Only Tools uses :)
+- Review all Integration Rules before committing
+
+🔒 **RULE 4: FINAL VERIFICATION BEFORE CSV CREATION**
+- Do NOT create CSV until all attributes verified against source
+- Do NOT use invented category titles
+- Do NOT assume transport/TLS relationships
+- Do NOT confuse authentication with pricing
+- Do NOT mix category title formats
+- Use SYNC_GUIDE.md red-flag check before finalizing
+
+🔒 **RULE 5: UPGRADE_v2.0.2.md VERIFICATION**
+- Check that all attributes in final CSV align with current learnings/knowledge
+- Verify no assumptions were made in any attribute
+- Verify all category titles came from source documentation
+- Verify all authentication, TLS, pricing attributes follow current rules
+- Document any new learnings in learned-fixes.md before finalizing
+
+---
+
 # Unified MCP Skill — Research, Deploy, Fix, Audit
 
 **All-in-one MCP server management:** Research and document attributes, conditional local setup (clone+install), inline error recovery, and project compliance auditing — all in one unified skill with optimized execution paths.
@@ -840,25 +887,43 @@ Bearer Token authentication (for API calls inside tools) ≠ TLS encryption (for
 
 ---
 
-### Learning 4: Pricing Attribute — Server vs Service
+### Learning 4: Pricing Attribute — Server vs Service (Updated 2026-03-27)
 
-**❌ WRONG:** Marking Paid = Yes because GPU rentals charge money
+**❌ WRONG:** Marking Paid = Yes because:
+- API key is required
+- The downstream service charges money
+- Authentication requirement exists
 
-**✅ CORRECT:** Pricing reflects the **MCP SERVER itself**, not the service it accesses
+**✅ CORRECT:** Pricing reflects the **MCP SERVER itself**, not the service it accesses or authentication required
 
-| Scenario | Free | Paid |
-|----------|------|------|
-| **Open-source server, free service** | Yes | No |
-| **Open-source server, paid service** | Yes | No |
-| **Paid server (requires license)** | No | Yes |
-| **Closed-source vendor server** | No | Yes |
+| Scenario | Free | Paid | Notes |
+|----------|------|------|-------|
+| **Open-source server (MIT), paid Runway service** | Yes | No | MCP server is free; Runway AI service is paid (separate concern) |
+| **Open-source server, free service** | Yes | No | Both free |
+| **Open-source server, paid service** | Yes | No | MCP is free regardless of service costs |
+| **Paid server (requires license)** | No | Yes | The server itself costs money |
+| **Closed-source vendor server** | No | Yes | Proprietary licensing |
 
-**Rule:**
-- Mark **Free = Yes** if the MCP server itself is open-source/no-cost
-- Mark **Paid = Yes** ONLY if you must pay to access/use the MCP server itself
-- Don't confuse with downstream service costs (GPU rentals, API calls, subscriptions)
+**CRITICAL RULE:**
+- Mark **Free = Yes** if the **MCP server code is open-source** (regardless of API key requirement)
+- Mark **Paid = Yes** ONLY if **you must pay to access/use the MCP server itself** (proprietary license)
+- **NEVER confuse with:**
+  - API key requirement (that's authentication, not pricing)
+  - Downstream service costs (GPU rentals, API calls, subscriptions)
+  - Service fees (paid by users of the service, not the MCP server)
 
-**Hyperbolic Example:** Server is open-source (Free = Yes), but using it to rent GPUs costs money (that's a service fee, not server fee).
+**Real Examples:**
+- ✅ Runway MCP: MIT License → Free = Yes (even though Runway AI service is paid)
+- ✅ Telnyx MCP: Open-source → Free = Yes (even though Telnyx service is paid)
+- ❌ Proprietary MCP: Requires license purchase → Free = No, Paid = Yes
+
+**Hyperbolic Example:**
+```
+Server: Open-source (MIT License) → Free = Yes
+API Key: Required to use Runway AI → Authentication (NOT pricing)
+Runway Service: $$ → Service cost (NOT server cost)
+Result: MCP Server pricing = FREE
+```
 
 ---
 
@@ -890,28 +955,67 @@ Does server have ONLY read operations?
 
 ---
 
-### Learning 6: Capabilities - Tools Categorization
+### Learning 6: Capabilities - Tools Categorization (Updated 2026-03-27)
 
-**❌ WRONG:** Creating custom categories (e.g., "GPU Management", "SSH Management")
+**❌ WRONG:**
+- Creating custom categories based on assumptions (e.g., "GPU Management", "SSH Management")
+- Randomly inventing titles (e.g., "Video Generation & Management")
+- Reorganizing or renaming categories
+- Grouping tools based on personal logic
 
-**✅ CORRECT:** Use the EXACT categories from your research documentation
+**✅ CORRECT:** Use EXACT category titles from actual source documentation
 
-**Rule:** When user provides tool categories in research, use those verbatim. Don't reorganize or rename.
+**CRITICAL RULE - STRICT ENFORCEMENT:**
+```
+🔒 NEVER assume or invent category titles
+🔒 NEVER rename categories
+🔒 Categories MUST come from documented source
+🔒 Use titles EXACTLY as shown in source
+```
 
-**Source Priority:**
-1. User-provided research documentation (most accurate)
-2. README official tool groupings
-3. Source code file structure
-4. Last resort: Infer from tool names
+**Source Priority (in order - STOP at first match):**
+1. Tool documentation / README (official groupings)
+2. Source code organization / comments
+3. Official API documentation
+4. User-provided research
+5. ❌ NEVER invent - ask user first if no source found
 
-**Hyperbolic Example:**
-User research showed:
+**Real Examples:**
+
+FROM SOURCE (use exactly):
+```
+✅ "Project Management"
+✅ "Team & Workspace Metadata"
+✅ "Search & Query Utilities"
+✅ "Import/Export Tools"
+✅ "Content Management"
+✅ "Other Write Operations"
+```
+
+NOT FROM SOURCE (don't create):
+```
+❌ "Video Generation & Management" (assumed)
+❌ "Image Generation" (invented)
+❌ "Task Management" (assumed)
+❌ "GPU Management" (custom)
+❌ "SSH Management" (custom)
+```
+
+**Process:**
+1. Search README for category names
+2. Search source code for organization
+3. Search API docs for groupings
+4. Search user research for categories
+5. If nothing found → DO NOT invent → Contact/skip
+
+**Hyperbolic Example (CORRECT):**
+User research documentation showed:
 ```
 Team & Workspace Metadata
 Search & Query Utilities
 Other
 ```
-Use EXACTLY these categories, not custom ones.
+Use EXACTLY these categories → Don't reorganize → Don't rename → Don't create new ones
 
 ---
 
@@ -999,7 +1103,8 @@ Use EXACTLY these categories, not custom ones.
 MCP Info
 ├── Description (3–4 lines with specific capabilities)
 ├── Git Repo Version (v1.2.3 format — latest only)
-│   Source priority: 1st → GitHub Releases  2nd → GitHub Tags  (never use server initialize response)
+│   Source priority: 1st → GitHub Releases  2nd → GitHub Tags  3rd → package.json
+│   Use version EXACTLY as shown in source (NO notes, NO transformation)
 ├── Category (one of 4: File Management / Developer Tools / Data Retrieval / Productivity)
 ├── GitHub Repository (URL or N/A)
 └── Endpoint URL (URL or N/A)

@@ -1,5 +1,50 @@
 # Multi-Server Parallel Research
 
+⚠️ **IMPORTANT NOTE: unified-mcp-skill-new AND multi-server.md MUST FOLLOW THESE RULES**
+
+**BEFORE CREATING ANY FINAL REPORT CSV FOR EACH SERVER:**
+
+🔒 **RULE 1: VERIFY ALL ATTRIBUTES WITH SOURCE DOCUMENTATION**
+- Do NOT assume, invent, or create category titles randomly
+- Check README, source code, API documentation for actual category names
+- Use category titles EXACTLY as shown in source
+- For Capabilities - Tools: Extract from documented source (e.g., "Team & Workspace Metadata", NOT "Task Management")
+- For Non-Read-Only Tools: Extract actual operation categories from source
+- Example of WRONG: ❌ "Video Generation & Management" (invented), ❌ "Image Generation" (assumed)
+- Example of CORRECT: ✅ "Project Management" (from source), ✅ "Import/Export Tools" (from source)
+
+🔒 **RULE 2: CHECK WORKFLOW AND RULES REFERENCE**
+- Verify all attributes against learned-fixes.md error patterns
+- Verify Protocol Version with numeric comparison (NOT assumption)
+- Verify TLS only for remote transports (STDIO = No)
+- Verify Pricing based on server licensing (NOT service costs or API key requirement)
+- Verify Hosting Provider priority (SaaS Vendor takes precedence over GitHub)
+- Verify Git Repo Version from actual source (Releases → Tags → package.json)
+- Verify Authentication rules (Bearer Token ≠ TLS encryption, multiple auth types can be Yes)
+
+🔒 **RULE 3: CHECK ENTIRE INSTRUCTION SET**
+- Review all 8 Learnings in SKILL.md before finalizing report
+- Review all Prevention Checklists in learned-fixes.md
+- Review all Formatting Rules (Capabilities - Tools uses –, Non-Read-Only Tools uses :)
+- Review all Integration Rules before committing
+
+🔒 **RULE 4: FINAL VERIFICATION BEFORE CSV CREATION**
+- Do NOT create CSV until all attributes verified against source
+- Do NOT use invented category titles
+- Do NOT assume transport/TLS relationships
+- Do NOT confuse authentication with pricing
+- Do NOT mix category title formats
+- Use SYNC_GUIDE.md red-flag check before finalizing
+
+🔒 **RULE 5: UPGRADE_v2.0.2.md VERIFICATION**
+- Check that all attributes in final CSV align with current learnings/knowledge
+- Verify no assumptions were made in any attribute
+- Verify all category titles came from source documentation
+- Verify all authentication, TLS, pricing attributes follow current rules
+- Document any new learnings in learned-fixes.md before finalizing
+
+---
+
 🔒 **CRITICAL SYNC RULE** (LOCKED)
 > This file must stay synchronized with `SKILL.md`
 > Whenever SKILL.md is updated → verify this file needs updates too
@@ -7,7 +52,7 @@
 
 🎓 **SELF-LEARNING INTEGRATION (Unified MCP Skill 2.0)**
 > Before each batch research:
-> 1. Read `learned-fixes.md` — Error Patterns #1-4 (Protocol, Auth, Tools Ops, Deployment)
+> 1. Read `learned-fixes.md` — Error Patterns #1-8 (Protocol, Auth, Tools Ops, Deployment, TLS, Pricing, etc.)
 > 2. Apply verification checklists during research
 > 3. Use pre-submission checklist before finalizing reports
 > This prevents recurring mistakes across multi-server batches.

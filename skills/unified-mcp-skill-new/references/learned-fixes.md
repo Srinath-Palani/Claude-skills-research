@@ -279,6 +279,97 @@ Deployment:
 
 ---
 
+## Error Pattern #7: TLS Encryption vs Bearer Token Confusion (CRITICAL)
+
+**Date:** 2026-03-27 | **Server:** Runway API MCP | **Severity:** CRITICAL
+
+**Signals (What Went Wrong)**
+- Marked TLS 1.3 = Yes and TLS 1.2 = Yes for STDIO server
+- No remote endpoint exists (Endpoint URL = N/A)
+- Transport Protocol = STDIO (local process only)
+- Mistakenly assumed Bearer Token authentication implies TLS encryption
+
+**Root Cause:** Conflated two INDEPENDENT concepts:
+- Bearer Token = **Authentication delivery method** (how credentials are sent)
+- TLS Encryption = **Transport layer encryption** (how data is protected in transit)
+
+**Critical Misunderstanding:**
+```
+❌ WRONG LOGIC: "Bearer Token present → TLS must be Yes"
+✅ CORRECT LOGIC: Bearer Token ≠ TLS (completely separate layers)
+```
+
+**The Correct Framework:**
+
+| Layer | Concept | When Applicable |
+|-------|---------|-----------------|
+| **Authentication** | Bearer Token, API Token, PAT | All transports (STDIO, HTTP/SSE, etc.) |
+| **Transport Encryption** | TLS 1.3, TLS 1.2 | ONLY remote transports (HTTP/SSE, StreamableHttp) |
+| **Local Process** | STDIO | NO TLS needed (stdin/stdout on local machine) |
+
+**Why Runway was wrong:**
+1. Transport = STDIO (local process, no network)
+2. Endpoint URL = N/A (no remote endpoint)
+3. STDIO → automatic TLS = No (ALWAYS)
+4. Bearer Token is auth layer (irrelevant to TLS decision)
+
+**Fix (Verification Checklist - MANDATORY):**
+```
+BEFORE marking ANY TLS field:
+
+□ Step 1: Identify Transport Protocol FIRST
+   - STDIO? → All TLS = No (STOP HERE)
+   - HTTP/SSE or StreamableHttp? → Continue to Step 2
+
+□ Step 2: If remote transport detected
+   - Verify endpoint exists with curl tests:
+     curl -I https://endpoint/mcp        (GET test)
+     curl -X POST https://endpoint/mcp   (POST test)
+   - If endpoint responds → Check response format
+   - If endpoint 404 → TLS = No
+
+□ Step 3: NEVER check Authentication for TLS decision
+   - Bearer Token presence ≠ TLS presence
+   - API Token presence ≠ TLS presence
+   - These are independent layers
+
+□ Step 4: Mark TLS only if:
+   - Transport = HTTP/SSE OR StreamableHttp AND
+   - Remote endpoint verified AND
+   - Response format indicates real MCP endpoint
+
+□ Step 5: When in doubt
+   - If no endpoint tested → TLS = No
+   - If STDIO transport → TLS = No (ALWAYS)
+```
+
+**Real-World Examples:**
+
+| Scenario | Transport | Endpoint | TLS 1.3 | TLS 1.2 | Why |
+|----------|-----------|----------|---------|---------|-----|
+| Runway (this case) | STDIO | N/A | No | No | Local process, no network |
+| Slack MCP | HTTP/SSE | https://api.slack.com | Yes | Yes | Remote endpoint, TLS required |
+| GitHub MCP | STDIO | N/A | No | No | Local process, no network |
+| Telnyx (SaaS) | HTTP/SSE | https://api.telnyx.com | Yes | Yes | Remote endpoint, TLS required |
+
+**Prevention Rule (LOCKED - NEVER BREAK):**
+```
+🔒 CRITICAL: TLS encryption applies ONLY to remote transports
+🔒 Bearer Token authentication is INDEPENDENT of TLS
+🔒 STDIO = always TLS No (no exceptions)
+🔒 Never mark TLS Yes without endpoint verification
+🔒 Authentication layer ≠ Encryption layer
+```
+
+**Result:**
+- TLS 1.3 = No ✅
+- TLS 1.2 = No ✅
+- Bearer Token = Yes ✅ (separate concern)
+
+**Session:** Runway API MCP Server (2026-03-27)
+
+---
+
 ## Test Cases (Verification)
 
 ### Test Case #1: Buildkite MCP (Go SDK v1.4.1)
@@ -290,17 +381,119 @@ Expected Results:
 - ✅ Tools Operations: Read+Update+Delete = Yes (not multiple)
 - ✅ Deployment: Local = Yes, Container = Yes
 
+### Test Case #2: Runway API MCP (TypeScript SDK v1.12.1)
+**Verifying:** Error patterns #7 and #8 (TLS vs Bearer Token + Git Repo Version Priority)
+
+Expected Results:
+- ✅ Transport: STDIO = Yes
+- ✅ TLS 1.3 = No (STDIO = no network)
+- ✅ TLS 1.2 = No (STDIO = no network)
+- ✅ Bearer Token = Yes (independent from TLS)
+- ✅ Endpoint URL = N/A
+- ✅ Authentication does NOT determine TLS encryption
+- ✅ Git Repo Version: Check Releases first, Tags second, package.json last
+- ✅ Document source priority in CSV: "v1.0.0 [ No GitHub Releases | No git tags | package.json source ]"
+
+---
+
+## Error Pattern #8: Git Repo Version — Wrong Source Priority
+
+**Date:** 2026-03-27 | **Server:** Runway API MCP | **Severity:** Medium
+
+**Signals (What Went Wrong)**
+- Marked Git Repo Version without checking GitHub Releases first
+- Used package.json but didn't document what was checked (implicit assumption)
+- Did not show verification order (Releases → Tags → package.json)
+
+**Root Cause:** Did not follow **Rule: Git Repo Version Priority**
+```
+Source Priority:
+1st → GitHub Releases (official releases page)
+2nd → GitHub Tags (git tags in repository)
+3rd → package.json (fallback only if no releases/tags)
+NEVER → server initialize response
+```
+
+**Rule from SKILL.md (lines 1000-1001):**
+```
+Git Repo Version (v1.2.3 format — latest only)
+Source priority: 1st → GitHub Releases  2nd → GitHub Tags  (never use server initialize response)
+```
+
+**What was wrong:**
+```
+❌ WRONG: Added documentation/verification notes to version string
+   "v1.0.0 (from package.json, no git tags available)"
+   "v1.0.0 [ No GitHub Releases | No git tags | package.json source ]"
+
+✅ RIGHT: Use version EXACTLY as it appears in source (NO transformation)
+   From package.json: 1.0.0 → Use "1.0.0"
+   From Releases: v1.0.0 → Use "v1.0.0"
+   From Tags: release-1.0 → Use "release-1.0"
+```
+
+**Fix (Verification Checklist - MANDATORY):**
+```
+BEFORE marking Git Repo Version:
+
+□ Step 1: Check GitHub Releases API
+   curl https://api.github.com/repos/ORG/REPO/releases
+   Extract: tag_name (latest release) — USE EXACTLY AS SHOWN
+   If found → STOP, copy version exactly
+
+□ Step 2: Check GitHub Tags
+   git tag -l (or git describe --tags)
+   Extract: latest tag — USE EXACTLY AS SHOWN
+   If found → STOP, copy version exactly
+
+□ Step 3: Check package.json
+   Extract: "version" field — USE EXACTLY AS SHOWN
+   If found → STOP, copy version exactly
+
+□ Step 4: Copy to CSV (NO modifications, NO documentation added)
+   Just the version string: "1.0.0" or "v2.5.1" or "release-1.0"
+```
+
+**Real Examples:**
+
+| Server | Releases | Tags | package.json | Correct Result |
+|--------|----------|------|--------------|----------------|
+| Runway | ❌ None | ❌ None | 1.0.0 | "1.0.0" |
+| Buildkite | ❌ None | ✅ v1.2.0 | v1.1.5 | "v1.2.0" |
+| Slack | ✅ v2.5.1 | ✅ v2.5.1 | v2.5.1 | "v2.5.1" |
+| Custom | ✅ release-3.0 | ✅ tag-3.0 | 2.5.0 | "release-3.0" |
+
+**Prevention Rule (STRICT - NO EXCEPTIONS):**
+```
+🔒 Always check Releases FIRST
+🔒 Check Tags SECOND if no Releases
+🔒 Use package.json LAST as fallback
+🔒 Copy version EXACTLY as shown (NO transformation)
+🔒 Never add documentation, brackets, pipes, or verification notes
+🔒 Just the version string, period.
+```
+
+**Result (Runway):**
+```
+MCP Info,Git Repo Version,"1.0.0"
+```
+
+**Session:** Runway API MCP Server (2026-03-27)
+
 ---
 
 ## Version History
 
 | Version | Date | Changes |
 |---------|------|---------|
+| 2.2 | 2026-03-27 | Added Error Pattern #8: Git Repo Version — Wrong Source Priority (Medium) — from Runway API MCP research |
+| 2.1 | 2026-03-27 | Added Error Pattern #7: TLS Encryption vs Bearer Token Confusion (CRITICAL) — from Runway API MCP research |
 | 2.0 | 2026-03-26 | Initial learned-fixes.md created with 4 error patterns from Buildkite research |
 
 ---
 
-**Last Updated:** 2026-03-26
-**Skill Version:** Unified MCP Skill 2.0 (Self-Learning)
+**Last Updated:** 2026-03-27
+**Skill Version:** Unified MCP Skill 2.0.2+ (Self-Learning v2.1)
 **Status:** Active — Auto-referenced in research workflows
+**Critical Rules:** 7 error patterns documented with prevention checklists
 
