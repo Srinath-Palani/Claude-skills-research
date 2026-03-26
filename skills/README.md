@@ -256,6 +256,44 @@ Time:   VARIES (depends on scope)
 | **unified-mcp-skill/README.md** | Skill-specific documentation |
 | **unified-mcp-skill/references/learned-fixes.md** | Self-learning error patterns (v2.0) |
 | **../CLAUDE.md** | Project instructions (updated for v2.0) |
+| **../README.md** | Quick start and release notes |
+
+---
+
+## 🔧 Development & Git Automation (v2.0.1)
+
+**Automated Quality System:**
+
+This project includes 3 automated checks to keep documentation in sync:
+
+1. **Pre-commit Hook** (`.git/hooks/pre-commit`)
+   - Blocks commits if SKILL.md changes without CLAUDE.md or README.md
+   - Prevents documentation drift automatically
+
+2. **Commit-Msg Hook** (`.git/hooks/commit-msg`)
+   - Enforces `Type: Description` commit message format
+   - Validates all commits follow team standards
+
+3. **Commit Template** (`.git-commit-template`)
+   - Auto-loads guidance when you run `git commit`
+   - Ensures all team members document changes consistently
+
+**Workflow:**
+```bash
+# 1. Make changes to skill
+vi unified-mcp-skill/SKILL.md
+
+# 2. Update documentation
+vi ../CLAUDE.md
+vi ../README.md
+
+# 3. Stage and commit
+git add ../CLAUDE.md ../README.md unified-mcp-skill/SKILL.md
+git commit  # Template auto-loads with guidance
+
+# 4. Push to GitHub
+git push origin main
+```
 
 ---
 
@@ -285,7 +323,8 @@ Time:   VARIES (depends on scope)
 - All workflows verified
 - Security mandate enforced
 - Error patterns learned and improved
-- Commit: 7c8e61d (SKILL.md updated)
+- Git automation system deployed (v2.0.1)
+- Commit: 061440c (documentation updated)
 
 ---
 
