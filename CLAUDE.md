@@ -141,6 +141,18 @@ When team members clone this repo:
 
 ## Latest Updates (2026-03-26)
 
+### Sync Guide & Multi-Server Documentation ✅
+- **Added SYNC_GUIDE.md** - Critical synchronization checklist (30-second check + full verification)
+- **Added multi-server.md** - Complete multi-server research workflow (Steps M1-M3)
+- **Enhanced SKILL.md** - Added critical sync rule reminder (LOCKED rule)
+- **Added mcp-skill-cost.csv** - Cost tracking for MCP research sessions
+
+### Sync Protocol Documented
+- **File coupling:** SKILL.md ↔ multi-server.md (must stay synchronized)
+- **Parallel research:** 5-thread dispatch layer (Layer 1 agents)
+- **Report format:** Per-server CSVs + comparison table (11 attributes)
+- **Audit trail:** WORKFLOW_EXECUTION_LOG.md for each batch
+
 ### Skill Registry Integration ✅
 - **Unified-mcp-skill is now globally registered** in `~/.claude/skills/`
 - Fully invocable via `Skill("unified-mcp-skill", args="...")`

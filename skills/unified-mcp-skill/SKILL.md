@@ -8,6 +8,11 @@ description: >
   fewer tokens, full functionality.
 ---
 
+🔒 **CRITICAL SYNC RULE** (LOCKED)
+> Whenever this file (SKILL.md) is updated → MUST also update `references/multi-server.md`
+> See `references/SYNC_GUIDE.md` for verification checklist before committing.
+> Both files are tightly coupled and must stay synchronized.
+
 # Unified MCP Skill — Research, Deploy, Fix, Audit
 
 **All-in-one MCP server management:** Research and document attributes, conditional local setup (clone+install), inline error recovery, and project compliance auditing — all in one unified skill with optimized execution paths.

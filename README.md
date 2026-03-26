@@ -36,6 +36,8 @@ cd Claude-skills-research
 
 - **Documentation**
   - `skills/unified-mcp-skill/SKILL.md` - Single consolidated skill (all workflows embedded)
+  - `skills/unified-mcp-skill/references/SYNC_GUIDE.md` - Synchronization checklist
+  - `skills/unified-mcp-skill/references/multi-server.md` - Multi-server research workflow
   - `CLAUDE.md` - Project instructions and quick start
   - `marketplace.json` - Skills metadata and discovery
   - `.claude-plugin/plugin.json` - Plugin descriptor
@@ -88,7 +90,10 @@ Claude-skills-research/
 ├── skills/
 │   ├── unified-mcp-skill/
 │   │   ├── SKILL.md                 # 533 lines (all workflows embedded)
-│   │   ├── references/              # learned-fixes.md (Skill 2.0)
+│   │   ├── references/
+│   │   │   ├── learned-fixes.md     # Skill 2.0 self-learning
+│   │   │   ├── SYNC_GUIDE.md        # Synchronization checklist
+│   │   │   └── multi-server.md      # Multi-server research workflow
 │   │   └── .gitignore
 │   └── README.md
 ├── .claude/
