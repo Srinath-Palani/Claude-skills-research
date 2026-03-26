@@ -8,61 +8,176 @@ description: >
   fewer tokens, full functionality.
 ---
 
-🔒 **CRITICAL SYNC RULE** (LOCKED)
-> Whenever this file (SKILL.md) is updated → MUST also update `references/multi-server.md`
-> See `references/SYNC_GUIDE.md` for verification checklist before committing.
-> Both files are tightly coupled and must stay synchronized.
+<!-- SKILL_VERSION: 3.0.0 | Updated: 2026-03-27 -->
+
+🔒 **SYNC NOTE**
+> SKILL.md is the single source of truth for all rules, learnings, and formats.
+> `references/multi-server.md` contains ONLY multi-server orchestration logic (M1-M3, Layers 0/1).
+> `references/learned-fixes.md` contains ONLY error case studies (no rule duplication).
+> If you change workflow steps, attribute definitions, or report format here → verify multi-server.md references still point correctly.
 
 ---
 
-⚠️ **IMPORTANT NOTE: unified-mcp-skill-new AND multi-server.md MUST FOLLOW THESE RULES**
+🚫 **ZERO-ASSUMPTION POLICY — ABSOLUTE ENFORCEMENT**
 
-**BEFORE CREATING ANY FINAL REPORT CSV:**
+**Every Yes/No in the final CSV MUST have a verified source. No exceptions. No guessing. No skipping.**
 
-🔒 **RULE 1: VERIFY ALL ATTRIBUTES WITH SOURCE DOCUMENTATION**
-- Do NOT assume, invent, or create category titles randomly
-- Check README, source code, API documentation for actual category names
-- Use category titles EXACTLY as shown in source
-- For Capabilities - Tools: Extract from documented source (e.g., "Team & Workspace Metadata", NOT "Task Management")
-- For Non-Read-Only Tools: Extract actual operation categories from source
-- Example of WRONG: ❌ "Video Generation & Management" (invented), ❌ "Image Generation" (assumed)
-- Example of CORRECT: ✅ "Project Management" (from source), ✅ "Import/Export Tools" (from source)
+If you cannot verify an attribute from source → mark it `UNVERIFIED` and flag to user. NEVER guess Yes or No.
 
-🔒 **RULE 2: CHECK WORKFLOW AND RULES REFERENCE**
-- Verify all attributes against learned-fixes.md error patterns
-- Verify Protocol Version with numeric comparison (NOT assumption)
-- Verify TLS only for remote transports (STDIO = No)
-- Verify Pricing based on server licensing (NOT service costs or API key requirement)
-- Verify Hosting Provider priority (SaaS Vendor takes precedence over GitHub)
-- Verify Git Repo Version from actual source (Releases → Tags → package.json)
-- Verify Authentication rules (Bearer Token ≠ TLS encryption, multiple auth types can be Yes)
+---
 
-🔒 **RULE 3: CHECK ENTIRE INSTRUCTION SET**
-- Review all 8 Learnings in SKILL.md before finalizing report
-- Review all Prevention Checklists in learned-fixes.md
-- Review all Formatting Rules (Capabilities - Tools uses –, Non-Read-Only Tools uses :)
-- Review all Integration Rules before committing
+### GATE 1: EVIDENCE LEDGER (Every Attribute Needs Proof)
 
-🔒 **RULE 4: FINAL VERIFICATION BEFORE CSV CREATION**
-- Do NOT create CSV until all attributes verified against source
-- Do NOT use invented category titles
-- Do NOT assume transport/TLS relationships
-- Do NOT confuse authentication with pricing
-- Do NOT mix category title formats
-- Use SYNC_GUIDE.md red-flag check before finalizing
+**Before writing ANY Yes/No value, you MUST have:**
+```
+For EVERY attribute in the CSV:
+  ✅ REQUIRED: Source file or URL where the value was found
+  ✅ REQUIRED: Exact quote, line number, or API response proving the value
+  ❌ BLOCKED: "Probably Yes" / "Likely No" / "Seems like" / "Should be"
+  ❌ BLOCKED: Copying from similar servers / assuming from server name
+  ❌ BLOCKED: Marking Yes/No without reading actual source
+```
 
-🔒 **RULE 5: UPGRADE_v2.0.2.md VERIFICATION**
-- Check that all attributes in final CSV align with current learnings/knowledge
-- Verify no assumptions were made in any attribute
-- Verify all category titles came from source documentation
-- Verify all authentication, TLS, pricing attributes follow current rules
-- Document any new learnings in learned-fixes.md before finalizing
+**Evidence Ledger format (build internally before CSV):**
+```
+ATTRIBUTE              | VALUE | SOURCE                        | EVIDENCE
+Protocol Version       | Yes   | package.json line 5           | "@modelcontextprotocol/sdk": "1.15.0"
+TLS 1.3                | No    | Transport = STDIO (verified)  | No remote endpoint exists
+Bearer Token           | Yes   | server.json line 12           | "BUILDKITE_API_TOKEN (Required, Secret)"
+Pricing Free           | Yes   | LICENSE file                  | "MIT License"
+Tools Ops Delete       | Yes   | README tools section          | "cancel_build" = delete pattern
+```
+
+**If evidence column is empty → DO NOT write that row to CSV. Ask user instead.**
+
+---
+
+### GATE 2: MANDATORY CONNECTION & SOURCE VERIFICATION
+
+**You MUST establish contact with actual sources before reporting. Never report from memory or assumption.**
+
+```
+BEFORE filling ANY attribute:
+□ GitHub repo accessed? (README read, files searched, deps extracted)
+  → If repo 404 or private: flag to user, do NOT assume attributes
+□ Remote endpoint probed? (GET + POST with curl, responses recorded)
+  → If no endpoint: mark Endpoint URL = N/A with evidence "GET 404, POST 404"
+□ Dependency file found and version extracted?
+  → If no deps file: flag to user, do NOT guess protocol version
+□ server.json / .env.example / config files checked?
+  → If none exist: document "no config files found" — do NOT mark auth as No without this check
+```
+
+**HARD BLOCK: Do NOT proceed to Step 5 (Attribute Filling) until Step 0.5 (Parallel Search) is COMPLETE with all 5 threads returning results or confirmed-empty.**
+
+---
+
+### GATE 3: LEARNING GATE (All 8 Learnings Checked Every Time)
+
+**Before creating final CSV, walk through EVERY learning. This is NOT optional. Do NOT skip any.**
+
+```
+MANDATORY LEARNING WALKTHROUGH (check each one, document result):
+
+□ L1 Framework Priority: Which framework/SDK found? Version? Mapping result?
+  → Numeric comparison done? (e.g., "1.7.0 < 1.8 = YES → 2024-11-05")
+
+□ L2 Endpoint Verification: GET test result? POST test result? Response format?
+  → Both tests run? If skipped, why?
+
+□ L3 TLS vs Bearer: Transport protocol identified FIRST?
+  → If STDIO: All TLS = No (confirmed, not assumed)
+  → Bearer Token presence did NOT influence TLS decision?
+
+□ L4 Pricing: Is MCP server code open-source? License file checked?
+  → API key requirement NOT confused with pricing?
+  → Downstream service cost NOT confused with server cost?
+
+□ L5 Tools Ops: All tool names parsed? Delete/cancel patterns searched?
+  → HIGHEST level only marked? Only ONE level = Yes?
+
+□ L6 Categories: Category titles from source documentation?
+  → Source file/section cited for each category?
+  → ZERO invented categories?
+
+□ L7 Non-Read-Only: Does research documentation include this section?
+  → If not in research → row NOT added to CSV?
+
+□ L8 (=L3): TLS/Bearer independence confirmed?
+```
+
+**If ANY checkbox cannot be confirmed → STOP. Do not create CSV. Resolve first.**
+
+---
+
+### GATE 4: POST-RESEARCH SELF-IMPROVEMENT
+
+**After EVERY research session (before presenting final report to user):**
+
+```
+□ Did any attribute require correction during this session?
+  → YES: Document the error pattern in learned-fixes.md (new entry)
+  → NO: Confirm all attributes matched first evidence found
+
+□ Did any new SDK/framework version mapping appear?
+  → YES: Verify it's in SKILL.md Step 1 mapping table, add if missing
+
+□ Did any new authentication pattern appear?
+  → YES: Verify it's in Authentication Detection Rules, add if missing
+
+□ Was any Learning insufficient or ambiguous for this server?
+  → YES: Refine the Learning with new example in SKILL.md
+```
+
+**The skill gets BETTER with every session. Never discard a learning opportunity.**
+
+---
+
+### RULES 1-5 (Enforcement Summary)
+
+🔒 **RULE 1: SOURCE-ONLY ATTRIBUTES** — Every value from actual documentation. Zero invented content.
+🔒 **RULE 2: NUMERIC VERIFICATION** — Protocol version, TLS, pricing, auth all verified with explicit checks.
+🔒 **RULE 3: FULL LEARNING WALKTHROUGH** — All 8 Learnings checked. All learned-fixes.md patterns reviewed.
+🔒 **RULE 4: NO CSV WITHOUT EVIDENCE** — Evidence Ledger must be complete. Empty evidence = blocked.
+🔒 **RULE 5: SELF-IMPROVEMENT** — New patterns documented. Learnings refined. Skill improves each session.
+
+
 
 ---
 
 # Unified MCP Skill — Research, Deploy, Fix, Audit
 
 **All-in-one MCP server management:** Research and document attributes, conditional local setup (clone+install), inline error recovery, and project compliance auditing — all in one unified skill with optimized execution paths.
+
+---
+
+## Quick Reference (Workflow at a Glance)
+
+```
+Step 0   Config & Input       → Classify input (endpoint/GitHub/name), set paths
+Step 0.5 Parallel Search      → 5 threads: repo, files, endpoint probe, deps, compliance
+Step 1   Protocol Version     → Map SDK/framework version to protocol date (NUMERIC comparison)
+Step 2   Remote Endpoint      → Probe URL, detect transport, test TLS, build config
+Step 3   GitHub Repo          → Ask: local setup / remote / research-only? Clone if local
+Step 4   Server Name Only     → Search vendor docs + GitHub, resolve to URL
+Step 5   Attribute Filling    → Fill all fields with evidence + logic enforcement
+  5.1    Auth Verification    → Check server.json, README, .env, vendor docs
+  5.2    Tools Ops Check      → Highest level only (mutually exclusive)
+  5.3    Deployment Check     → Mark ALL applicable (not exclusive)
+  5.4    Hosting Check        → SaaS priority over GitHub
+Step 6   Transport & Caps     → Detect transports, extract capabilities
+Step 7   Basic Info           → Name, description, category, version
+Step 8   Save Report          → CSV to user-configured path
+
+On fail → 7-phase Error Recovery (auto-triggered)
+2+ servers → Multi-Server mode (see references/multi-server.md)
+```
+
+**Enforcement Gates (MANDATORY — block CSV until passed):**
+Gate 1=Evidence Ledger (every Yes/No has source proof)
+Gate 2=Connection Verified (all 5 threads complete)
+Gate 3=Learning Walkthrough (L1-L8 checked)
+Gate 4=Self-Improvement (new patterns documented)
 
 ---
 
@@ -129,6 +244,26 @@ Always write `<PLACEHOLDER>` for any API key, token, or secret field.
 Direct the user to open the file and paste the real value themselves.
 Never write, suggest, or echo an actual key into these files — not even partially.
 
+**SSRF Protection — Endpoint Probing (No exceptions):**
+Before probing ANY user-provided URL, validate the target:
+```
+BLOCKED targets (NEVER probe):
+- 127.0.0.0/8       (localhost / loopback)
+- 10.0.0.0/8        (private class A)
+- 172.16.0.0/12     (private class B)
+- 192.168.0.0/16    (private class C)
+- 169.254.0.0/16    (link-local / cloud metadata)
+- 0.0.0.0           (all interfaces)
+- ::1, fd00::/8     (IPv6 loopback / private)
+- localhost, *.local, *.internal
+```
+If URL resolves to a blocked range → REJECT immediately, do NOT probe.
+
+**Network Safety — All curl/HTTP probes:**
+- Always set timeouts: `--connect-timeout 5 --max-time 10`
+- Max 3 probe attempts per endpoint, 2-second delay between retries
+- Never follow redirects to blocked IP ranges (`--max-redirs 3`)
+
 ---
 
 ## Usage
@@ -164,11 +299,30 @@ MULTI-SERVER / BATCH
 
 ---
 
-## Unified Workflow: 7 Steps + Conditional Local Setup + Inline Error Recovery
+## Unified Workflow (Steps 0-8 + Error Recovery)
+
+> Steps 0-8 run sequentially. Steps 5.1-5.4 are verification sub-steps within Step 5.
+> Error Recovery (7 phases) triggers automatically on connection failure.
+> Multi-Server mode (M1-M3) activates when 2+ servers detected — see `references/multi-server.md`.
 
 ### Step 0 — Configuration & Input Classification
 
 **Path configuration — always ask, never assume:**
+
+**Path Validation (MANDATORY before use):**
+```
+REJECT any path that contains:
+- ".." segments           (path traversal)
+- Symlinks to outside     (resolve with realpath first)
+- System directories      (/etc, /var, /usr, /bin, /sbin, /System, /Library)
+- Other users' homes      (/Users/other, /home/other)
+- Root home               (/root, ~root)
+
+ALLOW only:
+- User's home directory subtree  (~/ or /Users/<current-user>/)
+- Explicitly approved directories (e.g., /tmp for testing)
+```
+Validate BEFORE any file write, clone, or report save operation.
 
 Report save path — ask every first use:
 ```
@@ -236,6 +390,8 @@ Run both searches in parallel via Step 0.5. Combine results using Report Generat
 - `go-sdk 1.4–1.11` → Protocol `2025-06-18` ← **COMMON MISS: Don't assume latest**
 - `go-sdk <1.4` → Protocol `2024-11-05`
 
+**NOTE:** Protocol `2025-03-26` ONLY applies to FastMCP 0.3.x. No Python/TypeScript/Go SDK maps to this version. If you don't find FastMCP 0.3.x, this protocol version does NOT apply.
+
 **CRITICAL VERIFICATION CHECKLIST (to prevent mistakes):**
 Before marking protocol version as final:
 ```
@@ -294,7 +450,7 @@ How do you want to run this server?
 
 | Sub-step | Action | Verify |
 |----------|--------|--------|
-| 3.1 | Clone repo to configured path | Dir exists, expected files present |
+| 3.1 | Clone repo to configured path (`git clone --depth 1` for research; full clone only if user needs history) | Dir exists, expected files present, path validated |
 | 3.2 | Determine connection method | Identify STDIO/Docker/Published from README |
 | 3.3 | Get user approval for install | Show deps + env vars, wait for "yes" |
 | 3.4 | Install dependencies | Language-specific (Python/Node/Docker) |
@@ -319,6 +475,12 @@ How do you want to run this server?
 | Docker | `docker build -t <repo-name> .` | `docker images \| grep <repo-name>` |
 | uv | `uv sync` | `uv run python -c "import mcp"` |
 
+**Docker Security Check (before building):**
+- Verify Dockerfile uses pinned base image (e.g., `python:3.12-slim`, NOT `python:latest`)
+- If `:latest` tag found → WARN user: "Unpinned base image detected — may introduce supply chain risk"
+- Check for `USER` directive (non-root execution preferred)
+- Review any `curl | sh` or piped install patterns → WARN user before proceeding
+
 **If Option 3 (Research Only):**
 Skip local setup, proceed to attribute research.
 
@@ -327,7 +489,7 @@ Skip local setup, proceed to attribute research.
 ### Step 4 — Server Name Only
 
 1. Search vendor documentation for remote endpoint
-2. Search for GitHub repository
+2. Search for GitHub repository (try: `{vendor}-mcp-server`, `mcp-{vendor}`, `{vendor}-mcp`)
 3. If both found, ask:
    ```
    [ 1 ] Use remote endpoint
@@ -336,9 +498,27 @@ Skip local setup, proceed to attribute research.
    ```
 4. Continue with chosen path
 
+**If server not found (neither endpoint nor repo):**
+```
+Could not find an MCP server matching "[server name]".
+
+Searched:
+- GitHub: github.com/*/[name]-mcp-server, mcp-[name], [name]-mcp
+- Vendor: [name].com, api.[name].com
+- MCP directory: https://github.com/modelcontextprotocol/servers
+
+[ 1 ] Try a different name or URL
+[ 2 ] Provide GitHub URL directly
+[ 3 ] Cancel research
+```
+Do NOT fabricate a server or guess URLs. Always confirm with user before proceeding.
+
 ---
 
 ### Step 5 — Attribute Filling with Logic Enforcement
+
+**HARD PREREQUISITE:** Step 0.5 (Parallel Search) MUST be complete before entering Step 5.
+All 5 threads must have returned results or confirmed-empty. If any thread is incomplete → go back and finish it.
 
 **Transport ↔ Deployment Auto-Rules:**
 - STDIO=Yes → Auto-set: Local=Yes
@@ -350,13 +530,25 @@ Skip local setup, proceed to attribute research.
 |-----------|---------|
 | Distribution | Official OR Community |
 | Pricing | Free OR Paid |
-| Hosting Provider | Choose: SaaS Vendor / 3rd Party SaaS / GitHub / GitLab / Bitbucket / SourceHut/Gitea/Gogs |
-| Transport Protocol | Choose: STDIO / HTTP/SSE / StreamableHttp / FastAPI |
 | Tools Operations | Choose HIGHEST: Read-only / R+Update / R+Update+Delete |
 
-**Evidence-Backed Attributes:**
+**Non-Exclusive Attributes (mark ALL that apply):**
 
-Every "Yes" must have source + exact quote or file path.
+| Attribute | Options |
+|-----------|---------|
+| Hosting Provider | SaaS Vendor / 3rd Party SaaS / GitHub / GitLab / Bitbucket / SourceHut/Gitea/Gogs (multiple Yes allowed, SaaS Vendor takes display priority) |
+| Transport Protocol | STDIO / HTTP/SSE / StreamableHttp / FastAPI (multiple Yes allowed if server supports both) |
+| Deployment Approach | Local / Container / Remote (multiple Yes allowed) |
+| Authentication | All types can be Yes simultaneously (see Auth Detection Rules) |
+
+**ZERO-ASSUMPTION ATTRIBUTE RULE:**
+
+For EVERY attribute below — you MUST cite the source. If you cannot find evidence:
+- Do NOT mark Yes or No by guessing
+- Mark as `UNVERIFIED` and flag to user: "Could not verify [attribute] — source not found"
+- Ask user to provide source or confirm before proceeding
+
+Every "Yes" must have source + exact quote or file path. Every "No" must have evidence of absence (searched X, Y, Z — not found).
 
 | Attribute | Type | Source |
 |-----------|------|--------|
@@ -599,7 +791,7 @@ Show category + root cause + ordered steps + risk level. Ask: "Proceed?"
 Test initialize again. Success → continue research. Fail → re-diagnose.
 
 ### Phase 6 — Record Pattern (Skill 2.0)
-If fix succeeds, append to "Learned Fixes" section in SKILL.md:
+If fix succeeds, append to `references/learned-fixes.md`:
 ```
 ### Error #[N]: [Error Title]
 
@@ -637,7 +829,7 @@ Triggered by: `"Review the project"`, `"Is this ready to commit?"`, `"Check requ
 **Confidentiality:**
 - [ ] No API keys in committed files
 - [ ] No credentials in README or reports
-- [ ] Settings files added to .gitignore
+- [ ] `.gitignore` includes required entries: `.env`, `.env.*`, `*.key`, `*.pem`, `.claude/settings.json`, `**/secrets/`, `**/*.secret`
 - [ ] Credentials routed to filesystem only
 
 **Consistency:**
@@ -683,6 +875,14 @@ Sequential research misses interdependencies. Endpoint found in Thread 3 reveals
 - Search: endpoint, https://, remote, hosted, cloud
 - Extract ALL external URLs
 - Look for deprecation notices (may point to new versions)
+- **If GitHub API returns 403 (rate limited):** Wait 60s, retry once. If still 403 → flag to user, do NOT guess attributes.
+- **If repo returns 404:** Confirm private/non-existent. Flag to user: "Repo not accessible. Provide URL or skip?"
+- **If repo is archived:** WARN user immediately:
+  ```
+  This repository is ARCHIVED. Research may be outdated.
+  [ 1 ] Continue anyway (results marked as potentially stale)
+  [ 2 ] Cancel research
+  ```
 
 **Thread 2: Repository File Search** *(always run)*
 - Files: .env.example, config.json, setup.md, docs/
@@ -690,14 +890,19 @@ Sequential research misses interdependencies. Endpoint found in Thread 3 reveals
 - API paths: /api/v2, /v1, /mcp
 - Comments with example URLs
 
-**Thread 3: Remote Endpoint Probing** *(always run — find endpoint if not given)*
+**Thread 3: Remote Endpoint Probing** *(run unless short-circuited)*
+- **SHORT-CIRCUIT:** If Thread 1 confirmed STDIO-only AND zero remote/endpoint URLs found in README → skip probing, mark Endpoint URL = N/A, TLS = No. Document: "STDIO-only server, no remote endpoint references in README."
 - If only GitHub given → extract candidate endpoint URLs from README/docs first
+- **BEFORE probing:** Validate URL against SSRF blocklist (see Security Mandate)
+- **All probes use:** `--connect-timeout 5 --max-time 10 --max-redirs 3`
+- **Rate limit:** Max 3 attempts per endpoint, 2-second delay between retries
+
 - Test 1: GET request (check HTTP/SSE)
-  - `curl -I https://api.{vendor}.com/v2/mcp`
+  - `curl -I --connect-timeout 5 --max-time 10 https://api.{vendor}.com/v2/mcp`
   - 200/401/403 → exists; 404 → not GET-based
 
 - Test 2: POST with JSON-RPC (check StreamableHttp)
-  - `curl -X POST https://.../ -d '{"jsonrpc":"2.0",...}'`
+  - `curl -X POST --connect-timeout 5 --max-time 10 https://.../ -d '{"jsonrpc":"2.0",...}'`
   - 401/403 → exists; 404 → doesn't exist
 
 - Test 3: Response format
@@ -717,17 +922,25 @@ Sequential research misses interdependencies. Endpoint found in Thread 3 reveals
 - Vendor blog/documentation
 - BAA (Business Associate Agreement) availability
 
-### After All Threads Complete
+### After All Threads Complete — HARD CHECKPOINT
 
-**Checkpoint:** Verify all complete before proceeding:
-- ✅ GitHub repo found AND full README read?
-- ✅ All repo files searched?
-- ✅ Remote endpoint found AND probed (GET + POST)?
-- ✅ Framework/SDK version identified?
-- ✅ Compliance documented?
+**BLOCKING GATE: Do NOT proceed to Step 1 until ALL threads report results.**
+
+```
+Thread Status Check (ALL must be ✅ or ❌-confirmed):
+
+□ Thread 1 — GitHub repo: ✅ Found and README read / ❌ Confirmed not found (searched 3+ patterns)
+□ Thread 2 — File search:  ✅ Config files checked / ❌ No config files exist (ls confirmed)
+□ Thread 3 — Endpoint:     ✅ Probed (GET + POST results recorded) / ❌ No endpoint (404 both, documented)
+□ Thread 4 — Dependencies: ✅ SDK/framework version extracted / ❌ No deps file (confirmed absence)
+□ Thread 5 — Compliance:   ✅ Checked vendor docs / ❌ No compliance info found (documented)
+```
+
+**If ANY thread is still pending → DO NOT proceed. Complete it first.**
+**If a thread returned empty → document WHY it's empty (e.g., "no releases page, no tags, version from package.json").**
 
 **Both GitHub + remote endpoint MUST be researched before moving to Step 1.**
-If either source is missing → continue searching until found or confirmed non-existent.
+If either source is missing → continue searching until found or confirmed non-existent with evidence.
 
 ---
 
@@ -751,7 +964,7 @@ Framework version determines protocol, NOT base SDK.
 
 **Example:** Telnyx with FastMCP 0.4.1 + mcp 1.3.0 → 2025-06-18 (FastMCP), not 2025-03-26 (mcp).
 
-**🔒 CRITICAL:** Before marking protocol version in CSV:
+**🔒 LOCKED:** Before marking protocol version in CSV:
 1. Extract exact version from source (package.json, pyproject.toml, etc.)
 2. **DO NUMERIC COMPARISON** against SKILL.md mapping ranges (NOT assumptions)
 3. Example: SDK 1.7.0 < 1.8? YES → 2024-11-05 (NOT 2025-06-18)
@@ -851,39 +1064,30 @@ API Token = Yes if:
 
 ---
 
-## Common Mistakes to Avoid
+## Key Learnings — Attribute Documentation
 
-✗ Not verifying SDK version before research
-✗ Connecting to wrong endpoint/repo
-✗ Mixing STDIO/Local or HTTP/Remote incorrectly
-✗ Not storing user paths for future use
-✗ Installing deps without user approval
-✗ Asking user to paste credentials during diagnosis
-✗ Marking multiple values in mutually exclusive fields
-✗ **Assuming 404 means endpoint doesn't exist** → test POST too
-✗ **Trusting README claims without verification** → may not be deployed
-✗ **Skipping endpoint probing** → use GET + POST to distinguish types
-✗ **Not checking response format** → distinguishes real MCP vs placeholder
+### Learning 3: TLS vs Bearer Token (INDEPENDENT Concepts)
 
----
-
-## Key Learnings — Attribute Documentation (Session 2026-03-26)
-
-### Learning 3: TLS vs Bearer Token Confusion
-
-**❌ WRONG:** Marking TLS 1.3 = Yes just because Bearer Token = Yes
-
-**✅ CORRECT:** TLS encryption only applies to REMOTE transport (HTTP/SSE or StreamableHttp)
+**Core Principle:** Bearer Token = authentication delivery method. TLS = transport encryption. These are completely independent layers.
 
 | Transport | TLS Apply? | Reason |
 |-----------|-----------|--------|
-| **STDIO** (local) | No | stdin/stdout on local machine, no encryption needed |
+| **STDIO** (local) | **Always No** | stdin/stdout on local machine, no network |
 | **HTTP/SSE** (remote) | Yes | Network transmission requires TLS |
 | **StreamableHttp** (remote) | Yes | Network transmission requires TLS |
 
-**Rule:** If Transport = STDIO AND no remote endpoint exists → **All TLS fields = No**
+**Rules:**
+- STDIO transport → All TLS fields = No (no exceptions)
+- Bearer Token present does NOT imply TLS present
+- TLS decision is based ONLY on transport protocol, never on authentication
+- Check transport FIRST, then determine TLS independently
 
-Bearer Token authentication (for API calls inside tools) ≠ TLS encryption (for transport layer). They are independent.
+**Examples:**
+- STDIO server with Bearer Token → TLS = No (auth is local process, no network)
+- HTTP endpoint with no auth → TLS = Yes (network needs encryption regardless)
+- HTTP endpoint with Bearer Token → TLS = Yes AND Bearer = Yes (both, independently)
+
+> See also: `references/learned-fixes.md` Error #1 (Hyperbolic) and Error #7 (Runway) for real case studies.
 
 ---
 
@@ -912,18 +1116,10 @@ Bearer Token authentication (for API calls inside tools) ≠ TLS encryption (for
   - Downstream service costs (GPU rentals, API calls, subscriptions)
   - Service fees (paid by users of the service, not the MCP server)
 
-**Real Examples:**
+**Examples:**
 - ✅ Runway MCP: MIT License → Free = Yes (even though Runway AI service is paid)
 - ✅ Telnyx MCP: Open-source → Free = Yes (even though Telnyx service is paid)
 - ❌ Proprietary MCP: Requires license purchase → Free = No, Paid = Yes
-
-**Hyperbolic Example:**
-```
-Server: Open-source (MIT License) → Free = Yes
-API Key: Required to use Runway AI → Authentication (NOT pricing)
-Runway Service: $$ → Service cost (NOT server cost)
-Result: MCP Server pricing = FREE
-```
 
 ---
 
@@ -948,10 +1144,7 @@ Does server have ONLY read operations?
            Mark others = No
 ```
 
-**Hyperbolic Example:**
-- Has: list (read), get (read), rent (write), terminate (delete)
-- Highest level = Delete
-- **Result:** Read-only update and/or delete = Yes, others = No
+**Example:** list (read) + rent (write) + terminate (delete) → Highest = Delete → Mark "Read-only update and/or delete = Yes", others = No
 
 ---
 
@@ -1008,14 +1201,7 @@ NOT FROM SOURCE (don't create):
 4. Search user research for categories
 5. If nothing found → DO NOT invent → Contact/skip
 
-**Hyperbolic Example (CORRECT):**
-User research documentation showed:
-```
-Team & Workspace Metadata
-Search & Query Utilities
-Other
-```
-Use EXACTLY these categories → Don't reorganize → Don't rename → Don't create new ones
+**Example:** If source shows "Team & Workspace Metadata" and "Search & Query Utilities" → use EXACTLY those. Don't rename, reorganize, or create new ones.
 
 ---
 
@@ -1032,32 +1218,38 @@ Use EXACTLY these categories → Don't reorganize → Don't rename → Don't cre
 
 ---
 
-### Learning 8: Bearer Token ≠ TLS Encryption
+### Learning 8: (Consolidated into Learning 3 — TLS vs Bearer Token)
 
-**Core Principle:** These are INDEPENDENT concepts
-
-| Concept | What It Is | Where It Appears |
-|---------|-----------|------------------|
-| **Bearer Token** | Authentication credential delivery method | Authorization header for API calls |
-| **TLS Encryption** | Transport layer encryption | HTTPS protocol for network communication |
-
-**Example:**
-- STDIO server with Bearer Token = uses auth inside local process (no TLS needed)
-- HTTP endpoint with no auth = needs TLS for network safety but no Bearer needed
-- HTTP endpoint with Bearer Token = needs BOTH TLS (network) + Bearer (auth)
-
-**Rule:** Don't assume TLS based on Bearer Token presence. Check transport protocol instead.
+> All TLS/Bearer Token rules are in Learning 3 above. See `references/learned-fixes.md` for case studies.
 
 ---
 
-## Integration Rules (Updated 2026-03-26)
+## Integration Rules
 
-- **Before each session:** Read "Learned Fixes" section and Prevention Checklist before researching
-- **When researching:** Verify Transport Protocol FIRST, then determine TLS
-- **When checking Pricing:** Ask "Is the MCP server itself paid?" not "Does it access paid services?"
-- **When categorizing Tools:** Use user's exact categories from research
-- **When marking Tools Operations:** Find the HIGHEST capability level present
-- **When adding rows:** Only include sections that exist in research documentation
+**Session Start (MANDATORY — never skip):**
+- Read `references/learned-fixes.md` error patterns #1-#8
+- Read Learnings 1-8 in this file
+- These are not suggestions — they are gates. Skipping them causes the same mistakes to recur.
+
+**During Research (enforce at every attribute):**
+- Verify Transport Protocol FIRST, then determine TLS (never reverse)
+- Verify Pricing = server license, NOT service cost (ask: "Is the MCP server itself paid?")
+- Verify Categories from source documentation (never invent)
+- Verify Tools Operations = HIGHEST level only (never mark multiple)
+- Verify Non-Read-Only rows exist in research before adding
+- Every Yes/No MUST have source evidence — if missing, flag to user
+
+**Workflow Gates:**
+- Step 3 decision: Ask user preference (local vs. research)
+- If local setup: Execute Steps 3.1-3.6 before research
+- If connection fails: Auto-trigger Phase 1 diagnosis
+- After error fix: Continue research from interrupted point
+- Security check: Every config change requires approval
+
+**Session End (MANDATORY — never skip):**
+- Run Gate 3 Learning Walkthrough (all 8 Learnings checked)
+- Run Gate 4 Self-Improvement (document new patterns if any)
+- Only THEN create final CSV
 
 ---
 
@@ -1071,17 +1263,6 @@ Use EXACTLY these categories → Don't reorganize → Don't rename → Don't cre
 | OAuth Client ID | `<OAUTH_CLIENT_ID>` |
 | OAuth Client Secret | `<OAUTH_CLIENT_SECRET>` |
 | Generic Secret | `<SECRET_KEY>` |
-
----
-
-## Integration Rules
-
-- **Before each session:** Read `references/learned-fixes.md`
-- **Step 3 decision:** Ask user preference (local vs. research)
-- **If local setup:** Execute Steps 3.1–3.6 before research
-- **If connection fails:** Auto-trigger Phase 1 diagnosis
-- **After error fix:** Continue research from interrupted point
-- **Security check:** Every config change requires approval
 
 ---
 
@@ -1105,7 +1286,7 @@ MCP Info
 ├── Git Repo Version (v1.2.3 format — latest only)
 │   Source priority: 1st → GitHub Releases  2nd → GitHub Tags  3rd → package.json
 │   Use version EXACTLY as shown in source (NO notes, NO transformation)
-├── Category (one of 4: File Management / Developer Tools / Data Retrieval / Productivity)
+├── Category (File Management / Developer Tools / Data Retrieval / Productivity / Other)
 ├── GitHub Repository (URL or N/A)
 └── Endpoint URL (URL or N/A)
 
@@ -1127,57 +1308,18 @@ Capabilities - Sampling (detailed_info with sampling models and capabilities)
 Non-Read-Only Tools (detailed_info with categories OR "None — all tools are read-only")
 ```
 
-**Example Rows:**
+**Example Rows (minimal — see `references/csv-example.md` for full Telnyx example):**
 
-Row 1 (Basic Info):
 ```csv
-MCP Info,Description,"Telnyx Python MCP Server for managing telephony, messaging, and AI assistant workflows via Claude and other MCP clients. Provides 50+ tools across SMS/MMS messaging, voice call control, AI assistant creation, cloud storage (S3-compatible), embeddings, webhook management, and integration secrets handling."
-```
+MCP Info,Description,"3-4 line description with specific capabilities."
+MCP Info,Git Repo Version,"v0.1.2"
+Distribution Type,Official,Yes
+Authentication,API Token,Yes
+Capabilities - Tools,detailed_info,"Category Name
+    •    tool_name – Description of what it does
 
-Row 2 (Version):
-```csv
-MCP Info,Git Repo Version,"v0.1.2 [ Referred from Tags/Releases ]"
-```
-
-Row 3 (Tools detailed_info):
-```csv
-Capabilities - Tools,detailed_info,"AI Assistants
-    •    create_assistant – Create new AI assistant with custom instructions
-    •    list_assistants – List all existing AI assistants
-    •    get_assistant – Get details for a specific AI assistant
-    •    update_assistant – Update an existing assistant's properties
-    •    delete_assistant – Delete an AI assistant
-
-Call Control
-    •    make_call – Make an outbound phone call to a destination number
-    •    hangup – Hang up an active phone call
-    •    transfer – Transfer an active call to a new destination
-    •    playback_start – Play audio file or URL during an active call
-    •    playback_stop – Stop audio playback on an active call
-    •    send_dtmf – Send DTMF (touch-tone) signals during a call
-    •    speak – Convert text to speech and play during a call
-
-Messaging
-    •    send_message – Send SMS or MMS messages to recipients
-    •    get_message – Get details for a specific message
-    •    sms_conversations – Access and view ongoing SMS conversations (resource)"
-```
-
-Row 4 (Non-Read-Only Tools):
-```csv
-Non-Read-Only Tools,detailed_info,"AI Assistants
-    •    create_assistant – Creates new AI assistant (write operation)
-    •    update_assistant – Modifies existing assistant (write operation)
-    •    delete_assistant – Removes assistant from system (delete operation)
-    •    start_assistant_call – Initiates outbound call (write operation)
-
-Call Control
-    •    make_call – Creates new call leg (write operation)
-    •    hangup – Terminates call (delete operation)
-    •    transfer – Modifies call routing (write operation)
-
-Messaging
-    •    send_message – Sends SMS/MMS (write operation)"
+Another Category
+    •    another_tool – Another description"
 ```
 
 **Formatting Rules (Critical):**
@@ -1189,7 +1331,7 @@ Messaging
 5. **Tool names** — Use actual registered function names (not generic labels)
 6. **Descriptions** — Concise, action-oriented (start with verb: "Create", "Get", "List", "Send")
 7. **Multiline cells** — CSV escaping handles newlines, no manual escaping needed
-8. **Attributes** — Every attribute must be Yes/No only (never "N/A", "Unknown", "Partial")
+8. **Attributes** — Final CSV must be Yes/No only. During research, use `UNVERIFIED` for unconfirmed attributes — resolve ALL to Yes/No before generating CSV (per Gate 1)
 
 **Example Bad vs Good:**
 
@@ -1205,159 +1347,7 @@ Capabilities - Tools,detailed_info,"AI Assistants
     •    list_assistants – List all existing AI assistants"
 ```
 
-**Telnyx_MCP_Server.csv Example (Complete Structure):**
-
-```csv
-Category,Attribute,Status
-MCP Info,Description,"Telnyx Python MCP Server for managing telephony, messaging, and AI assistant workflows via Claude and other MCP clients. Provides 50+ tools across SMS/MMS messaging, voice call control, AI assistant creation, cloud storage (S3-compatible), embeddings, webhook management, and integration secrets handling. Supports selective tool filtering and webhook receivers via ngrok integration."
-MCP Info,Git Repo Version,"v0.1.2 [ Referred from Tags/Releases ]"
-MCP Info,Category,"Developer and Coding Tools"
-MCP Info,GitHub Repository,"https://github.com/team-telnyx/telnyx-mcp-server"
-MCP Info,Endpoint URL,"N/A"
-Distribution Type,Official,Yes
-Distribution Type,Community,No
-MCP Protocol Version,2025-11-25,No
-MCP Protocol Version,2025-06-18,Yes
-MCP Protocol Version,2025-03-26,No
-MCP Protocol Version,2024-11-05,No
-Pricing,Free,Yes
-Pricing,Paid,No
-Hosting Provider,SaaS Vendor,No
-Hosting Provider,3rd Party SaaS,No
-Hosting Provider,GitHub,Yes
-Hosting Provider,GitLab,No
-Hosting Provider,Bitbucket,No
-Hosting Provider,SourceHut/Gitea/Gogs,No
-Authentication,OAuth 2.1 - Authorization Code Flow,No
-Authentication,OAuth 2.1 - Client Credentials Flow,No
-Authentication,Bearer Token,No
-Authentication,Personal Access Token,No
-Authentication,API Token,Yes
-Data Protection,TLS 1.3,No
-Data Protection,TLS 1.2,No
-Data Protection,Lower versions or no encryption,No
-Transport Protocol,STDIO,Yes
-Transport Protocol,HTTP/SSE,No
-Transport Protocol,StreamableHttp,No
-Transport Protocol,FastAPI,No
-Tools Operations,Read-only operations,No
-Tools Operations,Read-only and/or update operations,No
-Tools Operations,Read-only update and/or delete operations,Yes
-Deployment Approach,Local,Yes
-Deployment Approach,Container,No
-Deployment Approach,Remote,No
-Compliance & Certifications,HIPAA,No
-Compliance & Certifications,GDPR,No
-Compliance & Certifications,SOC 2,No
-Compliance & Certifications,FedRAMP,No
-Capabilities,Tools,Yes
-Capabilities,Resources,Yes
-Capabilities,Prompts,No
-Capabilities,Sampling,No
-Capabilities - Tools,detailed_info,"AI Assistants
-    •    create_assistant – Create a new AI assistant with custom instructions and configurations
-    •    list_assistants – List all existing AI assistants
-    •    get_assistant – Get details for a specific AI assistant
-    •    update_assistant – Update an existing assistant's properties and configuration
-    •    delete_assistant – Delete an AI assistant
-    •    get_assistant_texml – Get TEXML configuration for an assistant
-    •    start_assistant_call – Start an outbound call using an AI assistant
-
-Call Control
-    •    make_call – Make an outbound phone call to a destination number
-    •    hangup – Hang up an active phone call
-    •    transfer – Transfer an active call to a new destination
-    •    playback_start – Play audio file or URL during an active call
-    •    playback_stop – Stop audio playback on an active call
-    •    send_dtmf – Send DTMF (touch-tone) signals during a call
-    •    speak – Convert text to speech and play during a call
-    •    list_call_control_applications – List call control applications
-    •    get_call_control_application – Get details for a call control application
-    •    create_call_control_application – Create a new call control application
-
-Messaging
-    •    send_message – Send SMS or MMS messages to recipients
-    •    get_message – Get details for a specific message
-    •    sms_conversations – Access and view ongoing SMS conversations (resource)
-
-Phone Numbers
-    •    list_phone_numbers – List all phone numbers on the account
-    •    buy_phone_numbers – Purchase new phone numbers
-    •    update_phone_numbers – Update phone number configurations
-    •    list_available_numbers – Search for available phone numbers by area code or pattern
-
-Connection Management
-    •    list_connections – List voice connections configured on the account
-    •    get_connection – Get details for a specific connection
-    •    update_connection – Update connection configurations
-
-Cloud Storage
-    •    cloud_storage_create_bucket – Create a new cloud storage bucket
-    •    cloud_storage_list_buckets – List all storage buckets across all regions
-    •    cloud_storage_upload_file – Upload files to a bucket
-    •    cloud_storage_download_file – Download files from a bucket
-    •    cloud_storage_list_objects – List objects in a bucket
-    •    cloud_storage_delete_object – Delete objects from a bucket
-    •    cloud_storage_get_bucket_location – Get bucket location information
-
-Embeddings & AI
-    •    list_embedded_buckets – List existing embedded buckets
-    •    scrape_and_embed_url – Scrape website URL and create embeddings for AI training
-    •    create_file_embeddings – Create embeddings for custom files
-
-Secrets Manager
-    •    list_secrets – List integration secrets
-    •    create_secret – Create new bearer or basic auth secrets
-    •    delete_secret – Delete integration secrets
-
-Webhooks
-    •    webhook_configuration – Configure webhook receivers for Telnyx events
-    •    webhook_management – Manage active webhooks via ngrok integration"
-Capabilities - Resources,detailed_info,"API Configuration Resources
-    •    webhook_receiver – Webhook endpoint configuration (resource type: JSON document)
-    •    integration_secret – Integration credentials storage (resource type: encrypted document)
-    •    call_recording – Audio recording artifact (resource type: audio/wav)
-
-Cloud Storage
-    •    bucket_content – Cloud storage bucket contents (resource type: directory listing)
-    •    file_object – File object with metadata (resource type: binary/document)
-    •    embeddings_index – Vector embedding index (resource type: data structure)"
-Capabilities - Prompts,No
-Capabilities - Sampling,No
-Non-Read-Only Tools,detailed_info,"AI Assistants
-    •    create_assistant – Creates new AI assistant (write operation)
-    •    update_assistant – Modifies existing assistant (write operation)
-    •    delete_assistant – Removes assistant from system (delete operation)
-    •    start_assistant_call – Initiates outbound call (write operation)
-
-Call Control
-    •    make_call – Creates new call leg (write operation)
-    •    hangup – Terminates call (delete operation)
-    •    transfer – Modifies call routing (write operation)
-    •    playback_start – Initiates audio playback (write operation)
-    •    playback_stop – Stops playback (write operation)
-    •    send_dtmf – Sends signals to call (write operation)
-    •    speak – Initiates TTS playback (write operation)
-
-Messaging
-    •    send_message – Sends SMS/MMS (write operation)
-
-Phone Numbers
-    •    buy_phone_numbers – Purchases numbers (write operation - financial)
-    •    update_phone_numbers – Modifies number configuration (write operation)
-
-Cloud Storage
-    •    cloud_storage_create_bucket – Creates bucket (write operation)
-    •    cloud_storage_upload_file – Uploads files (write operation)
-    •    cloud_storage_delete_object – Removes objects (delete operation)
-
-Secrets Manager
-    •    create_secret – Creates secret entry (write operation)
-    •    delete_secret – Removes secret (delete operation)
-
-Webhooks
-    •    webhook_configuration – Creates/modifies webhook (write operation)"
-```
+> **Full CSV example:** See `references/csv-example.md` for complete Telnyx MCP Server report with all rows.
 
 ---
 
@@ -1415,226 +1405,31 @@ If GitHub source lists tools and remote endpoint lists additional tools:
 ### Rule 5 — Hosting Provider Priority Rule
 If research finds **both** SaaS Vendor and GitHub as hosting:
 ```
-→ Mark SaaS Vendor = Yes (SaaS Vendor takes priority)
-→ Mark GitHub = No
+→ Mark SaaS Vendor = Yes
+→ Mark GitHub = Yes
+→ Note: SaaS Vendor is the PRIMARY hosting (takes display priority in comparisons)
 ```
-Rationale: If a vendor hosts on SaaS infrastructure AND has a GitHub repo, the primary hosting is SaaS.
+Both are marked Yes because both are real hosting locations. SaaS Vendor takes priority only for sorting/display in multi-server comparisons, not for exclusion.
 
 ---
 
-## Learned Fixes — MCP Skill 2.0 Self-Learning (Consolidated)
+## Learned Fixes — Error Case Studies
 
-**Purpose:** Track attribute documentation errors, their root causes, and corrections for future research sessions.
+> **All error patterns with full details are in `references/learned-fixes.md`.**
+> Learnings 1-8 above contain the authoritative rules extracted from those errors.
+> Read learned-fixes.md before each research session for real-world case studies.
 
-**Last Updated:** 2026-03-26
-
-### Error #1: TLS Encryption Mismatch
-
-**Date:** 2026-03-26 | **Server:** Hyperbolic MCP | **Severity:** High
-
-**Signals (What Went Wrong)**
-- Marked TLS 1.3 = Yes and TLS 1.2 = No
-- Server uses STDIO transport (local process, no remote endpoint)
-- Confused Bearer Token authentication with TLS encryption
-
-**Root Cause:** Assumption that Bearer Token (API authentication) implies HTTPS/TLS (transport encryption). These are independent:
-- Bearer Token = how credentials are sent (auth layer)
-- TLS = how data is encrypted (transport layer)
-
-**Fix (Step-by-Step):**
-1. Check Transport Protocol first: Is it STDIO, HTTP/SSE, or StreamableHttp?
-2. For STDIO: All TLS fields = No (local process, no network transmission)
-3. For HTTP/SSE or StreamableHttp: Check actual endpoint protocol (curl -I to verify)
-4. Don't assume: Bearer Token ≠ TLS automatically
-
-**Result:** TLS 1.3 = No, TLS 1.2 = No, Transport = STDIO only
+**Error patterns documented:** #1-#4 (Buildkite/Hyperbolic), #7-#8 (Runway)
+**Covers:** Protocol version, Authentication, Tools Operations, Deployment, TLS, Pricing, Git Version
 
 ---
 
-### Error #2: Pricing Attribute Confusion
+## Final Report Output
 
-**Date:** 2026-03-26 | **Server:** Hyperbolic MCP | **Severity:** High
-
-**Signals:** Marked Paid = Yes because GPU rentals cost money; Confused service fees with server licensing fees
-
-**Root Cause:** Misunderstood "Pricing" attribute scope. Should reflect the **MCP SERVER itself** not downstream services it accesses.
-
-**Fix (Step-by-Step):**
-1. Ask: "Is the MCP server itself paid or open-source?"
-2. If open-source: Free = Yes, Paid = No (regardless of service costs)
-3. If proprietary/licensed: Free = No, Paid = Yes
-4. Ignore: GPU rental costs, subscription fees, service charges
-5. Document: Only the server's own licensing/distribution model
-
-**Result:** Free = Yes, Paid = No (open-source server, paid services independent)
-
----
-
-### Error #3: Tools Operations Highest Level Misidentification
-
-**Date:** 2026-03-26 | **Server:** Hyperbolic MCP | **Severity:** Medium
-
-**Signals:** Marked both "Read-only and/or update operations = Yes" AND "Read-only update and/or delete operations = Yes"; These are mutually exclusive
-
-**Root Cause:** Didn't identify highest capability level. Server has delete operations (terminate-gpu-instance) so should mark only the delete-level option.
-
-**Fix (Step-by-Step):**
-1. Scan all tools: Identify all operation types present (Read-only / Update / Delete)
-2. Find highest level:
-   - Delete present? → Mark "Read-only update and/or delete operations = Yes"
-   - Update present (no delete)? → Mark "Read-only and/or update operations = Yes"
-   - Read-only only? → Mark "Read-only operations = Yes"
-3. Mark others = No (mutually exclusive)
-
-**Result:**
-- Read-only operations = Yes (list-available-gpus, get-cluster-details, list-user-instances, ssh-status)
-- Read-only and/or update = No
-- Read-only update and/or delete = Yes (rent-gpu-instance creates, terminate-gpu-instance deletes, remote-shell executes)
-
----
-
-### Error #4: Capabilities - Tools Incorrect Categorization
-
-**Date:** 2026-03-26 | **Server:** Hyperbolic MCP | **Severity:** Medium
-
-**Signals:** Created custom categories: "GPU Management", "SSH Management"; User provided specific categories: "Team & Workspace Metadata", "Search & Query Utilities", "Other"
-
-**Root Cause:** Made assumptions about logical groupings instead of using user-provided documentation.
-
-**Fix (Step-by-Step):**
-1. Get user's research first: Always ask for exact categories
-2. Extract from documentation: Check README, docs, or user research
-3. Use verbatim: Don't reorganize, rename, or regroup
-4. Priority order: User research > README > Source code > Infer from tool names
-
-**Result:** Used exact user-provided categories:
-- Team & Workspace Metadata
-- Search & Query Utilities
-- Other
-
----
-
-### Error #5: Non-Read-Only Tools Row Unconditional Inclusion
-
-**Date:** 2026-03-26 | **Server:** Hyperbolic MCP | **Severity:** Low
-
-**Signals:** Added "Non-Read-Only Tools" row to CSV when user research didn't include it; Fabricated detailed_info content
-
-**Root Cause:** Assumed this row should always exist. It's optional and only appears if documented in research.
-
-**Fix (Step-by-Step):**
-1. Check research: Does user's documentation have "Non-Read-Only Tools" section?
-2. If No: Don't add the row to CSV
-3. If Yes: Include exactly as documented
-4. If all read-only: Include row with text "None — all tools are read-only"
-5. Never fabricate: Only include what exists in research
-
-**Result:** Don't include Non-Read-Only Tools row if not in user's research
-
----
-
-### Error #6: Protocol Version Range Mapping Without Numeric Verification
-
-**Date:** 2026-03-26 | **Server:** Hyperbolic MCP | **Severity:** CRITICAL
-
-**Signals:** Marked Protocol Version = 2025-06-18; User pointed out: SDK 1.7.0 should map to 2024-11-05; Never performed numeric comparison
-
-**Root Cause:** **CRITICAL MISTAKE:** Noted the SDK version but did NOT verify it against SKILL.md mapping ranges.
-- Found: `@modelcontextprotocol/sdk: 1.7.0`
-- Mapping rule: `sdk <1.8` → `2024-11-05`
-- Failed to compare: 1.7.0 < 1.8? YES
-- Assumed instead: Guessed 2025-06-18 without checking
-
-**Fix (Step-by-Step) — STRICT PROTOCOL**
-
-**BEFORE marking ANY protocol version in CSV:**
-1. Extract exact SDK/Framework version from source
-2. **DO NUMERIC COMPARISON** against SKILL.md ranges
-3. Verify: Is 1.7.0 < 1.8? Is 1.15 ≤ version < 1.23? Calculate explicitly
-4. Only AFTER numeric verification → mark the CSV
-
-**Example (Hyperbolic):**
+**On successful CSV generation, display:**
 ```
-Step 1: SDK = 1.7.0
-Step 2: Check range: sdk <1.8 → 2024-11-05
-Step 3: Compare: 1.7.0 < 1.8? YES ✅
-Step 4: Mark: 2024-11-05 = Yes
+╔═══════════════════════════════════════════════════════╗
+║   REPORT SUCCESSFULLY GENERATED                       ║
+║   FILE: /path/to/report/<servername>.csv              ║
+╚═══════════════════════════════════════════════════════╝
 ```
-
-**NEVER DO THIS:**
-- "It looks like 1.7, probably maps to..." ❌
-- Skipping the numeric comparison ❌
-- Assuming version ranges without verification ❌
-
-**Result:** Protocol Version = 2024-11-05 (not 2025-06-18)
-
-**🔒 LOCKED RULE:** **STRICTLY DO NOT MAP without checking right MCP protocol version.** **DO NUMERIC COMPARISON, NOT ASSUMPTION.**
-
----
-
-### Prevention Checklist (Before Final CSV)
-
-Use this checklist EVERY TIME before generating final CSV:
-
-- [ ] **Protocol Version:** Did numeric comparison (not assumption) against SKILL.md ranges?
-- [ ] **Transport Protocol:** Verified (STDIO/HTTP/StreamableHttp) in source code?
-- [ ] **TLS Encryption:** Only marked Yes if HTTP/SSE/StreamableHttp endpoint exists?
-- [ ] **Pricing:** Reflects MCP server licensing, not service fees?
-- [ ] **Tools Operations:** Only ONE "highest level" marked as Yes?
-- [ ] **Capabilities Categories:** Exactly match user's research documentation?
-- [ ] **Non-Read-Only Tools:** Only included if present in user research?
-- [ ] **Bearer Token ≠ TLS:** Verified these are independent concepts?
-
----
-
-### Session Log
-
-| Date | Server | Errors | Status |
-|------|--------|--------|--------|
-| 2026-03-26 | Hyperbolic MCP | 6 errors, all corrected | ✅ Complete |
-
----
-
-## Summary
-
-**Unified MCP skill** — single optimized execution path for research, deployment, error recovery, and project auditing. Consolidates all functionality into one unified, fast, token-efficient implementation.
-
-- ✅ 8-step research workflow
-- ✅ 3 input type handling (Remote / GitHub / Name)
-- ✅ Conditional local setup (user choice)
-- ✅ 4 connection methods (STDIO / Package / Docker / Remote)
-- ✅ 7-phase inline error recovery (auto-triggered)
-- ✅ Evidence-backed attributes (source tracking)
-- ✅ Project compliance audit (PASS/FAIL/WARN)
-- ✅ Skill 2.0 self-learning (Learned Fixes section)
-- ✅ Security mandate enforced (credentials via file only)
-- ✅ **FAST & EFFICIENT** — Single file, optimized paths, minimal tokens
-
----
-
-## Final Report Format (for Project Audits & Sessions)
-
-When generating final reports for project audits, use this format:
-
-```
-╔════════════════════════════════════════════════════════════════════════════════════════╗
-║                                                                                        ║
-║                    ✅ ✅ ✅  REPORT SUCCESSFULLY GENERATED  ✅ ✅ ✅                 ║
-║                                                                                        ║
-║                                                                                        ║
-║                                FILE LOCATION:                                         ║
-║                                                                                        ║
-║              /path/to/report/REPORT_NAME_DATE.txt                                     ║
-║                                                                                        ║
-║                                                                                        ║
-╚════════════════════════════════════════════════════════════════════════════════════════╝
-```
-
-**Format Features:**
-- Large, bold text (visible in all IDEs and terminals)
-- Clear file location path
-- Works across all platforms and editors
-
----
-
-**All workflows, instructions, and processes preserved. Zero functionality lost. Pure optimization.**
