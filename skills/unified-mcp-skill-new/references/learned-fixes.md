@@ -3,6 +3,10 @@
 **Self-learning database for preventing recurring research mistakes.**
 
 > These patterns were identified from real MCP research sessions and documented to prevent future errors in attribute research.
+>
+> **Error Index:** #1-#4 (Buildkite/Hyperbolic, 2026-03-26), #7-#8 (Runway, 2026-03-27)
+> Patterns #5-#6 are documented as SKILL.md Learnings 5-6 (no separate case study needed).
+> Authoritative rules for all patterns live in SKILL.md Learnings 1-8.
 
 ---
 
@@ -493,7 +497,7 @@ MCP Info,Git Repo Version,"1.0.0"
 ---
 
 **Last Updated:** 2026-03-27
-**Skill Version:** Unified MCP Skill 2.0.2+ (Self-Learning v2.1)
+**Skill Version:** Unified MCP Skill 3.0.0 (Self-Learning v2.1)
 **Status:** Active — Auto-referenced in research workflows
-**Critical Rules:** 7 error patterns documented with prevention checklists
+**Critical Rules:** 6 error patterns documented in this file (Patterns #1-#4, #7-#8); authoritative rules in SKILL.md Learnings 1-8
 
