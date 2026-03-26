@@ -11,15 +11,15 @@ git clone <repo-url> Claude-skills-research
 cd Claude-skills-research
 ```
 
-Then invoke the unified MCP skill with `/unified-mcp-skill` in Claude Code.
+Then invoke the unified MCP skill with `/unified-mcp-skill-new` in Claude Code.
 
 ---
 
-## Unified Skill: `/unified-mcp-skill`
+## Unified Skill: `/unified-mcp-skill-new`
 
 **The all-in-one MCP skill** — research and document attributes, conditionally set up locally, diagnose errors inline, run multi-server batch research, and audit projects — all in one optimized execution path.
 
-**Invocation:** `/unified-mcp-skill`
+**Invocation:** `/unified-mcp-skill-new`
 
 Use this skill for any MCP-related task:
 
@@ -60,7 +60,7 @@ Claude-skills-research/
 │       └── memory/
 │           └── MEMORY.md
 ├── skills/
-│   ├── unified-mcp-skill/       ← Main unified skill
+│   ├── unified-mcp-skill-new/       ← Main unified skill
 │   │   ├── SKILL.md             ← All workflows embedded (research, setup, error recovery, audit)
 │   │   └── references/
 │   │       └── learned-fixes.md ← Skill 2.0 self-learning (runtime state)
@@ -86,7 +86,7 @@ All skills enforce strict security rules:
 
 ### Scenario: Research and set up an MCP server
 
-**Use `/unified-mcp-skill` for everything:**
+**Use `/unified-mcp-skill-new` for everything:**
 
 ```
 "Research the GitHub MCP server and set it up locally"
@@ -108,9 +108,9 @@ All skills enforce strict security rules:
 
 When team members clone this repo:
 
-1. They get the unified skill automatically (in `skills/unified-mcp-skill/`)
+1. They get the unified skill automatically (in `skills/unified-mcp-skill-new/`)
 2. CLAUDE.md loads and shows available skills
-3. They can invoke `/unified-mcp-skill` immediately
+3. They can invoke `/unified-mcp-skill-new` immediately
 4. All functionality consolidated — no version conflicts
 
 **No additional setup needed.**
@@ -135,7 +135,7 @@ When team members clone this repo:
 - **MCP Servers Directory:** https://github.com/modelcontextprotocol/servers
 - **Output location:** `~/Desktop/MCP_reports/` (configurable)
 - **Cloned repos location:** `~/MCP_repos/<repo-name>` (configurable)
-- **Self-learning:** `skills/unified-mcp-skill/references/learned-fixes.md`
+- **Self-learning:** `skills/unified-mcp-skill-new/references/learned-fixes.md`
 
 ---
 
@@ -155,9 +155,9 @@ When team members clone this repo:
 
 ### Skill Registry Integration ✅
 - **Unified-mcp-skill is now globally registered** in `~/.claude/skills/`
-- Fully invocable via `Skill("unified-mcp-skill", args="...")`
+- Fully invocable via `Skill("unified-mcp-skill-new", args="...")`
 - No longer falls back to separate mcp-research skill
-- Works seamlessly with `/unified-mcp-skill` command and Skill() tool
+- Works seamlessly with `/unified-mcp-skill-new` command and Skill() tool
 
 ### Key Learnings Integrated
 - **Framework Priority:** FastMCP > Framework > SDK (for protocol detection)
@@ -177,9 +177,9 @@ When team members clone this repo:
 ## Support & Feedback
 
 For issues:
-1. Use `/unified-mcp-skill` with error message to diagnose (built-in error recovery)
-2. Check `skills/unified-mcp-skill/references/learned-fixes.md` for known solutions
-3. Run project audit: `/unified-mcp-skill` → "Review the project"
+1. Use `/unified-mcp-skill-new` with error message to diagnose (built-in error recovery)
+2. Check `skills/unified-mcp-skill-new/references/learned-fixes.md` for known solutions
+3. Run project audit: `/unified-mcp-skill-new` → "Review the project"
 4. Review registry guides in `.claude/projects/memory/` for skill system questions
 
 For feedback on Claude Code, visit: https://github.com/anthropics/claude-code/issues
@@ -192,7 +192,7 @@ For feedback on Claude Code, visit: https://github.com/anthropics/claude-code/is
 **Unified MCP Skill 2.0 now includes error pattern recognition to prevent recurring mistakes.**
 
 **New Files:**
-- `skills/unified-mcp-skill/references/learned-fixes.md` — Error pattern database
+- `skills/unified-mcp-skill-new/references/learned-fixes.md` — Error pattern database
   - 4 documented error patterns from Buildkite research
   - Root cause analysis for each
   - Verification checklists
