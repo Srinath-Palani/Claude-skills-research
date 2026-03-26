@@ -5,6 +5,13 @@
 > Whenever SKILL.md is updated → verify this file needs updates too
 > See `SYNC_GUIDE.md` for verification checklist before committing.
 
+🎓 **SELF-LEARNING INTEGRATION (Unified MCP Skill 2.0)**
+> Before each batch research:
+> 1. Read `learned-fixes.md` — Error Patterns #1-4 (Protocol, Auth, Tools Ops, Deployment)
+> 2. Apply verification checklists during research
+> 3. Use pre-submission checklist before finalizing reports
+> This prevents recurring mistakes across multi-server batches.
+
 **Trigger:** Auto-detected via Step 0-M (see below). No explicit command needed.
 
 **Architecture:** 2-layer sub-agent system. Token-bounded. Parallel per server. No scoring.
@@ -142,4 +149,44 @@ What next?
 ## Error Handling
 - Server unreachable → log error, continue batch, mark as "ERROR" in summary
 - Duplicate servers in list → deduplicate silently, note once
-- New error patterns found → append to `references/learned-fixes.md`
+- New error patterns found → append to "Learned Fixes" section in SKILL.md
+
+---
+
+## Key Learnings Applied (Updated 2026-03-26)
+
+**🔒 LOCKED RULES** — Use these for every multi-server research:
+
+1. **TLS ≠ Bearer Token**
+   - TLS only for HTTP/SSE/StreamableHttp endpoints
+   - STDIO servers → TLS = STDIO N/A
+   - Bearer Token in code ≠ automatic TLS presence
+
+2. **Pricing = Server Licensing (Not Services)**
+   - Free/Paid reflects MCP server itself
+   - Don't confuse with downstream service costs
+   - Ask: "Is the MCP server itself paid?"
+
+3. **Tools Operations — Mark Highest Level Only**
+   - Identify all operations present
+   - Mark ONLY: Delete (highest) > Update > Read-only (lowest)
+   - Other levels = No
+
+4. **Capabilities Categories from User Research**
+   - Use EXACT categories from research documentation
+   - Never reorganize or rename
+   - Priority: User research > README > Source code
+
+5. **Non-Read-Only Tools — Include Only If Researched**
+   - Don't fabricate this row
+   - Include only if documented
+   - Text: "None — all tools are read-only" if applicable
+
+6. **Protocol Version — Numeric Comparison (Not Assumption)**
+   - Extract exact version from source (package.json, pyproject.toml)
+   - **DO NUMERIC COMPARISON** against SKILL.md mapping ranges
+   - Example: SDK 1.7.0 < 1.8? YES → 2024-11-05 (NOT 2025-06-18)
+   - **NEVER proceed without explicit verification**
+   - Verify before writing to CSV
+
+See "Learned Fixes" section in SKILL.md for detailed error examples and prevention checklist.

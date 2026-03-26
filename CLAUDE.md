@@ -264,5 +264,71 @@ This repository includes automated quality checks to ensure documentation always
 
 ---
 
+## Latest Updates (2026-03-26 — v2.0.2 Self-Learning Upgrade) ✅
+
+### Self-Learning Capabilities Added
+**Unified MCP Skill 2.0 now includes error pattern recognition to prevent recurring mistakes.**
+
+**New Files:**
+- `skills/unified-mcp-skill/references/learned-fixes.md` — Error pattern database
+  - 4 documented error patterns from Buildkite research
+  - Root cause analysis for each
+  - Verification checklists
+  - Prevention rules
+
+**Enhanced SKILL.md Sections:**
+- **Step 1** — Added Go SDK mapping (v1.4–1.11 → 2025-06-18)
+  - Verification checklist to prevent protocol version mistakes
+  - Common mistake patterns documented
+
+- **Step 5.1** — New Authentication Verification section
+  - Comprehensive checklist
+  - Why all three auth types can be "Yes"
+  - References learned-fixes.md Error #2
+
+- **Step 5.2** — New Tools Operations Verification section
+  - Mutually exclusive rule enforcement
+  - Cancel/delete pattern recognition
+  - References learned-fixes.md Error #3
+
+- **Step 5.3** — New Deployment Approach Verification section
+  - Docker detection checklist
+  - Multiple deployment support explanation
+  - References learned-fixes.md Error #4
+
+**Multi-Server Integration:**
+- Updated `multi-server.md` with self-learning reference
+- Batch research now includes learned-fixes checks
+- Pre-submission verification checklist added
+
+### 4 Error Patterns Documented (Buildkite Case Study)
+
+| Error | Pattern | Fix |
+|-------|---------|-----|
+| **#1** | Protocol Version Mapping (assumed 2025-11-25 for Go SDK v1.4.1) | Cross-reference SDK version against mapping table |
+| **#2** | Authentication All No (missed server.json token requirement) | Check server.json BEFORE README |
+| **#3** | Tools Operations Violation (marked multiple exclusive levels) | Choose HIGHEST level only, recognize cancel_* = delete |
+| **#4** | Deployment Container No (missed Dockerfile + Docker image) | Search all sources: README, server.json, Dockerfile |
+
+### Verification Before Each Research Session
+
+**New Pre-Submission Checklist:**
+```
+Before finalizing report:
+□ Protocol Version: Look up exact SDK version in mapping table
+□ Authentication: Check server.json + README + .env.example
+□ Tools Operations: Look for cancel_*/delete_* patterns, mark HIGHEST level
+□ Deployment: Search Dockerfile, server.json, OCI registry
+□ Cross-check: All findings against learned-fixes.md
+```
+
+### Performance Impact
+- ✅ No additional tokens (integrated into existing workflow)
+- ✅ Prevents time-waste from correcting mistakes
+- ✅ Improves accuracy across all MCP research sessions
+- ✅ Self-learning database grows with future sessions
+
+---
+
 ## Last Updated: 2026-03-26
-**Status:** Production Ready ✅ | **Version:** 2.0.1 | **Commits:** 061440c (docs), 621c60a (automation)
+**Status:** Production Ready ✅ | **Version:** 2.0.2 (Self-Learning) | **Commits:** Latest includes learned-fixes.md integration

@@ -184,7 +184,28 @@ Run both searches in parallel via Step 0.5. Combine results using Report Generat
 - `sdk 1.8–1.11` → Protocol `2025-06-18`
 - `sdk <1.8` → Protocol `2024-11-05`
 
-Record: Framework name, version, protocol version (with source).
+**SDK Mapping (Go github.com/modelcontextprotocol/go-sdk):**
+- `go-sdk ≥1.12` → Protocol `2025-11-25`
+- `go-sdk 1.4–1.11` → Protocol `2025-06-18` ← **COMMON MISS: Don't assume latest**
+- `go-sdk <1.4` → Protocol `2024-11-05`
+
+**CRITICAL VERIFICATION CHECKLIST (to prevent mistakes):**
+Before marking protocol version as final:
+```
+□ Step 1: Extract exact version from dependency file (go.mod, requirements.txt, package.json)
+□ Step 2: Cross-reference version against the mapping table above (DO NOT guess/assume)
+□ Step 3: If version is between ranges, use LOWER protocol (e.g., v1.4.1 is <1.12 → use 2025-06-18)
+□ Step 4: Document the exact version + mapping source (file + line number)
+□ Step 5: Check learned-fixes.md for "Protocol Version Mapping Error" to avoid repeat mistakes
+```
+
+**Common Mistake Patterns:**
+- ❌ WRONG: "Latest protocol must be v2025-11-25" (assumes without checking)
+- ✅ RIGHT: "SDK v1.4.1 maps to 2025-06-18" (checked version table)
+- ❌ WRONG: "Go SDK in go.mod but no mapping" (missing Go SDK mapping)
+- ✅ RIGHT: "Go SDK v1.4.1 → Protocol 2025-06-18 per Go SDK mapping" (complete mapping)
+
+Record: Framework name, exact version, protocol version, mapping source, verification timestamp.
 
 ---
 
@@ -303,6 +324,87 @@ Every "Yes" must have source + exact quote or file path.
 
 ---
 
+### Step 5.1 — Authentication Verification (Self-Learning Fix)
+
+**CRITICAL:** Authentication is often MISSED. Use this checklist:
+
+```
+AUTHENTICATION VERIFICATION CHECKLIST:
+□ Step 1: Search server.json for "TOKEN", "API_KEY", "SECRET", "BEARER"
+□ Step 2: Search README for "authentication", "auth", "credentials", "token"
+□ Step 3: Search .env.example for credential fields
+□ Step 4: Search vendor docs for API access / token setup page
+□ Step 5: If ANY credential found → mark ALL applicable auth types as Yes
+□ Step 6: Check learned-fixes.md for "Authentication Fields Marked No" pattern
+```
+
+**Common Mistake Pattern (LEARNED):**
+- ❌ WRONG: "No authentication fields found" (didn't search server.json)
+- ✅ RIGHT: "BUILDKITE_API_TOKEN found in server.json → Bearer Token, PAT, API Token all = Yes"
+- ❌ WRONG: "No auth in README, so Authentication = No" (incomplete search)
+- ✅ RIGHT: "Check server.json, .env.example, config files, vendor docs"
+
+**Why All Three Can Be "Yes":**
+- Bearer Token = delivery method (HTTP header)
+- Personal Access Token = credential type (user-specific)
+- API Token = alternative naming (same credential)
+All can coexist for same server.
+
+---
+
+### Step 5.2 — Tools Operations Verification (Self-Learning Fix)
+
+**CRITICAL:** Tools Operations is MUTUALLY EXCLUSIVE. Choose ONE level only.
+
+```
+TOOLS OPERATIONS VERIFICATION CHECKLIST:
+□ Step 1: Parse ALL tool names from documentation
+□ Step 2: Look for patterns: create_*, update_*, delete_*, cancel_*, remove_*
+□ Step 3: If ONLY read operations found → mark "Read-only" = Yes
+□ Step 4: If read + create/update found → mark "Read+Update" = Yes
+□ Step 5: If read + create/update + delete/cancel found → mark "Read+Update+Delete" = Yes
+□ Step 6: Mark ONLY the HIGHEST level (not multiple levels)
+□ Step 7: Check learned-fixes.md for "Tools Operations Violation" pattern
+```
+
+**Common Mistake Patterns (LEARNED):**
+- ❌ WRONG: Mark both "Read+Update = Yes" AND "Read+Update+Delete = Yes" (violates exclusivity)
+- ✓ RIGHT: Mark ONLY "Read+Update+Delete = Yes" (highest level)
+- ❌ WRONG: "Tool names: create_build, cancel_build" → mark "Read+Update" (missed delete pattern)
+- ✅ RIGHT: "Tool names show cancel_* pattern" → mark "Read+Update+Delete" (delete operations present)
+
+**Cancel/Delete Pattern Recognition:**
+- `cancel_*` → Delete operation
+- `delete_*` → Delete operation
+- `remove_*` → Delete operation
+- `destroy_*` → Delete operation
+
+---
+
+### Step 5.3 — Deployment Approach Verification (Self-Learning Fix)
+
+**CRITICAL:** Deployment Approach allows MULTIPLE selections (NOT mutually exclusive).
+
+```
+DEPLOYMENT APPROACH VERIFICATION CHECKLIST:
+□ Step 1: Search for Dockerfile, docker.json, Dockerfile.local in repo
+□ Step 2: Search server.json for "docker", "container", "run"
+□ Step 3: Search for OCI registry references (ghcr.io, etc.)
+□ Step 4: Check for PyPI/npm package (published package = Local possible)
+□ Step 5: Check for STDIO support (stdin/stdout = Local)
+□ Step 6: Check for vendor endpoint (= Remote)
+□ Step 7: If multiple found → mark ALL applicable approaches
+□ Step 8: Check learned-fixes.md for "Deployment Container Marked No" pattern
+```
+
+**Common Mistake Patterns (LEARNED):**
+- ❌ WRONG: "Go binary exists, so Container = No" (missed Docker config)
+- ✅ RIGHT: "Found Dockerfile + docker image + STDIO" → mark Local = Yes AND Container = Yes
+- ❌ WRONG: "Check README only for deployment" (incomplete search)
+- ✅ RIGHT: "Check README + server.json + Dockerfile + OCI registry"
+
+---
+
 ### Step 6 — Tools & Capabilities
 
 Extract from source code:
@@ -380,14 +482,20 @@ Show category + root cause + ordered steps + risk level. Ask: "Proceed?"
 Test initialize again. Success → continue research. Fail → re-diagnose.
 
 ### Phase 6 — Record Pattern (Skill 2.0)
-If fix succeeds, append to `references/learned-fixes.md`:
+If fix succeeds, append to "Learned Fixes" section in SKILL.md:
 ```
-## [Error Title]
+### Error #[N]: [Error Title]
+
+**Date:** YYYY-MM-DD | **Server:** [server-name] | **Severity:** [High/Medium/Low/CRITICAL]
+
 **Signals:** [symptoms]
-**Cause:** [root cause]
-**Fix:** [step-by-step]
-**Verify:** [how to test]
-**Date:** YYYY-MM-DD | **Category:** [1–7]
+
+**Root Cause:** [root cause]
+
+**Fix (Step-by-Step):**
+[step-by-step instructions]
+
+**Result:** [outcome]
 ```
 
 ---
@@ -526,6 +634,12 @@ Framework version determines protocol, NOT base SDK.
 
 **Example:** Telnyx with FastMCP 0.4.1 + mcp 1.3.0 → 2025-06-18 (FastMCP), not 2025-03-26 (mcp).
 
+**🔒 CRITICAL:** Before marking protocol version in CSV:
+1. Extract exact version from source (package.json, pyproject.toml, etc.)
+2. **DO NUMERIC COMPARISON** against SKILL.md mapping ranges (NOT assumptions)
+3. Example: SDK 1.7.0 < 1.8? YES → 2024-11-05 (NOT 2025-06-18)
+4. **NEVER proceed without explicit verification**
+
 ### Learning 2: Endpoint Verification Strategy
 
 README claims ≠ actual implementation. "Remote MCP Now Available" ≠ endpoint is functional.
@@ -633,6 +747,143 @@ API Token = Yes if:
 ✗ **Trusting README claims without verification** → may not be deployed
 ✗ **Skipping endpoint probing** → use GET + POST to distinguish types
 ✗ **Not checking response format** → distinguishes real MCP vs placeholder
+
+---
+
+## Key Learnings — Attribute Documentation (Session 2026-03-26)
+
+### Learning 3: TLS vs Bearer Token Confusion
+
+**❌ WRONG:** Marking TLS 1.3 = Yes just because Bearer Token = Yes
+
+**✅ CORRECT:** TLS encryption only applies to REMOTE transport (HTTP/SSE or StreamableHttp)
+
+| Transport | TLS Apply? | Reason |
+|-----------|-----------|--------|
+| **STDIO** (local) | No | stdin/stdout on local machine, no encryption needed |
+| **HTTP/SSE** (remote) | Yes | Network transmission requires TLS |
+| **StreamableHttp** (remote) | Yes | Network transmission requires TLS |
+
+**Rule:** If Transport = STDIO AND no remote endpoint exists → **All TLS fields = No**
+
+Bearer Token authentication (for API calls inside tools) ≠ TLS encryption (for transport layer). They are independent.
+
+---
+
+### Learning 4: Pricing Attribute — Server vs Service
+
+**❌ WRONG:** Marking Paid = Yes because GPU rentals charge money
+
+**✅ CORRECT:** Pricing reflects the **MCP SERVER itself**, not the service it accesses
+
+| Scenario | Free | Paid |
+|----------|------|------|
+| **Open-source server, free service** | Yes | No |
+| **Open-source server, paid service** | Yes | No |
+| **Paid server (requires license)** | No | Yes |
+| **Closed-source vendor server** | No | Yes |
+
+**Rule:**
+- Mark **Free = Yes** if the MCP server itself is open-source/no-cost
+- Mark **Paid = Yes** ONLY if you must pay to access/use the MCP server itself
+- Don't confuse with downstream service costs (GPU rentals, API calls, subscriptions)
+
+**Hyperbolic Example:** Server is open-source (Free = Yes), but using it to rent GPUs costs money (that's a service fee, not server fee).
+
+---
+
+### Learning 5: Tools Operations — Presence vs Absence
+
+**❌ WRONG:** Marking "Read-only and/or update operations = Yes" when server also has delete operations
+
+**✅ CORRECT:** Mark the HIGHEST level of operation capability present
+
+**Decision Tree:**
+```
+Does server have delete/terminate operations?
+    → Yes: Mark "Read-only update and/or delete operations = Yes"
+           Mark others = No
+
+Does server have only create/update (no delete)?
+    → Yes: Mark "Read-only and/or update operations = Yes"
+           Mark others = No
+
+Does server have ONLY read operations?
+    → Yes: Mark "Read-only operations = Yes"
+           Mark others = No
+```
+
+**Hyperbolic Example:**
+- Has: list (read), get (read), rent (write), terminate (delete)
+- Highest level = Delete
+- **Result:** Read-only update and/or delete = Yes, others = No
+
+---
+
+### Learning 6: Capabilities - Tools Categorization
+
+**❌ WRONG:** Creating custom categories (e.g., "GPU Management", "SSH Management")
+
+**✅ CORRECT:** Use the EXACT categories from your research documentation
+
+**Rule:** When user provides tool categories in research, use those verbatim. Don't reorganize or rename.
+
+**Source Priority:**
+1. User-provided research documentation (most accurate)
+2. README official tool groupings
+3. Source code file structure
+4. Last resort: Infer from tool names
+
+**Hyperbolic Example:**
+User research showed:
+```
+Team & Workspace Metadata
+Search & Query Utilities
+Other
+```
+Use EXACTLY these categories, not custom ones.
+
+---
+
+### Learning 7: Non-Read-Only Tools Row — Conditional Presence
+
+**❌ WRONG:** Always including "Non-Read-Only Tools" row in CSV
+
+**✅ CORRECT:** Only include this row if it exists in your research documentation
+
+**Rule:**
+- If research has no "Non-Read-Only Tools" section → Don't add the row
+- If research DOES have it → Include with exact details
+- If all tools are read-only → Row says "None — all tools are read-only"
+
+---
+
+### Learning 8: Bearer Token ≠ TLS Encryption
+
+**Core Principle:** These are INDEPENDENT concepts
+
+| Concept | What It Is | Where It Appears |
+|---------|-----------|------------------|
+| **Bearer Token** | Authentication credential delivery method | Authorization header for API calls |
+| **TLS Encryption** | Transport layer encryption | HTTPS protocol for network communication |
+
+**Example:**
+- STDIO server with Bearer Token = uses auth inside local process (no TLS needed)
+- HTTP endpoint with no auth = needs TLS for network safety but no Bearer needed
+- HTTP endpoint with Bearer Token = needs BOTH TLS (network) + Bearer (auth)
+
+**Rule:** Don't assume TLS based on Bearer Token presence. Check transport protocol instead.
+
+---
+
+## Integration Rules (Updated 2026-03-26)
+
+- **Before each session:** Read "Learned Fixes" section and Prevention Checklist before researching
+- **When researching:** Verify Transport Protocol FIRST, then determine TLS
+- **When checking Pricing:** Ask "Is the MCP server itself paid?" not "Does it access paid services?"
+- **When categorizing Tools:** Use user's exact categories from research
+- **When marking Tools Operations:** Find the HIGHEST capability level present
+- **When adding rows:** Only include sections that exist in research documentation
 
 ---
 
@@ -974,6 +1225,179 @@ Rationale: If a vendor hosts on SaaS infrastructure AND has a GitHub repo, the p
 
 ---
 
+## Learned Fixes — MCP Skill 2.0 Self-Learning (Consolidated)
+
+**Purpose:** Track attribute documentation errors, their root causes, and corrections for future research sessions.
+
+**Last Updated:** 2026-03-26
+
+### Error #1: TLS Encryption Mismatch
+
+**Date:** 2026-03-26 | **Server:** Hyperbolic MCP | **Severity:** High
+
+**Signals (What Went Wrong)**
+- Marked TLS 1.3 = Yes and TLS 1.2 = No
+- Server uses STDIO transport (local process, no remote endpoint)
+- Confused Bearer Token authentication with TLS encryption
+
+**Root Cause:** Assumption that Bearer Token (API authentication) implies HTTPS/TLS (transport encryption). These are independent:
+- Bearer Token = how credentials are sent (auth layer)
+- TLS = how data is encrypted (transport layer)
+
+**Fix (Step-by-Step):**
+1. Check Transport Protocol first: Is it STDIO, HTTP/SSE, or StreamableHttp?
+2. For STDIO: All TLS fields = No (local process, no network transmission)
+3. For HTTP/SSE or StreamableHttp: Check actual endpoint protocol (curl -I to verify)
+4. Don't assume: Bearer Token ≠ TLS automatically
+
+**Result:** TLS 1.3 = No, TLS 1.2 = No, Transport = STDIO only
+
+---
+
+### Error #2: Pricing Attribute Confusion
+
+**Date:** 2026-03-26 | **Server:** Hyperbolic MCP | **Severity:** High
+
+**Signals:** Marked Paid = Yes because GPU rentals cost money; Confused service fees with server licensing fees
+
+**Root Cause:** Misunderstood "Pricing" attribute scope. Should reflect the **MCP SERVER itself** not downstream services it accesses.
+
+**Fix (Step-by-Step):**
+1. Ask: "Is the MCP server itself paid or open-source?"
+2. If open-source: Free = Yes, Paid = No (regardless of service costs)
+3. If proprietary/licensed: Free = No, Paid = Yes
+4. Ignore: GPU rental costs, subscription fees, service charges
+5. Document: Only the server's own licensing/distribution model
+
+**Result:** Free = Yes, Paid = No (open-source server, paid services independent)
+
+---
+
+### Error #3: Tools Operations Highest Level Misidentification
+
+**Date:** 2026-03-26 | **Server:** Hyperbolic MCP | **Severity:** Medium
+
+**Signals:** Marked both "Read-only and/or update operations = Yes" AND "Read-only update and/or delete operations = Yes"; These are mutually exclusive
+
+**Root Cause:** Didn't identify highest capability level. Server has delete operations (terminate-gpu-instance) so should mark only the delete-level option.
+
+**Fix (Step-by-Step):**
+1. Scan all tools: Identify all operation types present (Read-only / Update / Delete)
+2. Find highest level:
+   - Delete present? → Mark "Read-only update and/or delete operations = Yes"
+   - Update present (no delete)? → Mark "Read-only and/or update operations = Yes"
+   - Read-only only? → Mark "Read-only operations = Yes"
+3. Mark others = No (mutually exclusive)
+
+**Result:**
+- Read-only operations = Yes (list-available-gpus, get-cluster-details, list-user-instances, ssh-status)
+- Read-only and/or update = No
+- Read-only update and/or delete = Yes (rent-gpu-instance creates, terminate-gpu-instance deletes, remote-shell executes)
+
+---
+
+### Error #4: Capabilities - Tools Incorrect Categorization
+
+**Date:** 2026-03-26 | **Server:** Hyperbolic MCP | **Severity:** Medium
+
+**Signals:** Created custom categories: "GPU Management", "SSH Management"; User provided specific categories: "Team & Workspace Metadata", "Search & Query Utilities", "Other"
+
+**Root Cause:** Made assumptions about logical groupings instead of using user-provided documentation.
+
+**Fix (Step-by-Step):**
+1. Get user's research first: Always ask for exact categories
+2. Extract from documentation: Check README, docs, or user research
+3. Use verbatim: Don't reorganize, rename, or regroup
+4. Priority order: User research > README > Source code > Infer from tool names
+
+**Result:** Used exact user-provided categories:
+- Team & Workspace Metadata
+- Search & Query Utilities
+- Other
+
+---
+
+### Error #5: Non-Read-Only Tools Row Unconditional Inclusion
+
+**Date:** 2026-03-26 | **Server:** Hyperbolic MCP | **Severity:** Low
+
+**Signals:** Added "Non-Read-Only Tools" row to CSV when user research didn't include it; Fabricated detailed_info content
+
+**Root Cause:** Assumed this row should always exist. It's optional and only appears if documented in research.
+
+**Fix (Step-by-Step):**
+1. Check research: Does user's documentation have "Non-Read-Only Tools" section?
+2. If No: Don't add the row to CSV
+3. If Yes: Include exactly as documented
+4. If all read-only: Include row with text "None — all tools are read-only"
+5. Never fabricate: Only include what exists in research
+
+**Result:** Don't include Non-Read-Only Tools row if not in user's research
+
+---
+
+### Error #6: Protocol Version Range Mapping Without Numeric Verification
+
+**Date:** 2026-03-26 | **Server:** Hyperbolic MCP | **Severity:** CRITICAL
+
+**Signals:** Marked Protocol Version = 2025-06-18; User pointed out: SDK 1.7.0 should map to 2024-11-05; Never performed numeric comparison
+
+**Root Cause:** **CRITICAL MISTAKE:** Noted the SDK version but did NOT verify it against SKILL.md mapping ranges.
+- Found: `@modelcontextprotocol/sdk: 1.7.0`
+- Mapping rule: `sdk <1.8` → `2024-11-05`
+- Failed to compare: 1.7.0 < 1.8? YES
+- Assumed instead: Guessed 2025-06-18 without checking
+
+**Fix (Step-by-Step) — STRICT PROTOCOL**
+
+**BEFORE marking ANY protocol version in CSV:**
+1. Extract exact SDK/Framework version from source
+2. **DO NUMERIC COMPARISON** against SKILL.md ranges
+3. Verify: Is 1.7.0 < 1.8? Is 1.15 ≤ version < 1.23? Calculate explicitly
+4. Only AFTER numeric verification → mark the CSV
+
+**Example (Hyperbolic):**
+```
+Step 1: SDK = 1.7.0
+Step 2: Check range: sdk <1.8 → 2024-11-05
+Step 3: Compare: 1.7.0 < 1.8? YES ✅
+Step 4: Mark: 2024-11-05 = Yes
+```
+
+**NEVER DO THIS:**
+- "It looks like 1.7, probably maps to..." ❌
+- Skipping the numeric comparison ❌
+- Assuming version ranges without verification ❌
+
+**Result:** Protocol Version = 2024-11-05 (not 2025-06-18)
+
+**🔒 LOCKED RULE:** **STRICTLY DO NOT MAP without checking right MCP protocol version.** **DO NUMERIC COMPARISON, NOT ASSUMPTION.**
+
+---
+
+### Prevention Checklist (Before Final CSV)
+
+Use this checklist EVERY TIME before generating final CSV:
+
+- [ ] **Protocol Version:** Did numeric comparison (not assumption) against SKILL.md ranges?
+- [ ] **Transport Protocol:** Verified (STDIO/HTTP/StreamableHttp) in source code?
+- [ ] **TLS Encryption:** Only marked Yes if HTTP/SSE/StreamableHttp endpoint exists?
+- [ ] **Pricing:** Reflects MCP server licensing, not service fees?
+- [ ] **Tools Operations:** Only ONE "highest level" marked as Yes?
+- [ ] **Capabilities Categories:** Exactly match user's research documentation?
+- [ ] **Non-Read-Only Tools:** Only included if present in user research?
+- [ ] **Bearer Token ≠ TLS:** Verified these are independent concepts?
+
+---
+
+### Session Log
+
+| Date | Server | Errors | Status |
+|------|--------|--------|--------|
+| 2026-03-26 | Hyperbolic MCP | 6 errors, all corrected | ✅ Complete |
+
+---
+
 ## Summary
 
 **Unified MCP skill** — single optimized execution path for research, deployment, error recovery, and project auditing. Consolidates all functionality into one unified, fast, token-efficient implementation.
@@ -985,7 +1409,7 @@ Rationale: If a vendor hosts on SaaS infrastructure AND has a GitHub repo, the p
 - ✅ 7-phase inline error recovery (auto-triggered)
 - ✅ Evidence-backed attributes (source tracking)
 - ✅ Project compliance audit (PASS/FAIL/WARN)
-- ✅ Skill 2.0 self-learning (learned-fixes.md)
+- ✅ Skill 2.0 self-learning (Learned Fixes section)
 - ✅ Security mandate enforced (credentials via file only)
 - ✅ **FAST & EFFICIENT** — Single file, optimized paths, minimal tokens
 
