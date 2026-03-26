@@ -1,5 +1,5 @@
 ---
-name: unified-mcp-skill
+name: unified-mcp-skill-new
 user-invocable: true
 description: >
   All-in-one unified MCP skill: research MCP servers, document attributes,
