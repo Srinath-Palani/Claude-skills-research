@@ -28,7 +28,7 @@ cd Claude-skills-research
 
 - **Complete Functionality**
   - Research MCP servers with evidence-backed attributes
-  - 10-attribute security scoring (0–53 scale)
+  - Multi-server parallel research + comparison
   - Conditional local setup (clone+install)
   - 7-phase inline error recovery
   - Project compliance audit (45+ checks)
@@ -70,11 +70,11 @@ cd Claude-skills-research
 ### What `/unified-mcp-skill` Does
 
 1. **Research** — Full attribute documentation with evidence backing
-2. **Score** — 10-attribute CCI security score (0–53 scale)
-3. **Setup** — Conditional clone + install (if user chooses)
-4. **Recover** — 7-phase error diagnosis + auto-fix
-5. **Audit** — Compliance checks (PASS/FAIL/WARN)
-6. **Learn** — Skill 2.0 self-learning (error patterns)
+2. **Setup** — Conditional clone + install (if user chooses)
+3. **Recover** — 7-phase error diagnosis + auto-fix
+4. **Audit** — Compliance checks (PASS/FAIL/WARN)
+5. **Learn** — Skill 2.0 self-learning (error patterns)
+6. **Batch** — Multi-server parallel research + comparison
 
 ---
 
@@ -101,35 +101,6 @@ Claude-skills-research/
 
 ---
 
-## v2.0 Performance Metrics
-
-| Metric | Before | After | Improvement |
-|--------|--------|-------|-------------|
-| **Skills** | 4 separate | 1 unified | Single command ✅ |
-| **Files to load** | 4 files | 1 file | **4x faster** ⚡ |
-| **Code lines** | 2,900+ | 533 | **82% reduction** |
-| **Token consumption** | Higher | Lower | **~10% savings** 🎯 |
-| **Context-switching** | Frequent | Never | **Seamless UX** 🎪 |
-| **Maintenance** | 12 files | 1 file | **92% fewer files** |
-
----
-
-## v2.0 Consolidation Summary
-
-**All 4 Skills Merged Into 1 Unified Skill:**
-
-| Original Skill | Lines | Merged Into | Location |
-|---|---|---|---|
-| `mcp-researcher` | 376 | `/mcp` | Steps 0-9 |
-| `attribute-researcher` | 248 | `/mcp` | Step 5-6 |
-| `project-reviewer` | 253 | `/mcp` | Audit section |
-| `error-handling` | 753 | `/mcp` | Phases 1-6 |
-| **Total** | **1,630** | **Unified** | **533 lines** |
-
-**Result:** 82% code reduction, 4x faster loading, same functionality, better performance 🚀
-
----
-
 ## v2.0 Unified Workflow
 
 ```
@@ -140,8 +111,7 @@ User Input (MCP Server / Request)
     ├─ 📊 Research Phase
     │   ├─ Input classification (endpoint/GitHub/name)
     │   ├─ Protocol verification
-    │   ├─ Attribute filling (evidence-backed)
-    │   └─ Security scoring (0–53)
+    │   └─ Attribute filling (evidence-backed)
     │
     ├─ 🚀 Conditional Deployment
     │   ├─ Ask: Local / Remote / Research-only?
@@ -182,7 +152,7 @@ User Input (MCP Server / Request)
 - Security mandate enforced at every step
 
 ✅ **Advanced Features**
-- 10-attribute security scoring (0–53 scale)
+- Multi-server parallel research + comparison
 - Skill 2.0 self-learning via learned-fixes.md
 - Evidence-backed attribute documentation
 - 7 error category auto-classification
@@ -216,15 +186,6 @@ User Input (MCP Server / Request)
    ```
    /unified-mcp-skill "Research the GitHub MCP server"
    ```
-
----
-
-## Release Information
-
-- **Current Version:** 2.0.0 (Production Ready ✅)
-- **Latest Changes:** All skills consolidated into single `/unified-mcp-skill` command
-- **Performance:** 4x faster, 82% less code, 100% functionality preserved
-- **Commit:** a4a4589
 
 ---
 
@@ -271,17 +232,6 @@ git pull origin main
 - ✅ FINAL_REGISTRY_EXPLANATION.md — Comprehensive explanation
 - ✅ COMPLETION_CHECKLIST.md — Verification checklist
 - All guides saved to: `.claude/projects/.../memory/`
-
-### 📊 Performance Metrics (v2.0.1)
-
-| Metric | v2.0 | v2.0.1 | Status |
-|--------|------|--------|--------|
-| **Unified Skills** | 1 | 1 | ✅ Enhanced |
-| **Global Registration** | No | Yes ✅ | FIXED |
-| **Registry Conflicts** | Yes | No ✅ | RESOLVED |
-| **Learning Docs** | 3 | 7+ ✅ | EXPANDED |
-| **Example Servers** | 1 | 2+ ✅ | ADDED |
-| **Production Ready** | Yes | Yes ✅ | VERIFIED |
 
 ### 🔍 What's New
 
@@ -403,11 +353,3 @@ Made with 🤖 Claude | Last Updated: 2026-03-26 | Version: 2.0.1 | Status: Prod
 
 ---
 
-## Latest Changes (2026-03-26) — Git Automation Deployed
-
-✅ **Pre-commit Hook** — Blocks skill changes without doc updates
-✅ **Commit-Msg Hook** — Enforces message format
-✅ **Commit Template** — Guides structured commits
-✅ **Automation Verified** — All hooks installed and executable
-✅ **Committed & Pushed** — Changes synced to GitHub
-✅ **All README files updated** — CLAUDE.md, README.md, and skills/README.md synchronized

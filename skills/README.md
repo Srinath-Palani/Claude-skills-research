@@ -26,9 +26,9 @@
 
 ### Key Features
 
-✅ **MCP Research & Security Scoring**
-- 10-attribute security scoring (0–53 scale)
+✅ **MCP Research**
 - Evidence-backed attribute documentation
+- Multi-server parallel research + comparison
 - Protocol version verification
 
 ✅ **Conditional Local Setup**
@@ -92,7 +92,6 @@ skills/
     │ • Protocol verification          │
     │ • Conditional local setup ◄──────┼─── Only if user wants
     │ • Research & attributes          │
-    │ • Security scoring (0–53)        │
     │ • Inline error recovery (7 phases)
     │ • CSV + Markdown output          │
     │ • Self-learning updates          │

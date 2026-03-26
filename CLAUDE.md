@@ -17,7 +17,7 @@ Then invoke the unified MCP skill with `/unified-mcp-skill` in Claude Code.
 
 ## Unified Skill: `/unified-mcp-skill`
 
-**The all-in-one MCP skill** — research servers with security scoring, document attributes, conditionally set up locally, diagnose errors inline, and audit projects — all in one optimized execution path.
+**The all-in-one MCP skill** — research and document attributes, conditionally set up locally, diagnose errors inline, run multi-server batch research, and audit projects — all in one optimized execution path.
 
 **Invocation:** `/unified-mcp-skill`
 
@@ -30,10 +30,11 @@ Use this skill for any MCP-related task:
 | **Local Setup** | "Set up this server locally", "Clone and run the Slack MCP" |
 | **Error Recovery** | "The MCP server won't connect" [paste error] |
 | **Project Audit** | "Review the project", "Is this ready to commit?" |
+| **Batch Research** | "Research these MCPs: GitHub, Slack, Linear", "Compare GitHub and Stripe MCPs" |
 
 **Features:**
-- ✅ Research with 10-attribute security scoring (0–53 scale)
 - ✅ Evidence-backed attribute documentation
+- ✅ Multi-server parallel research + comparison (~80% fewer tokens vs inline)
 - ✅ Conditional local setup (clone + install if user wants)
 - ✅ 7-phase inline error recovery (auto-diagnosis on connection fail)
 - ✅ Project compliance audit (PASS/FAIL/WARN checks)
@@ -42,7 +43,7 @@ Use this skill for any MCP-related task:
 - ✅ 4 connection methods: STDIO / Published Package / Docker / Remote
 - ✅ Protocol version verification before research
 - ✅ Security mandate enforced (no credentials in chat, always via file editing)
-- ✅ CSV + Markdown report output
+- ✅ CSV report output
 - ✅ **Token-optimized** — single file, no redundancy
 
 ---
@@ -95,9 +96,8 @@ All skills enforce strict security rules:
   2. Setup: Asks deployment preference (local/remote/research-only)
   3. Local Setup (if chosen): Clones, installs, configures
   4. Error Recovery (if needed): Diagnoses and fixes connection errors inline
-  5. Security Score: Calculates CCI score (0–53)
-  6. Report: Saves CSV + Markdown to configured path
-  7. Self-Learning: Records any new error patterns to learned-fixes.md
+  5. Report: Saves CSV to configured path
+  6. Self-Learning: Records any new error patterns to learned-fixes.md
 ```
 
 **No context-switching.** One skill. One command. Complete workflow.
@@ -146,13 +146,6 @@ When team members clone this repo:
 - Fully invocable via `Skill("unified-mcp-skill", args="...")`
 - No longer falls back to separate mcp-research skill
 - Works seamlessly with `/unified-mcp-skill` command and Skill() tool
-
-### Telnyx MCP Server Research ✅
-- Comprehensive research report: `~/Desktop/MCP_reports/telnyx-mcp-server.csv`
-- 46 tools across 12 categories documented
-- Security score: 17/53 (CCI scoring)
-- Configuration template ready at: `.claude/settings.json`
-- All learnings integrated into SKILL.md
 
 ### Key Learnings Integrated
 - **Framework Priority:** FastMCP > Framework > SDK (for protocol detection)

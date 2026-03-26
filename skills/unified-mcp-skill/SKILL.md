@@ -2,7 +2,7 @@
 name: unified-mcp-skill
 user-invocable: true
 description: >
-  All-in-one unified MCP skill: research MCP servers with security scoring, document attributes,
+  All-in-one unified MCP skill: research MCP servers, document attributes,
   conditionally set up locally, diagnose errors inline, and audit projects. Single optimized
   execution path for research, deployment, error recovery, and compliance auditing. Faster,
   fewer tokens, full functionality.
@@ -10,7 +10,7 @@ description: >
 
 # Unified MCP Skill — Research, Deploy, Fix, Audit
 
-**All-in-one MCP server management:** Research with security scoring, document attributes, conditional local setup (clone+install), inline error recovery, and project compliance auditing — all in one unified skill with optimized execution paths.
+**All-in-one MCP server management:** Research and document attributes, conditional local setup (clone+install), inline error recovery, and project compliance auditing — all in one unified skill with optimized execution paths.
 
 ---
 
@@ -18,11 +18,12 @@ description: >
 
 | Capability | Description | Invocation Signal |
 |-----------|-------------|------------------|
-| **MCP Research** | Research and security-score MCP servers | "Research the GitHub MCP server", "Analyze this MCP: https://..." |
+| **MCP Research** | Research and document MCP servers | "Research the GitHub MCP server", "Analyze this MCP: https://..." |
 | **Attribute Docs** | Fill every MCP attribute with evidence | "Document attributes for...", "Catalogue this MCP server" |
 | **Local Setup** | Clone, install, configure MCP servers | "Set up this server locally", "Clone and run..." |
 | **Error Recovery** | 7-phase inline diagnosis and auto-fix | Automatic on connection fail |
 | **Project Audit** | Audit project and skills for compliance | "Review the project", "Is this ready to commit?" |
+| **Multi-Server Research** | Parallel batch research + comparison of N servers | "Research these MCPs: X, Y, Z", "Compare GitHub and Slack MCPs" |
 
 ---
 
@@ -35,7 +36,7 @@ description: >
 ✓ **Configurable paths** (report save + clone paths, stored for future)
 ✓ **Logic enforcement** — STDIO↔Local, HTTP/SSE↔Remote auto-set
 ✓ **7-phase inline error recovery** — automatic diagnosis on connection fail
-✓ **10-attribute security scoring** (0–53 scale)
+✓ **Multi-server parallel research** — layered sub-agent batch, ~80% fewer tokens vs. inline
 ✓ **Evidence-backed attribute documentation**
 ✓ **CSV report output** with full traceability
 ✓ **Project compliance audit** with PASS/FAIL/WARN checks
@@ -68,51 +69,89 @@ SECURITY ALERT: Do not share credentials here. Treat as compromised.
 - .env files committed to git
 - Config files tracked by git
 - Any committed or cached files
+- `.claude/settings.json` (project-level)
+- `~/.claude/settings.json` (global)
+
+**For MCP config files (`.claude/settings.json` / `~/.claude/settings.json`):**
+Always write `<PLACEHOLDER>` for any API key, token, or secret field.
+Direct the user to open the file and paste the real value themselves.
+Never write, suggest, or echo an actual key into these files — not even partially.
 
 ---
 
 ## Usage
 
-**Invoke with:** `/start-mcp`
+**Invoke with:** `/unified-mcp-skill`
+
+> 🔒 **LOCKED — Do NOT change this invocation command without explicit user approval.**
 
 ```
 RESEARCH
-/start-mcp "Research the GitHub MCP server"
-/start-mcp "Get full report on the Slack MCP server"
-/start-mcp "Document this MCP server: https://github.com/org/repo"
-/start-mcp "Analyze and score this MCP: https://mcp.example.com"
+/unified-mcp-skill "Research the GitHub MCP server"
+/unified-mcp-skill "Get full report on the Slack MCP server"
+/unified-mcp-skill "Document this MCP server: https://github.com/org/repo"
+/unified-mcp-skill "Analyze and score this MCP: https://mcp.example.com"
 
 LOCAL SETUP
-/start-mcp "Set up the GitHub MCP server locally"
-/start-mcp "Clone and get the Slack MCP running"
+/unified-mcp-skill "Set up the GitHub MCP server locally"
+/unified-mcp-skill "Clone and get the Slack MCP running"
 
 ERROR RECOVERY (automatic)
-/start-mcp "The MCP server won't connect"
-/start-mcp [paste error or stack trace]
+/unified-mcp-skill "The MCP server won't connect"
+/unified-mcp-skill [paste error or stack trace]
 
 PROJECT AUDIT
-/start-mcp "Review the project"
-/start-mcp "Is this ready to commit?"
+/unified-mcp-skill "Review the project"
+/unified-mcp-skill "Is this ready to commit?"
+
+MULTI-SERVER / BATCH
+/unified-mcp-skill "Research these MCPs: GitHub, Slack, Linear"
+/unified-mcp-skill "Compare the GitHub and Stripe MCP servers"
+/unified-mcp-skill "Batch report on: [server1], [server2], [server3]"
 ```
 
 ---
 
-## Unified Workflow: 8 Steps + Conditional Local Setup + Inline Error Recovery
+## Unified Workflow: 7 Steps + Conditional Local Setup + Inline Error Recovery
 
 ### Step 0 — Configuration & Input Classification
 
-**First-time path configuration:**
-- Ask: "Where to save MCP reports?"
-- Ask: "Clone location for local servers?" (default: `~/MCP_repos/`)
-- Save to `.claude/settings.json` for future sessions
+**Path configuration — always ask, never assume:**
 
-**Classify input as one of 3 types:**
+Report save path — ask every first use:
+```
+Where should MCP reports be saved?
+Enter full path (e.g. /Users/you/Desktop/MCP_reports):
+```
 
-| Type | Signal | Transport | Next Step |
-|------|--------|-----------|-----------|
-| **Remote Endpoint** | `https://`, path `/sse` or `/mcp` | HTTP/SSE or StreamableHttp | TLS verify, skip local setup |
-| **GitHub URL** | Contains `github.com` | STDIO | Ask: Local setup or research only? |
-| **Server Name** | Plain text (e.g., "GitHub MCP") | Detect | Search vendor + GitHub |
+Clone path — ask every time user chooses local setup:
+```
+Where should this server be cloned?
+Enter full path:
+```
+If a path was used before, offer to reuse:
+```
+Last used clone path: /Users/you/projects/mcp
+[ 1 ] Use this path
+[ 2 ] Enter a different path
+[ 3 ] Save this as my default path (skip asking next time)
+```
+Only save as default if user explicitly selects option 3.
+
+**Classify input to determine starting point — then ALWAYS find the other source too:**
+
+| Input Given | Starting Point | Also MUST Find |
+|-------------|---------------|----------------|
+| **Remote Endpoint** | Probe endpoint (TLS, auth, transport) | Search GitHub for source repo |
+| **GitHub URL** | Read repo (README, deps, tools) | Search for + probe remote endpoint |
+| **Server Name** | Search both simultaneously | GitHub URL + remote endpoint |
+
+**MANDATORY DUAL-SOURCE RULE:**
+Regardless of input type, research is NEVER complete with only one source.
+- Given GitHub URL → always search for remote endpoint (README, docs, curl probe)
+- Given remote endpoint → always find GitHub repo
+- Given server name → find both before proceeding
+Run both searches in parallel via Step 0.5. Combine results using Report Generation Rules 2–5.
 
 ---
 
@@ -150,7 +189,12 @@ Record: Framework name, version, protocol version (with source).
 2. Verify TLS: Run GET and POST tests (document results)
 3. Test connection: Probing both HTTP methods
 4. Detect auth method: Check WWW-Authenticate header, /.well-known/oauth, vendor docs
-5. Ask config location: Global (~/.claude/settings.json) or Project (.claude/settings.json)?
+5. Ask config location:
+   ```
+   Where should the MCP config be added?
+   [ 1 ] Global   → ~/.claude/settings.json  (all projects)
+   [ 2 ] Project  → .claude/settings.json    (this project only)
+   ```
 6. Build config **with `<PLACEHOLDER>` values only** — direct user to edit file directly
 7. Test initialize request — on fail → Error Recovery Phase 1
 
@@ -158,21 +202,19 @@ Record: Framework name, version, protocol version (with source).
 
 ### Step 3 — GitHub Repository URL (Conditional Local Setup)
 
-**Ask deployment preference (1/2/3):**
+**Ask deployment preference:**
 
 ```
 How do you want to run this server?
 
-1. Locally (clone + install + configure)
-   → Full setup: clone, install deps, test connection
+[ 1 ] Locally (clone + install + configure)
+      → Full setup: clone, install deps, test connection
 
-2. Use remote endpoint (if available)
-   → Check README for remote endpoint
+[ 2 ] Use remote endpoint (if available)
+      → Check README for remote endpoint
 
-3. Just research attributes (no setup)
-   → Skip local setup, proceed to research only
-
-Select (1/2/3):
+[ 3 ] Just research attributes (no setup)
+      → Skip local setup, proceed to research only
 ```
 
 **If Option 1 (Local Setup) — Execute sub-steps:**
@@ -213,8 +255,13 @@ Skip local setup, proceed to attribute research.
 
 1. Search vendor documentation for remote endpoint
 2. Search for GitHub repository
-3. If both found: Ask user (Remote / GitHub / Help me decide)
-4. Continue with chosen path (Type A or B)
+3. If both found, ask:
+   ```
+   [ 1 ] Use remote endpoint
+   [ 2 ] Use GitHub repository
+   [ 3 ] Help me decide
+   ```
+4. Continue with chosen path
 
 ---
 
@@ -230,7 +277,7 @@ Skip local setup, proceed to attribute research.
 |-----------|---------|
 | Distribution | Official OR Community |
 | Pricing | Free OR Paid |
-| Hosting Provider | Choose: SaaS / GitHub / GitLab / Bitbucket / SourceHut |
+| Hosting Provider | Choose: SaaS / GitHub |
 | Transport Protocol | Choose: STDIO / HTTP/SSE / StreamableHttp |
 | Tools Operations | Choose HIGHEST: Read-only / R+Update / R+Update+Delete |
 
@@ -244,8 +291,8 @@ Every "Yes" must have source + exact quote or file path.
 | Description | Text | README (3–4 lines, specific capabilities) |
 | Category | Choice | mcp.md or vendor classification |
 | Git Repo | URL | GitHub link (or N/A) |
-| Git Version | Tag | Latest release (format: v1.2.3 + all versions) |
-| Authentication | Choice | Vendor docs or source code (env vars, decorators) |
+| Git Version | Tag | Latest only — Releases first, Tags second (format: v1.2.3) |
+| Authentication | Choice | Vendor docs or source code (env vars, decorators) — see Authentication Detection Rules below |
 | Transport | Choice | Server startup code analysis |
 | Deployment | Choice | Based on transport + availability |
 
@@ -257,7 +304,7 @@ Extract from source code:
 - Find `@mcp.tool()` decorators
 - Group by logical category
 - List non-read-only operations (write/delete)
-- Check capabilities: Tools/Resources/Prompts/Sampling
+- Check capabilities: Tools only
 
 **Format (CSV cell):**
 ```
@@ -277,33 +324,7 @@ Extract from vendor docs + GitHub:
 
 ---
 
-### Step 8 — Calculate Security Score (Optional)
-
-```
-Include CCI Security Score?
-1. Yes, calculate
-2. No, skip
-3. Cancel
-```
-
-**10 Attributes (max 53 total):**
-
-| Attribute | Max | Scoring |
-|-----------|-----|---------|
-| Protocol Version | 5 | Latest=5, 1 behind=3, older=1 |
-| Distribution | 5 | Official=5, Community=3 |
-| Pricing | 3 | Free=3, Paid=1 |
-| Authentication | 5 | OAuth 2.1=5, Bearer/PAT=3, Token=2, None=1 |
-| Hosting | 5 | SaaS=5, GitHub=3, Self-hosted=1 |
-| TLS | 5 | 1.3=5, 1.2=3, STDIO N/A=3, None=1 |
-| Transport | 5 | StreamableHttp=5, HTTP/SSE=3, STDIO=2 |
-| Tools Operations | 5 | R+U+D=5, R+U=3, Read-only=1 |
-| Deployment | 3 | Remote=3, Local/Container=2, Hybrid=1 |
-| Capabilities | 3 | 4+ types=3, 2-3=2, 1=1 |
-
----
-
-### Step 9 — Save Report
+### Step 8 — Save Report
 
 **Location:** User-configured path
 **Format:** CSV (3 columns: Category, Attribute, Status)
@@ -397,7 +418,6 @@ Triggered by: `"Review the project"`, `"Is this ready to commit?"`, `"Check requ
 **Completeness:**
 - [ ] All workflows have approval gates
 - [ ] Error recovery covers all 7 categories
-- [ ] Security scoring validated against CCI spec
 
 ### Audit Output
 
@@ -427,19 +447,21 @@ Sequential research misses interdependencies. Endpoint found in Thread 3 reveals
 
 ### Step 0.5 — 5 Concurrent Threads
 
-**Thread 1: GitHub README Full Read**
+**Thread 1: GitHub Repository Research** *(always run — find repo if not given)*
+- If only endpoint given → search for GitHub repo first, then read it
 - Read ENTIRE README (all sections)
 - Search: endpoint, https://, remote, hosted, cloud
 - Extract ALL external URLs
 - Look for deprecation notices (may point to new versions)
 
-**Thread 2: Repository File Search**
+**Thread 2: Repository File Search** *(always run)*
 - Files: .env.example, config.json, setup.md, docs/
 - Grep: "https://", "endpoint", "url", "host" patterns
 - API paths: /api/v2, /v1, /mcp
 - Comments with example URLs
 
-**Thread 3: Endpoint Pattern Probing (Multi-Method)**
+**Thread 3: Remote Endpoint Probing** *(always run — find endpoint if not given)*
+- If only GitHub given → extract candidate endpoint URLs from README/docs first
 - Test 1: GET request (check HTTP/SSE)
   - `curl -I https://api.{vendor}.com/v2/mcp`
   - 200/401/403 → exists; 404 → not GET-based
@@ -468,13 +490,21 @@ Sequential research misses interdependencies. Endpoint found in Thread 3 reveals
 ### After All Threads Complete
 
 **Checkpoint:** Verify all complete before proceeding:
-- ✅ Full README read?
+- ✅ GitHub repo found AND full README read?
 - ✅ All repo files searched?
-- ✅ Endpoint patterns probed?
-- ✅ Framework version identified?
+- ✅ Remote endpoint found AND probed (GET + POST)?
+- ✅ Framework/SDK version identified?
 - ✅ Compliance documented?
 
-If ANY incomplete → Continue until done.
+**Both GitHub + remote endpoint MUST be researched before moving to Step 1.**
+If either source is missing → continue searching until found or confirmed non-existent.
+
+---
+
+## Multi-Server Parallel Research
+
+**If 1 server detected** → skip this section, continue with standard workflow from Step 0.
+**If 2+ servers detected** → load and follow `references/multi-server.md`.
 
 ---
 
@@ -527,6 +557,61 @@ Step 3: Response format analysis
 3. Verify actual implementation → Can you call MCP methods?
 
 If endpoint returns vendor API errors (not JSON-RPC) → Mark as: Endpoint URL = N/A (not functional yet).
+
+---
+
+## Authentication Detection Rules
+
+**Core Principle:** Bearer Token is a DELIVERY METHOD, not a credential type. Multiple auth fields can be Yes simultaneously.
+
+### Visual Relationship
+```
+Bearer Token (delivery method — how it's sent)
+    ├── Personal Access Token  (user-specific, acts on behalf of user)
+    ├── OAuth Access Token     (from OAuth 2.1 flow)
+    └── JWT Token              (signed token)
+
+API Key (credential type — app identification, NOT user-specific)
+    └── Can be delivered via Bearer header OR X-API-Key header OR query param
+```
+
+### Detection Rules per Auth Type
+
+> 🔒 **LOCKED — Do NOT modify this table without explicit user approval.**
+
+| Auth Type | Mark Yes When | Example Header | Co-occurrence |
+|-----------|--------------|----------------|---------------|
+| **Bearer Token** | `Authorization: Bearer` found anywhere in source/docs | `Authorization: Bearer <token>` | Always Yes when PAT, OAuth token, or API key uses Bearer delivery |
+| **Personal Access Token** | "personal access token", "PAT" explicitly in docs/README/code; user-specific token acting on behalf of user | `Authorization: Bearer <pat>` | → Also set Bearer Token = Yes |
+| **API Token** | `"api key"`, `"api_token"`, `"api_key"` in source or docs; static key for app identification | `X-API-Key: abc123` OR `Authorization: Bearer <api_key>` | → Also set Bearer Token = Yes if sent via Bearer |
+| **OAuth 2.1 - Authorization Code Flow** | OAuth 2.1 auth code flow documented; user redirected to auth page | `Authorization: Bearer <oauth_token>` | → Also set Bearer Token = Yes |
+| **OAuth 2.1 - Client Credentials Flow** | OAuth 2.1 client credentials documented; machine-to-machine auth | `Authorization: Bearer <token>` | → Also set Bearer Token = Yes |
+
+### Key Rules
+
+> 🔒 **LOCKED — Do NOT modify these rules without explicit user approval.**
+
+1. **Bearer Token ≠ credential type** — it's the transport mechanism. Never mark ONLY Bearer Token without also identifying the underlying credential type (PAT / API Token / OAuth).
+2. **PAT + Bearer = both Yes** — PAT is delivered via Bearer header, so both are always Yes together.
+3. **API Token + Bearer = both Yes** — if API key is sent via `Authorization: Bearer`, both are Yes.
+4. **API Token ≠ PAT** — API keys are app-level static keys; PATs are user-level tokens. Do not conflate.
+5. **Multiple Yes allowed** — Auth fields are NOT mutually exclusive. Mark all that apply.
+
+### Detection Patterns (from source code)
+
+```
+Bearer Token = Yes if:
+  "Authorization: Bearer" in source/docs
+
+PAT = Yes if:
+  "personal access token" in combined_text OR
+  "PAT" explicitly mentioned in docs
+
+API Token = Yes if:
+  "api key" in combined_text OR
+  "api_token" in combined_text OR
+  "api_key" in combined_text
+```
 
 ---
 
@@ -587,7 +672,8 @@ If endpoint returns vendor API errors (not JSON-RPC) → Mark as: Endpoint URL =
 ```
 MCP Info
 ├── Description (3–4 lines with specific capabilities)
-├── Git Repo Version (v1.2.3 format + all versions list)
+├── Git Repo Version (v1.2.3 format — latest only)
+│   Source priority: 1st → GitHub Releases  2nd → GitHub Tags  (never use server initialize response)
 ├── Category (one of 4: File Management / Developer Tools / Data Retrieval / Productivity)
 ├── GitHub Repository (URL or N/A)
 └── Endpoint URL (URL or N/A)
@@ -595,16 +681,16 @@ MCP Info
 Distribution Type (Official / Community)
 MCP Protocol Version (2025-11-25 / 2025-06-18 / 2025-03-26 / 2024-11-05)
 Pricing (Free / Paid)
-Hosting Provider (SaaS / GitHub / GitLab / Bitbucket / SourceHut)
+Hosting Provider (SaaS / GitHub)
 Authentication (OAuth 2.1 AuthCode / OAuth 2.1 Client Creds / Bearer / PAT / API Token)
 Data Protection (TLS 1.3 / TLS 1.2 / Lower versions or no encryption)
-Transport Protocol (STDIO / HTTP/SSE / StreamableHttp / FastAPI)
+Transport Protocol (STDIO / HTTP/SSE / StreamableHttp)
 Tools Operations (Read-only / R+Update / R+Update+Delete)
 Deployment Approach (Local / Container / Remote)
-Capabilities (Tools / Resources / Prompts / Sampling)
+Compliance & Certifications (HIPAA / GDPR / SOC 2 / FedRAMP)
+Capabilities (Tools)
 Capabilities - Tools (detailed_info with categories and bullet points)
 Non-Read-Only Tools (detailed_info with categories OR "None — all tools are read-only")
-Compliance & Certifications (HIPAA / GDPR / SOC 2 / FedRAMP)
 ```
 
 **Example Rows:**
@@ -616,7 +702,7 @@ MCP Info,Description,"Telnyx Python MCP Server for managing telephony, messaging
 
 Row 2 (Version):
 ```csv
-MCP Info,Git Repo Version,"v0.1.2 [ Referred from Tags/Releases ] | All versions: v0.1.2, v0.1.1, v0.1.0"
+MCP Info,Git Repo Version,"v0.1.2 [ Referred from Tags/Releases ]"
 ```
 
 Row 3 (Tools detailed_info):
@@ -690,7 +776,7 @@ Capabilities - Tools,detailed_info,"AI Assistants
 ```csv
 Category,Attribute,Status
 MCP Info,Description,"Telnyx Python MCP Server for managing telephony, messaging, and AI assistant workflows via Claude and other MCP clients. Provides 50+ tools across SMS/MMS messaging, voice call control, AI assistant creation, cloud storage (S3-compatible), embeddings, webhook management, and integration secrets handling. Supports selective tool filtering and webhook receivers via ngrok integration."
-MCP Info,Git Repo Version,"v0.1.2 [ Referred from Tags/Releases ] | All versions: v0.1.2, v0.1.1, v0.1.0"
+MCP Info,Git Repo Version,"v0.1.2 [ Referred from Tags/Releases ]"
 MCP Info,Category,"Developer and Coding Tools"
 MCP Info,GitHub Repository,"https://github.com/team-telnyx/telnyx-mcp-server"
 MCP Info,Endpoint URL,"N/A"
@@ -703,11 +789,7 @@ MCP Protocol Version,2024-11-05,No
 Pricing,Free,Yes
 Pricing,Paid,No
 Hosting Provider,SaaS Vendor,No
-Hosting Provider,3rd Party SaaS vendor,No
 Hosting Provider,GitHub,Yes
-Hosting Provider,GitLab,No
-Hosting Provider,Bitbucket,No
-Hosting Provider,SourceHut/Gitea/Gogs,No
 Authentication,OAuth 2.1 - Authorization Code Flow,No
 Authentication,OAuth 2.1 - Client Credentials Flow,No
 Authentication,Bearer Token,No
@@ -719,17 +801,17 @@ Data Protection,Lower versions or no encryption,No
 Transport Protocol,STDIO,Yes
 Transport Protocol,HTTP/SSE,No
 Transport Protocol,StreamableHttp,No
-Transport Protocol,FastAPI,No
 Tools Operations,Read-only operations,No
 Tools Operations,Read-only and/or update operations,No
 Tools Operations,Read-only update and/or delete operations,Yes
 Deployment Approach,Local,Yes
 Deployment Approach,Container,No
 Deployment Approach,Remote,No
+Compliance & Certifications,HIPAA,No
+Compliance & Certifications,GDPR,No
+Compliance & Certifications,SOC 2,No
+Compliance & Certifications,FedRAMP,No
 Capabilities,Tools,Yes
-Capabilities,Resources,Yes
-Capabilities,Prompts,No
-Capabilities,Sampling,No
 Capabilities - Tools,detailed_info,"AI Assistants
     •    create_assistant – Create a new AI assistant with custom instructions and configurations
     •    list_assistants – List all existing AI assistants
@@ -822,11 +904,68 @@ Secrets Manager
 
 Webhooks
     •    webhook_configuration – Creates/modifies webhook (write operation)"
-Compliance & Certifications,HIPAA,No
-Compliance & Certifications,GDPR,No
-Compliance & Certifications,SOC 2,No
-Compliance & Certifications,FedRAMP,No
 ```
+
+---
+
+## Report Generation Rules (Single & Multi-Server)
+
+### Rule 1 — Per-Server CSV Naming
+Each server gets its own report: `~/Desktop/MCP_reports/<mcp-name>.csv`
+Example: `github-mcp-server.csv`, `slack-mcp.csv`
+
+---
+
+### Rule 2 — Always Check Both Sources (GitHub + Remote Endpoint)
+Regardless of what input the user provides, ALWAYS research both:
+
+| User provides | Also check |
+|---------------|------------|
+| GitHub URL | Search for + probe remote endpoint (README, docs, curl test) |
+| Remote endpoint | Search for + find GitHub repository |
+| Server name | Find both GitHub URL and remote endpoint |
+
+Run both source searches in parallel (existing Step 0.5 + endpoint probe).
+Generate the report from the **combined findings of both sources**.
+
+---
+
+### Rule 3 — Multi-Value Category Merge (Auth / Transport / Deployment)
+For these 3 categories, if **either source** yields a value → mark it `Yes`:
+
+**Authentication** — union of both sources:
+```
+If GitHub shows: API Token = Yes
+If endpoint shows: Bearer Token = Yes
+→ Report both as Yes:
+  Authentication,API Token,Yes
+  Authentication,Bearer Token,Yes
+```
+
+Same logic applies to:
+- **Transport Protocol** — union of all detected transports across both sources:
+  - GitHub = STDIO + endpoint probe = HTTP/SSE → both Yes
+  - GitHub = STDIO + endpoint probe = StreamableHttp → both Yes
+  - Endpoint = HTTP/SSE AND StreamableHttp detected → both Yes
+  - All three possible → STDIO Yes, HTTP/SSE Yes, StreamableHttp Yes
+- **Deployment Approach** — if GitHub = Local and endpoint = Remote → both Yes
+
+---
+
+### Rule 4 — Capabilities - Tools: Combine & Mention Both
+If GitHub source lists tools and remote endpoint lists additional tools:
+- Merge all tool names into one `Capabilities - Tools,detailed_info` cell
+- Note the source of each tool group if they differ
+
+---
+
+### Rule 5 — Hosting Provider Priority Rule
+If research finds **both** SaaS Vendor and GitHub as hosting:
+```
+→ Mark SaaS Vendor = Yes (SaaS Vendor takes priority)
+→ Mark GitHub = No
+```
+Rationale: If a vendor hosts on SaaS infrastructure AND has a GitHub repo, the primary hosting is SaaS.
 
 ---
 
@@ -840,7 +979,6 @@ Compliance & Certifications,FedRAMP,No
 - ✅ 4 connection methods (STDIO / Package / Docker / Remote)
 - ✅ 7-phase inline error recovery (auto-triggered)
 - ✅ Evidence-backed attributes (source tracking)
-- ✅ 10-attribute security scoring (CCI-based)
 - ✅ Project compliance audit (PASS/FAIL/WARN)
 - ✅ Skill 2.0 self-learning (learned-fixes.md)
 - ✅ Security mandate enforced (credentials via file only)
