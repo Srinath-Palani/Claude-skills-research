@@ -1,0 +1,41 @@
+# Commit message template for Claude-skills-research
+# Usage: git config commit.template .git-commit-template
+#
+# Format: Type: Brief description (50 chars max for first line)
+#
+# Types:
+# - Feature: New functionality or capability
+# - Fix: Bug fix or correction
+# - Update: Enhancement to existing feature
+# - Refactor: Code restructuring without feature change
+# - Docs: Documentation updates (README.md, CLAUDE.md, etc)
+# - Test: Test additions or fixes
+# - Chore: Maintenance, cleanup, dependencies
+# - WIP: Work in progress (avoid for main branch)
+
+# Example:
+# Feature: Add Telnyx MCP server research capability
+#
+# Updates:
+# - CLAUDE.md: Added new skill documentation
+# - README.md: Updated getting started section
+# - SKILL.md: Integrated new research methodology
+#
+# Key Changes:
+# - 46-tool enumeration for Telnyx MCP
+# - Security scoring (17/53 CCI)
+# - Protocol version detection (FastMCP priority)
+#
+# Co-Authored-By: Claude Haiku 4.5 <noreply@anthropic.com>
+
+# IMPORTANT REMINDERS:
+# 1. Always update CLAUDE.md for feature/fix changes
+# 2. Always update README.md for release-level changes
+# 3. Always update SKILL.md for methodology/learning changes
+# 4. Include explicit list of files updated in commit message
+# 5. Add Co-Authored-By line for all commits
+
+# Commit to:
+# - Include specific files changed in message
+# - Reference version/release numbers for major changes
+# - Link to relevant issues if applicable
