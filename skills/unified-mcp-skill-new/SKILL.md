@@ -86,33 +86,33 @@ Never write, suggest, or echo an actual key into these files — not even partia
 
 ## Usage
 
-**Invoke with:** `/unified-mcp-skill`
+**Invoke with:** `/unified-mcp-skill-new`
 
-> 🔒 **LOCKED — Do NOT change this invocation command without explicit user approval.**
+> ✅ **UNLOCKED — Invocation command updated to `/unified-mcp-skill-new` with explicit user approval (2026-03-27).**
 
 ```
 RESEARCH
-/unified-mcp-skill "Research the GitHub MCP server"
-/unified-mcp-skill "Get full report on the Slack MCP server"
-/unified-mcp-skill "Document this MCP server: https://github.com/org/repo"
-/unified-mcp-skill "Analyze and score this MCP: https://mcp.example.com"
+/unified-mcp-skill-new "Research the GitHub MCP server"
+/unified-mcp-skill-new "Get full report on the Slack MCP server"
+/unified-mcp-skill-new "Document this MCP server: https://github.com/org/repo"
+/unified-mcp-skill-new "Analyze and score this MCP: https://mcp.example.com"
 
 LOCAL SETUP
-/unified-mcp-skill "Set up the GitHub MCP server locally"
-/unified-mcp-skill "Clone and get the Slack MCP running"
+/unified-mcp-skill-new "Set up the GitHub MCP server locally"
+/unified-mcp-skill-new "Clone and get the Slack MCP running"
 
 ERROR RECOVERY (automatic)
-/unified-mcp-skill "The MCP server won't connect"
-/unified-mcp-skill [paste error or stack trace]
+/unified-mcp-skill-new "The MCP server won't connect"
+/unified-mcp-skill-new [paste error or stack trace]
 
 PROJECT AUDIT
-/unified-mcp-skill "Review the project"
-/unified-mcp-skill "Is this ready to commit?"
+/unified-mcp-skill-new "Review the project"
+/unified-mcp-skill-new "Is this ready to commit?"
 
 MULTI-SERVER / BATCH
-/unified-mcp-skill "Research these MCPs: GitHub, Slack, Linear"
-/unified-mcp-skill "Compare the GitHub and Stripe MCP servers"
-/unified-mcp-skill "Batch report on: [server1], [server2], [server3]"
+/unified-mcp-skill-new "Research these MCPs: GitHub, Slack, Linear"
+/unified-mcp-skill-new "Compare the GitHub and Stripe MCP servers"
+/unified-mcp-skill-new "Batch report on: [server1], [server2], [server3]"
 ```
 
 ---
@@ -1504,6 +1504,31 @@ Use this checklist EVERY TIME before generating final CSV:
 - ✅ Skill 2.0 self-learning (Learned Fixes section)
 - ✅ Security mandate enforced (credentials via file only)
 - ✅ **FAST & EFFICIENT** — Single file, optimized paths, minimal tokens
+
+---
+
+## Final Report Format (for Project Audits & Sessions)
+
+When generating final reports for project audits, use this format:
+
+```
+╔════════════════════════════════════════════════════════════════════════════════════════╗
+║                                                                                        ║
+║                    ✅ ✅ ✅  REPORT SUCCESSFULLY GENERATED  ✅ ✅ ✅                 ║
+║                                                                                        ║
+║                                                                                        ║
+║                                FILE LOCATION:                                         ║
+║                                                                                        ║
+║              /path/to/report/REPORT_NAME_DATE.txt                                     ║
+║                                                                                        ║
+║                                                                                        ║
+╚════════════════════════════════════════════════════════════════════════════════════════╝
+```
+
+**Format Features:**
+- Large, bold text (visible in all IDEs and terminals)
+- Clear file location path
+- Works across all platforms and editors
 
 ---
 
