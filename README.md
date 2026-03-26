@@ -296,6 +296,27 @@ git pull origin main
 
 ## 📋 Development Workflow
 
+### Git Automation System (v2.0.1)
+
+This project includes 3 automated quality checks to ensure documentation always stays synchronized:
+
+**Automated Checks:**
+
+1. **Pre-commit Hook** — Prevents commits when SKILL.md changes without CLAUDE.md or README.md
+   - File: `.git/hooks/pre-commit`
+   - Benefit: Catches documentation drift before commit
+   - Example error: Clear message showing exactly which docs to stage
+
+2. **Commit-Msg Hook** — Validates all commit messages
+   - File: `.git/hooks/commit-msg`
+   - Enforces: `Type: Description` format with Co-Authored-By recommendation
+   - Benefit: Consistent, readable git history
+
+3. **Commit Template** — Guides structured commits
+   - File: `.git-commit-template`
+   - Auto-loads: When you run `git commit`
+   - Benefit: Team members see exactly what to document
+
 **Before committing, always update:**
 
 ```bash
@@ -304,20 +325,27 @@ git pull origin main
 # README.md — Quick start and latest release notes
 # SKILL.md — Core skill documentation and learnings
 
-# 2. Commit with proper template
+# 2. Stage all changes
 git add CLAUDE.md README.md skills/unified-mcp-skill/SKILL.md
-git commit -m "Feature: Brief description
 
-Updates:
-- CLAUDE.md: [sections]
-- README.md: [sections]
-- SKILL.md: [learnings/features]
+# 3. Commit (template auto-loads with guidance)
+git commit  # Opens editor with pre-filled template
 
-Co-Authored-By: Claude Haiku 4.5 <noreply@anthropic.com>"
-
-# 3. Verify and push
+# 4. Verify and push
 git log -1 --stat
 git push origin main
+```
+
+**What the template guides you to write:**
+```
+Type: Brief description (Feature/Fix/Update/Docs/etc)
+
+Updates:
+- CLAUDE.md: [specific sections]
+- README.md: [specific sections]
+- SKILL.md: [learnings/features]
+
+Co-Authored-By: Claude Haiku 4.5 <noreply@anthropic.com>
 ```
 
 ---
@@ -372,3 +400,13 @@ cp -r skills/unified-mcp-skill ~/.claude/skills/unified-mcp-skill
 ---
 
 Made with 🤖 Claude | Last Updated: 2026-03-26 | Version: 2.0.1 | Status: Production Ready ✅
+
+---
+
+## Latest Changes (2026-03-26) — Git Automation Deployed
+
+✅ **Pre-commit Hook** — Blocks skill changes without doc updates
+✅ **Commit-Msg Hook** — Enforces message format
+✅ **Commit Template** — Guides structured commits
+✅ **Automation Verified** — All hooks installed and executable
+✅ **Committed & Pushed** — Changes synced to GitHub
