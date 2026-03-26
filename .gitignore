@@ -43,3 +43,9 @@ test_reports/
 # Archive contains historical records from optimization process
 # Not needed for production or users
 archive/
+
+# Project Documentation (local working documents)
+# These are internal working files, not part of the distribution
+IMPLEMENTATION_SUMMARY.md
+QUALITY_SCORE_IMPROVEMENT_PLAN.md
+optimization_guide.md
