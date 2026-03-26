@@ -7,7 +7,7 @@
 ## 🆕 New Capabilities
 
 ### 1. **learned-fixes.md** — Error Pattern Database
-Location: `skills/unified-mcp-skill/references/learned-fixes.md`
+Location: `skills/unified-mcp-skill-new/references/learned-fixes.md`
 
 Contains 4 documented error patterns with:
 - Root cause analysis
@@ -140,7 +140,7 @@ Updated `multi-server.md` to reference learned-fixes during batch research.
 ## 📚 File Structure
 
 ```
-skills/unified-mcp-skill/
+skills/unified-mcp-skill-new/
 ├── SKILL.md                    ← Enhanced with verification sections
 └── references/
     ├── learned-fixes.md        ← NEW: Error pattern database
