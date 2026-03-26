@@ -1,330 +1,97 @@
-# Claude Skills — Unified MCP Skill (v2.0)
+# Claude Skills -- Unified MCP Skill (v3.0)
 
-> Last updated: 2026-03-26
-> **NEW:** All 4 skills consolidated into 1 unified skill — `/unified-mcp-skill`
+> Last updated: 2026-03-27
+> **Skill v3.0:** Security hardened, token-optimized, 4-gate enforcement
 > Structure: Unified all-in-one workflow (research, setup, error recovery, audit)
 
 ---
 
-## 🚀 The Unified MCP Skill — `/unified-mcp-skill`
+## The Unified MCP Skill -- `/unified-mcp-skill-new`
 
 **All-in-one skill that replaces 4 separate skills:**
 
 ```
-/unified-mcp-skill "your request"
+/unified-mcp-skill-new "your request"
 ```
 
 ### What It Does
 
 | Task | Command |
 |------|---------|
-| 🔍 **Research** | `/unified-mcp-skill "Research the GitHub MCP server"` |
-| 📋 **Document** | `/unified-mcp-skill "Document this MCP: https://github.com/org/repo"` |
-| 🔧 **Setup** | `/unified-mcp-skill "Set up the Slack MCP server locally"` |
-| 🐛 **Fix Errors** | `/unified-mcp-skill "The MCP server won't connect"` |
-| ✅ **Audit Project** | `/unified-mcp-skill "Review the project"` |
+| **Research** | `/unified-mcp-skill-new "Research the GitHub MCP server"` |
+| **Document** | `/unified-mcp-skill-new "Document this MCP: https://github.com/org/repo"` |
+| **Setup** | `/unified-mcp-skill-new "Set up the Slack MCP server locally"` |
+| **Fix Errors** | `/unified-mcp-skill-new "The MCP server won't connect"` |
+| **Audit Project** | `/unified-mcp-skill-new "Review the project"` |
+| **Batch Research** | `/unified-mcp-skill-new "Research these MCPs: GitHub, Slack, Linear"` |
 
 ### Key Features
 
-✅ **MCP Research**
-- Evidence-backed attribute documentation
+- Evidence-backed attribute documentation (Gate 1: Evidence Ledger)
 - Multi-server parallel research + comparison
 - Protocol version verification
-
-✅ **Conditional Local Setup**
-- Clone + install only if user wants it
-- Auto-detect from GitHub/PyPI
-- Support for STDIO, Package, Docker, Remote connections
-
-✅ **7-Phase Inline Error Recovery**
-- Automatic diagnosis on connection fail
-- No context-switching — all inline
-- Auto-fix with user confirmation
-
-✅ **Project Compliance Audit**
-- 45+ compliance checks (6 groups)
-- PASS/FAIL/WARN report with recommendations
-- Credential pattern detection
-
-✅ **Skill 2.0 Self-Learning**
-- Automatic error pattern capture
-- Stored in `unified-mcp-skill/references/learned-fixes.md`
-- Smarter recovery over time
-
-✅ **Token-Optimized**
-- Single execution path (no redundancy)
-- ~10% fewer tokens than separate skills
-- 4x faster skill loading
+- Conditional local setup (clone + install if user wants)
+- 4 connection methods: STDIO, Package, Docker, Remote
+- 7-phase inline error recovery
+- Project compliance audit
+- Self-learning via `learned-fixes.md`
+- SSRF protection, curl timeouts, path validation
+- 4-gate enforcement (no assumptions, no skipped learnings)
+- Token-optimized SSOT architecture (~37% fewer tokens vs v2.0)
 
 ---
 
-## 📁 Directory Structure (v2.0 — Unified)
+## Directory Structure (v3.0)
 
 ```
 skills/
-├── unified-mcp-skill/              ← THE SKILL (consolidated)
-│   ├── SKILL.md                    (all workflows embedded)
-│   ├── README.md                   (this skill's documentation)
+├── unified-mcp-skill-new/          <-- THE SKILL
+│   ├── SKILL.md                    (all workflows, rules, gates)
 │   └── references/
-│       └── learned-fixes.md        (v2.0 self-learning)
+│       ├── learned-fixes.md        (error case studies)
+│       ├── multi-server.md         (batch research orchestration)
+│       └── csv-example.md          (CSV formatting reference)
 │
-└── README.md                        ← This file
-```
-
-**Previous separate skills have been consolidated into `unified-mcp-skill/`**
-
----
-
-## 📊 Unified Workflow
-
-```
-┌──────────────────────────────────────────────────────┐
-│  USER: /unified-mcp-skill "your request"                     │
-└──────────────────┬───────────────────────────────────┘
-                   │
-                   ▼
-    ┌─────────────────────────────────┐
-    │   UNIFIED MCP SKILL v2.0         │
-    │   (Single execution path)        │
-    ├─────────────────────────────────┤
-    │ • Input classification           │
-    │ • Configuration setup            │
-    │ • Protocol verification          │
-    │ • Conditional local setup ◄──────┼─── Only if user wants
-    │ • Research & attributes          │
-    │ • Inline error recovery (7 phases)
-    │ • CSV + Markdown output          │
-    │ • Self-learning updates          │
-    └─────────────────────────────────┘
-```
-
-**All workflows embedded in ONE skill — no context-switching.**
-
----
-
-## 🚀 Common Use Cases
-
-### Use Case 1: Research Remote MCP Server
-```
-Input:  "Research the GitHub MCP server endpoint"
-Flow:   mcp-researcher → Type A (endpoint) → Research → Report
-Output: CSV with attributes + security score
-Time:   FAST ⚡ (no local setup)
-```
-
-### Use Case 2: Clone and Set Up Local Server
-```
-Input:  "Clone and get the GitHub MCP server running"
-Flow:   mcp-researcher → Type B (GitHub) → Ask "How to run?"
-        → User selects "Option 1: Local setup"
-        → Steps 3.1–3.6: Clone + Install + Test
-        → Research attributes → Report
-Output: CSV report + working local setup
-Time:   NORMAL (includes setup)
-```
-
-### Use Case 3: Research Only (No Setup)
-```
-Input:  "Document the GitHub MCP server (no setup)"
-Flow:   mcp-researcher → Type B (GitHub) → Ask "How to run?"
-        → User selects "Option 3: Research only"
-        → Skip local setup → Research → Report
-Output: CSV with attributes
-Time:   FAST ⚡ (no unnecessary setup)
-```
-
-### Use Case 4: Error Recovery
-```
-Input:  "Set up the GitHub MCP server"
-Flow:   mcp-researcher → Setup → Connection test FAILS
-        → Phase 1: Classify error
-        → Phase 2: Diagnose
-        → Phase 3–6: Fix inline
-        → Continue research
-Output: CSV report + fixed setup + learned pattern
-Time:   LONGER (but inline, no context-switching)
-```
-
-### Use Case 5: Quality Audit
-```
-Input:  "Review the project" (optional, on-demand)
-Flow:   project-reviewer → Full audit
-        → evals (if triggered) → Test cases
-Output: Audit report with gaps + recommendations
-Time:   VARIES (depends on scope)
+└── README.md                       <-- This file
 ```
 
 ---
 
+## Architecture (v3.0 SSOT)
+
+```
+SKILL.md (source of truth)
+  ├── Gates 1-4 (enforcement)
+  ├── Steps 0-8 (workflow)
+  ├── Learnings 1-8 (attribute rules)
+  ├── Auth Detection Rules
+  ├── CSV Format + Rules
+  └── Error Recovery (7-phase)
+
+references/multi-server.md
+  └── References SKILL.md (never duplicates)
+
+references/learned-fixes.md
+  └── References SKILL.md (never duplicates)
+
+references/csv-example.md
+  └── Formatting reference only
+```
 
 ---
 
-## 📊 v2.0 Consolidation Complete
-
-| Component | Status | Details |
-|-----------|--------|---------|
-| **mcp-researcher** | ✅ RETIRED | Merged into unified-mcp-skill |
-| **error-handling** | ✅ RETIRED | Merged into unified-mcp-skill (7 phases inline) |
-| **repo-clone** | ✅ RETIRED | Merged into unified-mcp-skill (conditional setup) |
-| **attribute-researcher** | ✅ RETIRED | Merged into unified-mcp-skill (Step 5) |
-| **project-reviewer** | ✅ RETIRED | Merged into unified-mcp-skill (audit workflow) |
-| **unified-mcp-skill** | ✅ ACTIVE | All functionality consolidated here |
-
-**Result:** 4 separate skills → 1 unified skill ✨
-
----
-
-## ✅ v2.0 Status — COMPLETE
-
-### Consolidation ✅
-- [x] All 4 separate skills merged into `unified-mcp-skill`
-- [x] Research workflow embedded
-- [x] Error recovery (7 phases) embedded inline
-- [x] Local setup (conditional) embedded
-- [x] Project audit embedded
-- [x] Attribute documentation embedded
-- [x] Self-learning protocol enabled
-
-### Optimization ✅
-- [x] Single execution path (no redundancy)
-- [x] Token efficiency improved (~10% savings)
-- [x] Skill loading 4x faster (1 file vs 4)
-- [x] Zero context-switching for users
-
-### Testing ✅
-- [x] All workflows verified
-- [x] Error recovery phases tested
-- [x] Security mandate enforced
-- [x] Documentation updated
-
----
-
-## 🎯 Key Design Principles
-
-✅ **Hierarchy:** Clear tier structure (main → support → audit/test)
-✅ **Linear Flow:** Users follow one primary path (mcp-researcher)
-✅ **Conditional:** Local setup only when user needs it
-✅ **Inline Recovery:** Error handling within primary skill
-✅ **No Handoffs:** All integrated (except optional attribute-researcher call)
-✅ **Speed:** Skip unnecessary code for remote/research-only scenarios
-✅ **Quality:** Optional audit tools available on-demand
-✅ **Learning:** Skill 2.0 protocol for continuous improvement (learned-fixes.md)
-
----
-
-## 🚀 Next Steps
-
-1. **Complete attribute-researcher optimization** (Task #6)
-   - Target: workflow.md 138 → 100 lines (28% reduction)
-   - Status: Pending
-
-2. **Run full validation** (Task #1)
-   - Command: `/project-reviewer "Review the project"`
-   - Verify all consolidations complete
-   - Check no functionality lost
-
-3. **Test consolidated workflow**
-   - Remote endpoint research
-   - GitHub local setup
-   - Research-only mode
-   - Error recovery paths
-   - Skill 2.0 learning
-
----
-
-## 📝 Quick Start
-
-**All requests use the same command:**
+## Quick Start
 
 ```bash
-/unified-mcp-skill "Research the GitHub MCP server"
-/unified-mcp-skill "Set up the Slack MCP server locally"
-/unified-mcp-skill "The MCP server won't connect"
-/unified-mcp-skill "Review the project"
+/unified-mcp-skill-new "Research the GitHub MCP server"
+/unified-mcp-skill-new "Set up the Slack MCP server locally"
+/unified-mcp-skill-new "The MCP server won't connect"
+/unified-mcp-skill-new "Review the project"
+/unified-mcp-skill-new "Research these MCPs: GitHub, Slack, Linear"
 ```
 
-**That's it.** One skill. One command. All functionality.
+One skill. One command. All functionality.
 
 ---
 
-## 📚 Documentation
-
-| File | Purpose |
-|------|---------|
-| **unified-mcp-skill/SKILL.md** | Main skill definition (all workflows) |
-| **unified-mcp-skill/README.md** | Skill-specific documentation |
-| **unified-mcp-skill/references/learned-fixes.md** | Self-learning error patterns (v2.0) |
-| **../CLAUDE.md** | Project instructions (updated for v2.0) |
-| **../README.md** | Quick start and release notes |
-
----
-
-## 🔧 Development & Git Automation (v2.0.1)
-
-**Automated Quality System:**
-
-This project includes 3 automated checks to keep documentation in sync:
-
-1. **Pre-commit Hook** (`.git/hooks/pre-commit`)
-   - Blocks commits if SKILL.md changes without CLAUDE.md or README.md
-   - Prevents documentation drift automatically
-
-2. **Commit-Msg Hook** (`.git/hooks/commit-msg`)
-   - Enforces `Type: Description` commit message format
-   - Validates all commits follow team standards
-
-3. **Commit Template** (`.git-commit-template`)
-   - Auto-loads guidance when you run `git commit`
-   - Ensures all team members document changes consistently
-
-**Workflow:**
-```bash
-# 1. Make changes to skill
-vi unified-mcp-skill/SKILL.md
-
-# 2. Update documentation
-vi ../CLAUDE.md
-vi ../README.md
-
-# 3. Stage and commit
-git add ../CLAUDE.md ../README.md unified-mcp-skill/SKILL.md
-git commit  # Template auto-loads with guidance
-
-# 4. Push to GitHub
-git push origin main
-```
-
----
-
-## ✨ v2.0 Highlights
-
-🎉 **All 4 skills consolidated into 1 unified skill**
-- Research → embedded
-- Error recovery → embedded (7 phases inline)
-- Local setup → embedded (conditional)
-- Project audit → embedded
-- Attribute documentation → embedded
-- Result: **Zero code duplication, single execution path**
-
-🚀 **Massive performance improvements**
-- Skills to load: 4 → 1 (**4x faster**)
-- Token usage: ~10% savings
-- Code maintenance: 1 file vs 4 files
-- Context-switching: Never
-
-⚡ **Better user experience**
-- Single command: `/unified-mcp-skill`
-- One entry point, all scenarios
-- Automatic error recovery (inline)
-- Self-learning over time
-
-📊 **Production-ready & tested**
-- All workflows verified
-- Security mandate enforced
-- Error patterns learned and improved
-- Git automation system deployed (v2.0.1)
-- Commit: 061440c (documentation updated)
-
----
-
-**Made with 🤖 Claude Code | v2.0 Unified & Optimized | Updated: 2026-03-26**
+**v3.0.0 | Updated: 2026-03-27**
