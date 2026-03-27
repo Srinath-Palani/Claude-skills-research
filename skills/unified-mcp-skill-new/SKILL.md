@@ -700,35 +700,36 @@ CAPABILITIES VERIFICATION CHECKLIST:
 **Format for Capabilities - Tools (CSV cell):**
 ```
 Category Name
-    •    tool_name – Description
+  • tool_name – Description
 
 Another Category
-    •    tool_name – Description
+  • tool_name – Description
 ```
 
 **Format for Capabilities - Resources (CSV cell):**
 ```
-Resource Category
-    •    resource_uri – Description (resource type: text/image/document)
-
-Another Category
-    •    resource_uri – Description
+  • resource_uri – Description (resource type: text/image/document)
 ```
 
 **Format for Capabilities - Prompts (CSV cell):**
 ```
-Prompt Category
-    •    prompt_name – Description (inputs: param1, param2)
-
-System Prompts
-    •    system_prompt – System instruction template for Claude
+  • prompt_name – Description (inputs: param1, param2)
 ```
 
 **Format for Capabilities - Sampling (CSV cell):**
 ```
 Model Capabilities
-    •    model_name – Sampling support (temperature, top_p, max_tokens)
-    •    completion_method – Inference optimization details
+  • model_name – Sampling support (temperature, top_p, max_tokens)
+  • completion_method – Inference optimization details
+```
+
+**Format for Non-Read-Only Tools (CSV cell):**
+```
+Category Name
+  • tool_name: Description of the write/delete operation
+
+Another Category
+  • tool_name: Description
 ```
 
 ---
@@ -1160,10 +1161,10 @@ Does server have ONLY read operations?
 
 **CRITICAL RULE - STRICT ENFORCEMENT:**
 ```
-🔒 NEVER assume or invent category titles
-🔒 NEVER rename categories
-🔒 Categories MUST come from documented source
-🔒 Use titles EXACTLY as shown in source
+🔒 NEVER randomly invent category titles with no evidence
+🔒 NEVER rename categories that exist in source
+🔒 Categories MUST come from source OR be derived from API endpoint paths
+🔒 Use source titles EXACTLY as shown — derivations must cite path/code evidence
 ```
 
 **Source Priority (in order - STOP at first match):**
@@ -1171,7 +1172,8 @@ Does server have ONLY read operations?
 2. Source code organization / comments
 3. Official API documentation
 4. User-provided research
-5. ❌ NEVER invent - ask user first if no source found
+5. API endpoint path structure (derive functional groupings from paths)
+6. ❌ NEVER invent random titles - ask user if derivation is unclear
 
 **Real Examples:**
 
@@ -1185,23 +1187,29 @@ FROM SOURCE (use exactly):
 ✅ "Other Write Operations"
 ```
 
-NOT FROM SOURCE (don't create):
+DERIVED FROM API PATHS (acceptable when no explicit source groupings exist):
 ```
-❌ "Video Generation & Management" (assumed)
-❌ "Image Generation" (invented)
-❌ "Task Management" (assumed)
-❌ "GPU Management" (custom)
-❌ "SSH Management" (custom)
+✅ "Media Generation"  (from /image_to_video, /text_to_image, /video_upscale, /video_to_video)
+✅ "Task Management"   (from /tasks/{taskId})
+✅ "Organization"      (from /organization)
+```
+
+NOT FROM SOURCE AND NOT DERIVABLE (don't create):
+```
+❌ "Video Generation & Management" (arbitrary — not from path or code)
+❌ "GPU Management" (assumed — no path/code evidence)
+❌ "SSH Management" (assumed — no path/code evidence)
 ```
 
 **Process:**
 1. Search README for category names
-2. Search source code for organization
+2. Search source code for organization/comments
 3. Search API docs for groupings
 4. Search user research for categories
-5. If nothing found → DO NOT invent → Contact/skip
+5. If none found → derive from API endpoint paths (group by path prefix/function type)
+6. If derivation is unclear → ask user
 
-**Example:** If source shows "Team & Workspace Metadata" and "Search & Query Utilities" → use EXACTLY those. Don't rename, reorganize, or create new ones.
+**Example:** If source shows "Team & Workspace Metadata" and "Search & Query Utilities" → use EXACTLY those. Don't rename, reorganize, or create new ones. If no source groupings exist, derive from endpoint paths and document the source evidence.
 
 ---
 
@@ -1301,9 +1309,9 @@ Tools Operations (Read-only / R+Update / R+Update+Delete)
 Deployment Approach (Local / Container / Remote)
 Compliance & Certifications (HIPAA / GDPR / SOC 2 / FedRAMP)
 Capabilities (Tools / Resources / Prompts / Sampling)
-Capabilities - Tools (detailed_info with categories and bullet points)
-Capabilities - Resources (detailed_info with resource types and descriptions)
-Capabilities - Prompts (detailed_info with prompt templates and use cases)
+Capabilities - Tools (detailed_info with categories and bullet points — always present)
+Capabilities - Resources (detailed_info — always present; use "None" if server has no resources)
+Capabilities - Prompts (detailed_info — always present; use "None" if server has no prompts)
 Capabilities - Sampling (detailed_info with sampling models and capabilities)
 Non-Read-Only Tools (detailed_info with categories OR "None — all tools are read-only")
 ```
@@ -1316,17 +1324,20 @@ MCP Info,Git Repo Version,"v0.1.2"
 Distribution Type,Official,Yes
 Authentication,API Token,Yes
 Capabilities - Tools,detailed_info,"Category Name
-    •    tool_name – Description of what it does
+  • tool_name – Description of what it does
 
 Another Category
-    •    another_tool – Another description"
+  • another_tool – Another description"
+Capabilities - Resources,detailed_info,"None"
+Capabilities - Prompts,detailed_info,"None"
 ```
 
 **Formatting Rules (Critical):**
 
 1. **Category headers** — Plain text, no brackets, no special formatting
-2. **Bullets** — Exactly 4 spaces before `•`, exactly 4 spaces after `•`
-3. **Connector** — Use `–` (en-dash, NOT hyphen) between tool name and description
+2. **Bullets** — Exactly 2 spaces before `•`, exactly 1 space after `•` (i.e. `  • tool_name`)
+3. **Connector (Capabilities - Tools)** — Use `–` (en-dash, NOT hyphen, NOT colon) between tool name and description
+3b. **Connector (Non-Read-Only Tools)** — Use `:` (colon, NOT en-dash) between tool name and description
 4. **Blank lines** — Always separate category blocks with blank line
 5. **Tool names** — Use actual registered function names (not generic labels)
 6. **Descriptions** — Concise, action-oriented (start with verb: "Create", "Get", "List", "Send")
@@ -1340,11 +1351,18 @@ Another Category
 Capabilities - Tools,detailed_info,"- AI Assistants: create_assistant, list_assistants"
 ```
 
-✅ RIGHT:
+✅ RIGHT (Capabilities - Tools):
 ```
 Capabilities - Tools,detailed_info,"AI Assistants
-    •    create_assistant – Create new AI assistant
-    •    list_assistants – List all existing AI assistants"
+  • create_assistant – Create new AI assistant
+  • list_assistants – List all existing AI assistants"
+```
+
+✅ RIGHT (Non-Read-Only Tools):
+```
+Non-Read-Only Tools,detailed_info,"Write Operations
+  • create_assistant: Create a new AI assistant
+  • delete_assistant: Delete an existing AI assistant"
 ```
 
 > **Full CSV example:** See `references/csv-example.md` for complete Telnyx MCP Server report with all rows.
