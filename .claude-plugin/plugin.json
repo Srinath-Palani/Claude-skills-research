@@ -5,7 +5,7 @@
   "skills": [
     {
       "name": "unified-mcp-skill-new",
-      "path": "/Users/srinathp/My-work-dir/Claude-skills-research/skills/unified-mcp-skill-new/SKILL.md",
+      "path": "skills/unified-mcp-skill-new/SKILL.md",
       "user-invocable": true,
       "command": "/unified-mcp-skill-new"
     }

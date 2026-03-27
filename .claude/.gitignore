@@ -35,7 +35,7 @@ build/
 *.pid
 
 # MCP Reports (generated at runtime)
-# Note: ~/.Desktop/MCP_reports/ is outside repo and safe
+# Note: ~/Documents/mcp-reports/ is outside repo and safe
 # This is just for any local test reports
 test_reports/
 

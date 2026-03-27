@@ -137,8 +137,8 @@ When team members clone this repo:
 
 - **MCP Spec:** https://spec.modelcontextprotocol.io
 - **MCP Servers Directory:** https://github.com/modelcontextprotocol/servers
-- **Output location:** `~/Desktop/MCP_reports/` (configurable)
-- **Cloned repos location:** `~/MCP_repos/<repo-name>` (configurable)
+- **Output location:** `~/Documents/mcp-reports/` (configurable)
+- **Cloned repos location:** Configurable (asked at clone time, see SKILL.md Step 3)
 - **Self-learning:** `skills/unified-mcp-skill-new/references/learned-fixes.md`
 - **Optimization guide:** `optimization_guide.md` (full v3.0 reference)
 

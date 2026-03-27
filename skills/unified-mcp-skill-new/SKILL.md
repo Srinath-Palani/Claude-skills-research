@@ -96,9 +96,9 @@ MANDATORY LEARNING WALKTHROUGH (check each one, document result):
 □ L5 Tools Ops: All tool names parsed? Delete/cancel patterns searched?
   → HIGHEST level only marked? Only ONE level = Yes?
 
-□ L6 Categories: Category titles from source documentation?
-  → Source file/section cited for each category?
-  → ZERO invented categories?
+□ L6 Categories: Category titles from standard taxonomy (Learning 6)?
+  → Each tool classified into best-fit standard category?
+  → ZERO invented categories (only taxonomy titles used)?
 
 □ L7 Non-Read-Only: Does research documentation include this section?
   → If not in research → row NOT added to CSV?
@@ -327,7 +327,7 @@ Validate BEFORE any file write, clone, or report save operation.
 Report save path — ask every first use:
 ```
 Where should MCP reports be saved?
-Enter full path (e.g. /Users/you/Desktop/MCP_reports):
+Enter full path (e.g. /Users/you/Documents/mcp-reports):
 ```
 
 Clone path — ask every time user chooses local setup:
@@ -748,6 +748,85 @@ Extract from vendor docs + GitHub:
 **Filename:** `<servername>.csv`
 **CSV Rules:** Use `csv.QUOTE_ALL` for proper multiline handling
 
+**Step 8.1 — Save Cost File (MANDATORY — always runs after CSV is saved)**
+
+After saving the CSV, immediately generate and save `<servername>-cost.txt` at the same path.
+
+**Timestamp capture (MANDATORY):**
+- **Before Thread 1 starts:** capture `RESEARCH_START = datetime.utcnow().isoformat()` (e.g. `"2026-03-27T19:08:03"`)
+- **After Gate 4 completes:** capture `RESEARCH_END = datetime.utcnow().isoformat()`
+- These timestamps define the window for token counting
+
+**How to compute token delta for this research session:**
+
+1. Find the current session JSONL file (auto-detect from working directory):
+   ```bash
+   CWD_SLUG=$(pwd | tr '/' '-' | sed 's/^-//')
+   ls -t ~/.claude/projects/-${CWD_SLUG}/*.jsonl | head -1
+   ```
+2. Sum all `message.usage.input_tokens`, `output_tokens`, `cache_read_input_tokens` where timestamp is between `RESEARCH_START` and `RESEARCH_END`
+3. That sum = tokens used for this MCP research
+
+**Python script to compute and save cost file:**
+```python
+import json, os, glob
+from datetime import datetime
+
+# Pricing rates (claude-sonnet-4-6)
+PRICE_INPUT      = 3.00 / 1_000_000
+PRICE_OUTPUT     = 15.00 / 1_000_000
+PRICE_CACHE_READ = 0.30 / 1_000_000
+
+# Auto-detect project dir from current working directory
+cwd = os.getcwd().replace("/", "-").lstrip("-")
+project_dir = os.path.expanduser(f"~/.claude/projects/-{cwd}")
+if not os.path.isdir(project_dir):
+    # Fallback: find most recently modified project dir
+    all_dirs = sorted(glob.glob(os.path.expanduser("~/.claude/projects/*")), key=os.path.getmtime, reverse=True)
+    project_dir = all_dirs[0] if all_dirs else ""
+jsonl_files = sorted(glob.glob(f"{project_dir}/*.jsonl"), key=os.path.getmtime, reverse=True)
+session_file = jsonl_files[0]
+
+# Read all entries within the research window (use RESEARCH_START timestamp captured before Thread 1)
+input_tokens = output_tokens = cache_read = 0
+with open(session_file) as f:
+    for line in f:
+        try:
+            entry = json.loads(line)
+            ts = entry.get("timestamp", "")
+            if ts >= RESEARCH_START and ts <= RESEARCH_END:
+                usage = entry.get("message", {}).get("usage", {})
+                input_tokens  += usage.get("input_tokens", 0)
+                output_tokens += usage.get("output_tokens", 0)
+                cache_read    += usage.get("cache_read_input_tokens", 0)
+        except Exception:
+            pass
+
+cost_input  = input_tokens  * PRICE_INPUT
+cost_output = output_tokens * PRICE_OUTPUT
+cost_cache  = cache_read    * PRICE_CACHE_READ
+total_cost  = cost_input + cost_output + cost_cache
+
+report_path = os.path.expanduser(f"~/Documents/mcp-reports/{SERVER_NAME}-cost.txt")
+with open(report_path, "w") as f:
+    f.write(f"MCP Server     : {SERVER_NAME}\n")
+    f.write(f"Date           : {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
+    f.write(f"Model          : claude-sonnet-4-6\n\n")
+    f.write(f"Token Usage\n")
+    f.write(f"  Input        : {input_tokens:,}\n")
+    f.write(f"  Output       : {output_tokens:,}\n")
+    f.write(f"  Cache Read   : {cache_read:,}\n\n")
+    f.write(f"Cost\n")
+    f.write(f"  Input        : ${cost_input:.4f}  ({input_tokens:,} × $3.00/1M)\n")
+    f.write(f"  Output       : ${cost_output:.4f}  ({output_tokens:,} × $15.00/1M)\n")
+    f.write(f"  Cache Read   : ${cost_cache:.4f}  ({cache_read:,} × $0.30/1M)\n")
+    f.write(f"  Total        : ${total_cost:.4f}\n")
+
+print(f"Cost file saved: {report_path}")
+```
+
+**Note:** `RESEARCH_START` and `RESEARCH_END` are ISO 8601 timestamps (e.g. `"2026-03-27T19:08:03"`) captured at the start and end of research. `SERVER_NAME` is the kebab-case server name (e.g. `"abacatepay-mcp"`).
+
 ---
 
 ## Error Recovery: 7 Phases (Inline on Connection Test Fail)
@@ -1088,7 +1167,7 @@ API Token = Yes if:
 - HTTP endpoint with no auth → TLS = Yes (network needs encryption regardless)
 - HTTP endpoint with Bearer Token → TLS = Yes AND Bearer = Yes (both, independently)
 
-> See also: `references/learned-fixes.md` Error #1 (Hyperbolic) and Error #7 (Runway) for real case studies.
+> See also: `references/learned-fixes.md` Error #1 (Buildkite) and Error #7 (Runway) for real case studies.
 
 ---
 
@@ -1262,7 +1341,7 @@ Non-Read-Only Tools:
 
 ## Report Format: CSV Structure
 
-**Output Location:** `~/Desktop/MCP_reports/<servername>.csv` (user-configured)
+**Output Location:** `~/Documents/mcp-reports/<servername>.csv` (user-configured)
 
 **Format:** CSV with exactly 3 columns: `Category, Attribute, Status`
 
@@ -1358,7 +1437,7 @@ Non-Read-Only Tools,detailed_info,"Write Operations
 ## Report Generation Rules (Single & Multi-Server)
 
 ### Rule 1 — Per-Server CSV Naming
-Each server gets its own report: `~/Desktop/MCP_reports/<mcp-name>.csv`
+Each server gets its own report: `~/Documents/mcp-reports/<mcp-name>.csv`
 Example: `github-mcp-server.csv`, `slack-mcp.csv`
 
 ---
@@ -1432,8 +1511,15 @@ Both are marked Yes because both are real hosting locations. SaaS Vendor takes p
 
 **On successful CSV generation, display:**
 ```
-╔═══════════════════════════════════════════════════════╗
-║   REPORT SUCCESSFULLY GENERATED                       ║
-║   FILE: /path/to/report/<servername>.csv              ║
-╚═══════════════════════════════════════════════════════╝
+╔═══════════════════════════════════════════════════════════════════╗
+║   REPORT SUCCESSFULLY GENERATED                                   ║
+║   CSV  : /path/to/report/<servername>.csv                         ║
+║   COST : /path/to/report/<servername>-cost.txt                    ║
+╚═══════════════════════════════════════════════════════════════════╝
 ```
+
+Both files are always saved together. The cost file contains:
+- MCP server name
+- Research date and model
+- Token breakdown (input, output, cache read)
+- Per-category cost and total cost

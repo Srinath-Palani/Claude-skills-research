@@ -123,7 +123,7 @@ Linear MCP      | v0.9.0  | Productivity     | 2024-11-05  | GitHub   | API Toke
 ════════════════════════════════════════════════════════════════════════════════════════════════════════
 Default sort: Protocol Version (newest first)
 Sort options: protocol / hosting / auth / transport / deployment
-Reports saved: ~/Desktop/MCP_reports/
+Reports saved: ~/Documents/mcp-reports/
 ```
 
 **All 11 comparison columns:**

@@ -33,9 +33,10 @@
     },
     "documentation": {
       "readme": "README.md",
-      "guides": "skills/*/SKILL.md",
-      "workflows": "skills/*/workflow.md",
-      "references": "skills/*/REFERENCE.md"
+      "skill": "skills/unified-mcp-skill-new/SKILL.md",
+      "learned-fixes": "skills/unified-mcp-skill-new/references/learned-fixes.md",
+      "multi-server": "skills/unified-mcp-skill-new/references/multi-server.md",
+      "csv-example": "skills/unified-mcp-skill-new/references/csv-example.md"
     }
   }
 }

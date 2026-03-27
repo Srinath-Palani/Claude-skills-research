@@ -238,22 +238,22 @@ Deployment:
 
 **These patterns are checked automatically at:**
 
-1. **Step 1 - Protocol Version Verification** (SKILL.md line ~175)
+1. **Step 1 — Protocol Version Verification** (SKILL.md section "Step 1")
    - Verification checklist added
    - Go SDK mapping documented
    - Common mistakes listed
 
-2. **Step 5.1 - Authentication Verification** (SKILL.md line ~327)
+2. **Step 5.1 — Authentication Verification** (SKILL.md section "Step 5.1")
    - Comprehensive checklist
    - Common mistake patterns
    - "Why All Three Can Be Yes" explanation
 
-3. **Step 5.2 - Tools Operations Verification** (SKILL.md line ~360)
+3. **Step 5.2 — Tools Operations Verification** (SKILL.md section "Step 5.2")
    - Mutually exclusive rule enforcement
    - Delete pattern recognition dictionary
    - Common mistake scenarios
 
-4. **Step 5.3 - Deployment Approach Verification** (SKILL.md line ~398)
+4. **Step 5.3 — Deployment Approach Verification** (SKILL.md section "Step 5.3")
    - Docker detection checklist
    - Multiple deployment support explanation
    - Common oversight patterns
@@ -396,7 +396,7 @@ Expected Results:
 - ✅ Endpoint URL = N/A
 - ✅ Authentication does NOT determine TLS encryption
 - ✅ Git Repo Version: Check Releases first, Tags second, package.json last
-- ✅ Document source priority in CSV: "v1.0.0 [ No GitHub Releases | No git tags | package.json source ]"
+- ✅ Version string copied EXACTLY as shown in source (NO notes, NO brackets, NO transformation)
 
 ---
 

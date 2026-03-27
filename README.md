@@ -46,7 +46,7 @@ Then use the unified skill:
 - 4 connection methods: STDIO / Published Package / Docker / Remote
 - Protocol version verification before research
 - Security mandate (no credentials in chat, filesystem only)
-- CSV report output to `~/Desktop/MCP_reports/`
+- CSV report output to `~/Documents/mcp-reports/`
 - Self-learning via learned-fixes.md (8 error patterns)
 
 ---
