@@ -4,9 +4,9 @@
 
 > These patterns were identified from real MCP research sessions and documented to prevent future errors in attribute research.
 >
-> **Error Index:** #1-#4 (Buildkite/Hyperbolic, 2026-03-26), #7-#8 (Runway, 2026-03-27)
+> **Error Index:** #1-#4 (Buildkite/Hyperbolic, 2026-03-26), #7-#8 (Runway, 2026-03-27), #9-#11 (CSV format/capability rows, 2026-03-27)
 > Patterns #5-#6 are documented as SKILL.md Learnings 5-6 (no separate case study needed).
-> Authoritative rules for all patterns live in SKILL.md Learnings 1-8.
+> Authoritative rules for all patterns live in SKILL.md Learnings 1-7.
 
 ---
 
@@ -486,10 +486,132 @@ MCP Info,Git Repo Version,"1.0.0"
 
 ---
 
+## Error Pattern #9: Description Field Corrupts CSV Status Column
+
+**Date:** 2026-03-27 | **Servers:** keeper-mcp-golang-docker, axiomhq-mcp, mcp-croit-ceph, mercadolibre-mcp-server | **Severity:** HIGH
+
+**Signals (What Went Wrong)**
+- Description text contained embedded newlines (written as multi-line cell)
+- Subsequent rows (Git Repo Version, Category, etc.) appeared corrupted or overwritten in the Status column
+- CSV file opened incorrectly in spreadsheet tools — rows were misaligned
+
+**Root Cause:**
+The `MCP Info,Description` cell was written with embedded newlines. CSV parsers interpret unescaped newlines inside quoted cells as row breaks, causing all subsequent content to shift columns and overwrite Status values in those rows.
+
+**What was wrong:**
+```
+❌ WRONG (newline inside cell breaks row structure):
+MCP Info,Description,"First sentence.
+Second sentence covering capabilities."
+MCP Info,Git Repo Version,"v1.0.0"   ← this gets absorbed into description cell
+```
+
+**Fix:**
+```
+✅ CORRECT (single continuous line, spaces instead of newlines):
+MCP Info,Description,"First sentence. Second sentence covering capabilities."
+MCP Info,Git Repo Version,"v1.0.0"   ← now correctly its own row
+```
+
+**Prevention Rule (STRICT):**
+```
+🔒 Description MUST be a single line — NO embedded newlines
+🔒 Join sentences with spaces, not line breaks
+🔒 Any double quotes inside description text must be escaped as ""
+🔒 Verify the Description row is ONE CSV row before saving
+```
+
+**Reference:** SKILL.md Formatting Rule #9
+
+---
+
+## Error Pattern #11: Missing Capability Rows (Capabilities-Tools / Resources / Prompts / Non-Read-Only)
+
+**Date:** 2026-03-27 | **Servers:** trackmage-mcp-server, odos-mcp, mercadolibre-mcp-server | **Severity:** HIGH
+
+**Signals (What Went Wrong)**
+- `Capabilities - Resources,detailed_info` row missing when server had no resources
+- `Capabilities - Prompts,detailed_info` row missing when server had no prompts
+- `Non-Read-Only Tools,detailed_info` row missing when all tools were read-only
+
+**Root Cause:**
+Learning 7 originally only protected Non-Read-Only Tools. The three Capabilities rows lacked the same "always present" mandate, so when content was absent they were silently omitted.
+
+**Fix:**
+All five rows are MANDATORY in every CSV report regardless of content. Attribute is always `detailed_info` — never `No` or blank:
+
+```
+✅ ALWAYS include all five (attribute = detailed_info):
+Capabilities - Tools,detailed_info,"<tools OR None>"
+Capabilities - Resources,detailed_info,"<resources OR None>"
+Capabilities - Prompts,detailed_info,"<prompts OR None>"
+Capabilities - Sampling,detailed_info,"<sampling OR None>"
+Non-Read-Only Tools,detailed_info,"<write tools OR None>"
+
+❌ WRONG:
+Capabilities - Sampling,No
+Capabilities - Sampling,No,
+```
+
+**Prevention Rule:**
+```
+🔒 Capabilities - Tools     → always present, "None" if Capabilities,Tools = No
+🔒 Capabilities - Resources  → always present, "None" if Capabilities,Resources = No
+🔒 Capabilities - Prompts    → always present, "None" if Capabilities,Prompts = No
+🔒 Capabilities - Sampling   → always present, "None" if Capabilities,Sampling = No
+🔒 Non-Read-Only Tools       → always present, "None" if all read-only
+🔒 Attribute for ALL five    → always "detailed_info", never "No"
+```
+
+**Reference:** SKILL.md Learning 7, Gate 3 L7
+
+---
+
+## Error Pattern #10: Git Repo Version — "UNVERIFIED" Instead of "No"
+
+**Date:** 2026-03-27 | **Servers:** keeper-mcp-golang-docker, axiomhq-mcp, mcp-croit-ceph, mercadolibre-mcp-server | **Severity:** Low
+
+**Signals (What Went Wrong)**
+- After checking all 3 sources (Releases → Tags → package.json), no version was found
+- Field was left as `UNVERIFIED` in the final CSV instead of being resolved
+
+**Root Cause:**
+The general ZERO-ASSUMPTION policy says to use `UNVERIFIED` when a value cannot be confirmed. But Git Repo Version has a defined fallback — when no version exists in any source, the correct value is `No`, not `UNVERIFIED`.
+
+**Fix:**
+```
+□ Step 1: Check GitHub Releases → not found
+□ Step 2: Check GitHub Tags → not found
+□ Step 3: Check package.json → not found
+□ Step 4: Mark as "No" (do NOT leave as UNVERIFIED)
+```
+
+**CSV output:**
+```
+✅ CORRECT:
+MCP Info,Git Repo Version,"No"
+
+❌ WRONG:
+MCP Info,Git Repo Version,"UNVERIFIED"
+```
+
+**Prevention Rule:**
+```
+🔒 Git Repo Version fallback when nothing found = "No"
+🔒 Never leave Git Repo Version as UNVERIFIED in final CSV
+```
+
+**Reference:** SKILL.md Row Order — Git Repo Version
+
+---
+
 ## Version History
 
 | Version | Date | Changes |
 |---------|------|---------|
+| 2.5 | 2026-03-27 | Added Error Pattern #11: Missing Capability rows — all four always mandatory with "None" fallback |
+| 2.4 | 2026-03-27 | Added Error Pattern #10: Git Repo Version "UNVERIFIED" → use "No" — from keeper/axiomhq/mcp-croit/mercadolibre research |
+| 2.3 | 2026-03-27 | Added Error Pattern #9: Description field corrupts Status column — from keeper/axiomhq/mcp-croit/mercadolibre research |
 | 2.2 | 2026-03-27 | Added Error Pattern #8: Git Repo Version — Wrong Source Priority (Medium) — from Runway API MCP research |
 | 2.1 | 2026-03-27 | Added Error Pattern #7: TLS Encryption vs Bearer Token Confusion (CRITICAL) — from Runway API MCP research |
 | 2.0 | 2026-03-26 | Initial learned-fixes.md created with 4 error patterns from Buildkite research |
@@ -497,7 +619,7 @@ MCP Info,Git Repo Version,"1.0.0"
 ---
 
 **Last Updated:** 2026-03-27
-**Skill Version:** Unified MCP Skill 3.0.0 (Self-Learning v2.1)
+**Skill Version:** Unified MCP Skill 3.0.0 (Self-Learning v2.5)
 **Status:** Active — Auto-referenced in research workflows
-**Critical Rules:** 6 error patterns documented in this file (Patterns #1-#4, #7-#8); authoritative rules in SKILL.md Learnings 1-8
+**Critical Rules:** 9 error patterns documented in this file (Patterns #1-#4, #7-#11); authoritative rules in SKILL.md Learnings 1-7
 

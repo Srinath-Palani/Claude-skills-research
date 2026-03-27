@@ -72,7 +72,7 @@ BEFORE filling ANY attribute:
 
 ---
 
-### GATE 3: LEARNING GATE (All 8 Learnings Checked Every Time)
+### GATE 3: LEARNING GATE (All Learnings Checked Every Time)
 
 **Before creating final CSV, walk through EVERY learning. This is NOT optional. Do NOT skip any.**
 
@@ -100,10 +100,16 @@ MANDATORY LEARNING WALKTHROUGH (check each one, document result):
   → Each tool classified into best-fit standard category?
   → ZERO invented categories (only taxonomy titles used)?
 
-□ L7 Non-Read-Only: Does research documentation include this section?
-  → If not in research → row NOT added to CSV?
+□ L7 Five Mandatory Rows: Are ALL five rows present in the CSV with correct format?
+  → Capabilities - Tools,detailed_info     present? (use "None" if no tools)
+  → Capabilities - Resources,detailed_info present? (use "None" if no resources)
+  → Capabilities - Prompts,detailed_info   present? (use "None" if no prompts)
+  → Capabilities - Sampling,detailed_info  present? (use "None" if no sampling)
+  → Non-Read-Only Tools,detailed_info      present? (use "None" if all read-only)
+  → Attribute column is "detailed_info" for ALL five — never "No" or blank
+  → ALL FIVE required — no exceptions
 
-□ L8 (=L3): TLS/Bearer independence confirmed?
+□ L3 recheck: TLS/Bearer independence confirmed? (STDIO → TLS always No)
 ```
 
 **If ANY checkbox cannot be confirmed → STOP. Do not create CSV. Resolve first.**
@@ -137,7 +143,7 @@ MANDATORY LEARNING WALKTHROUGH (check each one, document result):
 
 🔒 **RULE 1: SOURCE-ONLY ATTRIBUTES** — Every value from actual documentation. Zero invented content.
 🔒 **RULE 2: NUMERIC VERIFICATION** — Protocol version, TLS, pricing, auth all verified with explicit checks.
-🔒 **RULE 3: FULL LEARNING WALKTHROUGH** — All 8 Learnings checked. All learned-fixes.md patterns reviewed.
+🔒 **RULE 3: FULL LEARNING WALKTHROUGH** — All Learnings checked. All learned-fixes.md patterns reviewed.
 🔒 **RULE 4: NO CSV WITHOUT EVIDENCE** — Evidence Ledger must be complete. Empty evidence = blocked.
 🔒 **RULE 5: SELF-IMPROVEMENT** — New patterns documented. Learnings refined. Skill improves each session.
 
@@ -176,7 +182,7 @@ On fail → 7-phase Error Recovery (auto-triggered)
 **Enforcement Gates (MANDATORY — block CSV until passed):**
 Gate 1=Evidence Ledger (every Yes/No has source proof)
 Gate 2=Connection Verified (all 5 threads complete)
-Gate 3=Learning Walkthrough (L1-L8 checked)
+Gate 3=Learning Walkthrough (L1-L7 checked)
 Gate 4=Self-Improvement (new patterns documented)
 
 ---
@@ -191,24 +197,6 @@ Gate 4=Self-Improvement (new patterns documented)
 | **Error Recovery** | 7-phase inline diagnosis and auto-fix | Automatic on connection fail |
 | **Project Audit** | Audit project and skills for compliance | "Review the project", "Is this ready to commit?" |
 | **Multi-Server Research** | Parallel batch research + comparison of N servers | "Research these MCPs: X, Y, Z", "Compare GitHub and Slack MCPs" |
-
----
-
-## Feature Overview
-
-✓ **3 input types:** Remote endpoint / GitHub URL / Server name (auto-detect)
-✓ **Protocol version verification** before research (Priority: Framework > SDK)
-✓ **Conditional local setup** — only clone+install if user wants local deployment
-✓ **4 connection methods** — STDIO / Published Package / Docker / Remote
-✓ **Configurable paths** (report save + clone paths, stored for future)
-✓ **Logic enforcement** — STDIO↔Local, HTTP/SSE↔Remote auto-set
-✓ **7-phase inline error recovery** — automatic diagnosis on connection fail
-✓ **Multi-server parallel research** — layered sub-agent batch, ~80% fewer tokens vs. inline
-✓ **Evidence-backed attribute documentation**
-✓ **CSV report output** with full traceability
-✓ **Project compliance audit** with PASS/FAIL/WARN checks
-✓ **Skill 2.0 self-learning** — learned-fixes.md for error patterns
-✓ **Token-optimized** — single execution path, no redundant processing
 
 ---
 
@@ -553,7 +541,7 @@ Every "Yes" must have source + exact quote or file path. Every "No" must have ev
 | Attribute | Type | Source |
 |-----------|------|--------|
 | Name | Text | GitHub or vendor docs |
-| Description | Text | README (3–4 lines, specific capabilities) |
+| Description | Text | README (2–3 sentences, MUST start with "[Server Name] MCP Server…") |
 | Category | Choice | mcp.md or vendor classification |
 | Git Repo | URL | GitHub link (or N/A) |
 | Git Version | Tag | Latest only — Releases first, Tags second (format: v1.2.3) |
@@ -583,11 +571,7 @@ AUTHENTICATION VERIFICATION CHECKLIST:
 - ❌ WRONG: "No auth in README, so Authentication = No" (incomplete search)
 - ✅ RIGHT: "Check server.json, .env.example, config files, vendor docs"
 
-**Why All Three Can Be "Yes":**
-- Bearer Token = delivery method (HTTP header)
-- Personal Access Token = credential type (user-specific)
-- API Token = alternative naming (same credential)
-All can coexist for same server.
+**Why All Three Can Be "Yes":** See Authentication Detection Rules below (Bearer = delivery, PAT = credential type, API Token = app key — not mutually exclusive).
 
 ---
 
@@ -767,65 +751,8 @@ After saving the CSV, immediately generate and save `<servername>-cost.txt` at t
 2. Sum all `message.usage.input_tokens`, `output_tokens`, `cache_read_input_tokens` where timestamp is between `RESEARCH_START` and `RESEARCH_END`
 3. That sum = tokens used for this MCP research
 
-**Python script to compute and save cost file:**
-```python
-import json, os, glob
-from datetime import datetime
-
-# Pricing rates (claude-sonnet-4-6)
-PRICE_INPUT      = 3.00 / 1_000_000
-PRICE_OUTPUT     = 15.00 / 1_000_000
-PRICE_CACHE_READ = 0.30 / 1_000_000
-
-# Auto-detect project dir from current working directory
-cwd = os.getcwd().replace("/", "-").lstrip("-")
-project_dir = os.path.expanduser(f"~/.claude/projects/-{cwd}")
-if not os.path.isdir(project_dir):
-    # Fallback: find most recently modified project dir
-    all_dirs = sorted(glob.glob(os.path.expanduser("~/.claude/projects/*")), key=os.path.getmtime, reverse=True)
-    project_dir = all_dirs[0] if all_dirs else ""
-jsonl_files = sorted(glob.glob(f"{project_dir}/*.jsonl"), key=os.path.getmtime, reverse=True)
-session_file = jsonl_files[0]
-
-# Read all entries within the research window (use RESEARCH_START timestamp captured before Thread 1)
-input_tokens = output_tokens = cache_read = 0
-with open(session_file) as f:
-    for line in f:
-        try:
-            entry = json.loads(line)
-            ts = entry.get("timestamp", "")
-            if ts >= RESEARCH_START and ts <= RESEARCH_END:
-                usage = entry.get("message", {}).get("usage", {})
-                input_tokens  += usage.get("input_tokens", 0)
-                output_tokens += usage.get("output_tokens", 0)
-                cache_read    += usage.get("cache_read_input_tokens", 0)
-        except Exception:
-            pass
-
-cost_input  = input_tokens  * PRICE_INPUT
-cost_output = output_tokens * PRICE_OUTPUT
-cost_cache  = cache_read    * PRICE_CACHE_READ
-total_cost  = cost_input + cost_output + cost_cache
-
-report_path = os.path.expanduser(f"~/Documents/mcp-reports/{SERVER_NAME}-cost.txt")
-with open(report_path, "w") as f:
-    f.write(f"MCP Server     : {SERVER_NAME}\n")
-    f.write(f"Date           : {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
-    f.write(f"Model          : claude-sonnet-4-6\n\n")
-    f.write(f"Token Usage\n")
-    f.write(f"  Input        : {input_tokens:,}\n")
-    f.write(f"  Output       : {output_tokens:,}\n")
-    f.write(f"  Cache Read   : {cache_read:,}\n\n")
-    f.write(f"Cost\n")
-    f.write(f"  Input        : ${cost_input:.4f}  ({input_tokens:,} × $3.00/1M)\n")
-    f.write(f"  Output       : ${cost_output:.4f}  ({output_tokens:,} × $15.00/1M)\n")
-    f.write(f"  Cache Read   : ${cost_cache:.4f}  ({cache_read:,} × $0.30/1M)\n")
-    f.write(f"  Total        : ${total_cost:.4f}\n")
-
-print(f"Cost file saved: {report_path}")
-```
-
-**Note:** `RESEARCH_START` and `RESEARCH_END` are ISO 8601 timestamps (e.g. `"2026-03-27T19:08:03"`) captured at the start and end of research. `SERVER_NAME` is the kebab-case server name (e.g. `"abacatepay-mcp"`).
+**Cost script:** `references/cost-script.py` — set `RESEARCH_START`, `RESEARCH_END`, `SERVER_NAME` then run.
+`SERVER_NAME` = kebab-case (e.g. `"abacatepay-mcp"`). Timestamps = ISO 8601 (e.g. `"2026-03-27T19:08:03"`).
 
 ---
 
@@ -924,7 +851,7 @@ Triggered by: `"Review the project"`, `"Is this ready to commit?"`, `"Check requ
 ### Audit Output
 
 ```
-PROJECT REVIEW — 2026-03-26
+PROJECT REVIEW — [current date]
 ═══════════════════════════════════════════════════════════════
 
 ✅ PASS  Project goal alignment
@@ -1278,30 +1205,47 @@ Non-Read-Only Tools:
 
 ---
 
-### Learning 7: Non-Read-Only Tools Row — Conditional Presence
+### Learning 7: Capabilities & Non-Read-Only Tools — All Five Rows Always Present
 
-**❌ WRONG:** Always including "Non-Read-Only Tools" row in CSV
+**❌ WRONG:** Omitting any of these five rows when content is not found or not applicable
 
-**✅ CORRECT:** Only include this row if it exists in your research documentation
+**✅ CORRECT:** All five rows are MANDATORY in every CSV report — use `"None"` as the value when content is unavailable
 
-**Rule:**
-- If research has no "Non-Read-Only Tools" section → Don't add the row
-- If research DOES have it → Include with exact details
-- If all tools are read-only → Row says "None — all tools are read-only"
+**Five mandatory rows (NEVER omit any):**
+
+| Row | Attribute | When to use "None" |
+|-----|-----------|-------------------|
+| `Capabilities - Tools` | `detailed_info` | Server exposes no tools (Capabilities,Tools = No) |
+| `Capabilities - Resources` | `detailed_info` | Server exposes no resources (Capabilities,Resources = No) |
+| `Capabilities - Prompts` | `detailed_info` | Server exposes no prompts (Capabilities,Prompts = No) |
+| `Capabilities - Sampling` | `detailed_info` | Server has no sampling capability (Capabilities,Sampling = No) |
+| `Non-Read-Only Tools` | `detailed_info` | All tools are read-only OR no write/delete tools found |
+
+**Rules:**
+- If content found → Include with exact categorized details using `detailed_info` attribute
+- If not found / not applicable → Row value = `"None"` (attribute is still `detailed_info`)
+- NEVER omit any of these five rows — all are mandatory fields in every report
+- NEVER use `No` as the Attribute value — always use `detailed_info`
+
+**Example (server with tools only, no resources/prompts/sampling, read-only):**
+```csv
+Capabilities - Tools,detailed_info,"Search & Query Utilities
+  • list_items – List all items"
+Capabilities - Resources,detailed_info,"None"
+Capabilities - Prompts,detailed_info,"None"
+Capabilities - Sampling,detailed_info,"None"
+Non-Read-Only Tools,detailed_info,"None"
+```
 
 ---
-
-### Learning 8: (Consolidated into Learning 3 — TLS vs Bearer Token)
-
-> All TLS/Bearer Token rules are in Learning 3 above. See `references/learned-fixes.md` for case studies.
 
 ---
 
 ## Integration Rules
 
 **Session Start (MANDATORY — never skip):**
-- Read `references/learned-fixes.md` error patterns #1-#8
-- Read Learnings 1-8 in this file
+- Read `references/learned-fixes.md` all error patterns (#1-#4, #7-#11)
+- Read Learnings 1-7 in this file
 - These are not suggestions — they are gates. Skipping them causes the same mistakes to recur.
 
 **During Research (enforce at every attribute):**
@@ -1309,7 +1253,7 @@ Non-Read-Only Tools:
 - Verify Pricing = server license, NOT service cost (ask: "Is the MCP server itself paid?")
 - Verify Categories from source documentation (never invent)
 - Verify Tools Operations = HIGHEST level only (never mark multiple)
-- Verify Non-Read-Only rows exist in research before adding
+- All five capability rows ALWAYS present with attribute "detailed_info": Capabilities-Tools, Capabilities-Resources, Capabilities-Prompts, Capabilities-Sampling, Non-Read-Only Tools — use "None" for any that have no content
 - Every Yes/No MUST have source evidence — if missing, flag to user
 
 **Workflow Gates:**
@@ -1320,7 +1264,7 @@ Non-Read-Only Tools:
 - Security check: Every config change requires approval
 
 **Session End (MANDATORY — never skip):**
-- Run Gate 3 Learning Walkthrough (all 8 Learnings checked)
+- Run Gate 3 Learning Walkthrough (all Learnings checked)
 - Run Gate 4 Self-Improvement (document new patterns if any)
 - Only THEN create final CSV
 
@@ -1355,10 +1299,11 @@ Non-Read-Only Tools:
 
 ```
 MCP Info
-├── Description (3–4 lines with specific capabilities)
+├── Description (2–3 sentences, MUST start with "[Server Name] MCP Server…")
 ├── Git Repo Version (v1.2.3 format — latest only)
 │   Source priority: 1st → GitHub Releases  2nd → GitHub Tags  3rd → package.json
 │   Use version EXACTLY as shown in source (NO notes, NO transformation)
+│   If no version found after checking all 3 sources → use "No"
 ├── Category (File Management / Developer Tools / Data Retrieval / Productivity / Other)
 ├── GitHub Repository (URL or N/A)
 └── Endpoint URL (URL or N/A)
@@ -1374,17 +1319,17 @@ Tools Operations (Read-only / R+Update / R+Update+Delete)
 Deployment Approach (Local / Container / Remote)
 Compliance & Certifications (HIPAA / GDPR / SOC 2 / FedRAMP)
 Capabilities (Tools / Resources / Prompts / Sampling)
-Capabilities - Tools (detailed_info with categories and bullet points — always present)
-Capabilities - Resources (detailed_info — always present; use "None" if server has no resources)
-Capabilities - Prompts (detailed_info — always present; use "None" if server has no prompts)
-Capabilities - Sampling (detailed_info with sampling models and capabilities)
-Non-Read-Only Tools (detailed_info with categories OR "None — all tools are read-only")
+Capabilities - Tools (detailed_info — ALWAYS present; use "None" if server has no tools)
+Capabilities - Resources (detailed_info — ALWAYS present; use "None" if server has no resources)
+Capabilities - Prompts (detailed_info — ALWAYS present; use "None" if server has no prompts)
+Capabilities - Sampling (detailed_info — ALWAYS present; use "None" if server has no sampling capability)
+Non-Read-Only Tools (detailed_info — ALWAYS present; use "None" if all tools are read-only or no write/delete tools found)
 ```
 
 **Example Rows (minimal — see `references/csv-example.md` for full Telnyx example):**
 
 ```csv
-MCP Info,Description,"3-4 line description with specific capabilities."
+MCP Info,Description,"Telnyx MCP Server connects AI agents with Telnyx telephony, messaging, and AI assistant workflows. It provides 50+ tools across SMS/MMS messaging, voice call control, AI assistant creation, cloud storage, embeddings, webhook management, and integration secrets handling."
 MCP Info,Git Repo Version,"v0.1.2"
 Distribution Type,Official,Yes
 Authentication,API Token,Yes
@@ -1408,6 +1353,23 @@ Capabilities - Prompts,detailed_info,"None"
 6. **Descriptions** — Concise, action-oriented (start with verb: "Create", "Get", "List", "Send")
 7. **Multiline cells** — CSV escaping handles newlines, no manual escaping needed
 8. **Attributes** — Final CSV must be Yes/No only. During research, use `UNVERIFIED` for unconfirmed attributes — resolve ALL to Yes/No before generating CSV (per Gate 1)
+9. **Description field (CRITICAL — format + corruption prevention)** — The `MCP Info,Description` cell MUST:
+   - **Always start with `[Server Name] MCP Server`** (e.g., "Todoist MCP Server bridges AI assistants with…")
+   - Sentence 1: What the server connects/bridges (AI agents ↔ what platform/service)
+   - Sentence 2–3: Key features and capabilities (specific tools, workflows, or integrations)
+   - Be a **single continuous line** with NO embedded newlines (multi-sentence joined with spaces, not line breaks)
+   - Escape any double quotes inside the description as `""`
+   - If the description contains newlines or unescaped quotes, it will break the CSV row structure and overwrite subsequent Status column values.
+
+   ❌ WRONG (newline breaks row — corrupts subsequent Status values):
+   ```
+   MCP Info,Description,"First sentence.
+   Second sentence."
+   ```
+   ✅ CORRECT (single line):
+   ```
+   MCP Info,Description,"First sentence. Second sentence. Third sentence."
+   ```
 
 **Example Bad vs Good:**
 
@@ -1499,11 +1461,11 @@ Both are marked Yes because both are real hosting locations. SaaS Vendor takes p
 ## Learned Fixes — Error Case Studies
 
 > **All error patterns with full details are in `references/learned-fixes.md`.**
-> Learnings 1-8 above contain the authoritative rules extracted from those errors.
+> Learnings 1-7 above contain the authoritative rules extracted from those errors.
 > Read learned-fixes.md before each research session for real-world case studies.
 
-**Error patterns documented:** #1-#4 (Buildkite/Hyperbolic), #7-#8 (Runway)
-**Covers:** Protocol version, Authentication, Tools Operations, Deployment, TLS, Pricing, Git Version
+**Error patterns documented:** #1-#4 (Buildkite/Hyperbolic), #7-#8 (Runway), #9-#11 (CSV format/capability rows)
+**Covers:** Protocol version, Authentication, Tools Operations, Deployment, TLS, Pricing, Git Version, CSV Description, Capability Rows
 
 ---
 

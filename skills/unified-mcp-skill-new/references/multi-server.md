@@ -5,8 +5,8 @@
 
 🔒 **MANDATORY before any batch research:**
 > 1. Follow SKILL.md Gates 1-4 (Evidence Ledger, Connection Verification, Learning Gate, Self-Improvement)
-> 2. Read SKILL.md Learnings 1-8 for authoritative attribute rules
-> 3. Read `learned-fixes.md` error patterns #1-#8 for real case studies
+> 2. Read SKILL.md Learnings 1-7 for authoritative attribute rules
+> 3. Read `learned-fixes.md` all error patterns (#1-#4, #7-#11) for real case studies
 > 4. Each Layer 1 agent MUST build its own Evidence Ledger — no attribute without source proof
 > 5. If an agent cannot verify an attribute → return `"UNVERIFIED"` not `"unknown"`
 > SKILL.md is the single source of truth — rules are not duplicated here.
@@ -101,7 +101,7 @@ Each agent runs the **existing Step 0.5 dual-source workflow** (5 concurrent thr
 - If repo inaccessible → set `errors: ["repo not found"]`, return partial data with UNVERIFIED fields
 - Do not call other agents or tools outside README + file search + endpoint probe
 - **Evidence required:** Every attribute value MUST include source in `"evidence"` array (file + line or URL)
-- **Learning gate:** Apply all 8 Learnings from SKILL.md (especially L1 protocol, L3 TLS, L5 tools ops)
+- **Learning gate:** Apply all Learnings from SKILL.md (especially L1 protocol, L3 TLS, L5 tools ops)
 - **SSRF protection:** Validate all probe URLs against SKILL.md Security Mandate blocklist before probing
 - **Curl safety:** All probes use `--connect-timeout 5 --max-time 10 --max-redirs 3`
 - **Rate limit:** Max 3 attempts per endpoint, 2-second delay between retries
@@ -159,8 +159,8 @@ What next?
 
 ## Key Learnings Reference
 
-> **All 8 Learnings are defined in SKILL.md (Learnings 1-8).** They are the single source of truth.
-> **All error case studies are in `learned-fixes.md` (Errors #1-#4, #7-#8).**
+> **All Learnings are defined in SKILL.md (Learnings 1-7).** They are the single source of truth.
+> **All error case studies are in `learned-fixes.md` (Errors #1-#4, #7-#11).**
 > Read both before starting any multi-server batch research. Do not duplicate rules here.
 
 ---
