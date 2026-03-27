@@ -115,6 +115,16 @@ MANDATORY LEARNING WALKTHROUGH (check each one, document result):
   → NO embedded newlines — all sentences joined with spaces only
   → If Protocol Version or Pricing rows appear empty/missing → description has newlines (fix first)
   → Verify in raw CSV: description must start and end on the same line
+
+□ L9 Capabilities Source Verification: Were capabilities verified from source code?
+  → Entry point file read? (Program.java / main.py / index.ts)
+  → README alone is NOT sufficient — resources/prompts/sampling may be absent from docs
+  → Java: McpSchema.ServerCapabilities.builder() checked? registerResources/Tools/Prompts methods found?
+
+□ L10 Tool Names No Placeholders: Are all tool names in CSV concrete names?
+  → NO {servername}_, {prefix}_, {name}_ placeholder format anywhere in the report
+  → Use actual documented default name from README/config example, or base name only
+  → Check Capabilities - Tools, Capabilities - Resources, Non-Read-Only Tools cells
 ```
 
 **If ANY checkbox cannot be confirmed → STOP. Do not create CSV. Resolve first.**
@@ -689,13 +699,38 @@ TRANSPORT PROTOCOL VERIFICATION CHECKLIST:
 
 **Capabilities Detection:**
 
-Extract from source code and README (not mutually exclusive — mark all that apply):
+Extract from source code — **README alone is NOT sufficient** (capabilities may not be documented there).
 ```
 CAPABILITIES VERIFICATION CHECKLIST:
-□ Step 1: Does server expose @mcp.tool() decorators? → Tools = Yes
-□ Step 2: Does server expose @mcp.resource() decorators? → Resources = Yes
-□ Step 3: Does server expose @mcp.prompt() decorators? → Prompts = Yes
-□ Step 4: Does server expose sampling/completion methods? → Sampling = Yes
+□ Step 1: Read the server's entry point source file first
+   → Python: main.py / server.py
+   → TypeScript: index.ts / server.ts
+   → Java: Program.java / Application.java (look for McpSchema.ServerCapabilities.builder())
+   → Go: main.go / server.go
+   → NEVER mark Resources/Prompts/Sampling from README alone — check source
+
+□ Step 2: Look for tool registrations → Tools = Yes if found
+   - Python:     @mcp.tool() decorators or server.add_tool()
+   - TypeScript: server.tool() calls
+   - Java:       ITool implementations + registerTools(), .tools(true) in capabilities builder
+   - Go:         mcp.NewTool() + server.AddTool()
+
+□ Step 3: Look for resource registrations → Resources = Yes if found
+   - Python:     @mcp.resource() decorators
+   - TypeScript: server.resource() calls
+   - Java:       IResource implementations + registerResources(), .resources(...) in capabilities builder
+   - Go:         server.AddResource()
+
+□ Step 4: Look for prompt registrations → Prompts = Yes if found
+   - Python:     @mcp.prompt() decorators
+   - TypeScript: server.prompt() calls
+   - Java:       registerPrompts() + .prompts() in capabilities builder
+
+□ Step 5: Look for sampling handlers → Sampling = Yes if found
+
+□ Step 6: For Java — cross-check McpSchema.ServerCapabilities.builder() call
+   → Only capabilities explicitly listed in the builder are enabled
+   → .tools(true) = Tools, .resources(...) = Resources — absence = No
 ```
 
 **Format for Capabilities - Tools (CSV cell):**
@@ -711,6 +746,7 @@ Another Category
 ```
   • resource_uri – Description (resource type: text/image/document)
 ```
+🔒 **NO category header** — bullet points only. Never add a title line like "Table Metadata Resources" above the bullets.
 
 **Format for Capabilities - Prompts (CSV cell):**
 ```
@@ -1256,14 +1292,94 @@ Non-Read-Only Tools,detailed_info,"None"
 
 ---
 
+### Learning 8: Capabilities — Source Code Verification Required (2026-03-27)
+
+**CRITICAL RULE:** README does NOT reliably document all capabilities. Always read the server's entry point source file to find what is actually registered.
+
+**Why this matters:**
+- SAP BusinessObjects BI MCP by CData: README listed 3 tools only. Source had a `resources/` directory with `TableMetadataResource.java` — a fully registered MCP resource — never mentioned in README.
+- Result: `Capabilities,Resources` was initially marked `No` (wrong). Corrected only after reading `Program.java`.
+
+**Mandatory Source Verification:**
+```
+For EVERY server — read entry point source before marking any Capability as No:
+
+Python:     main.py / server.py
+             → search: @mcp.tool, @mcp.resource, @mcp.prompt, sampling handlers
+
+TypeScript: index.ts / server.ts
+             → search: server.tool(), server.resource(), server.prompt()
+
+Java:        Program.java / Application.java
+             → search: McpSchema.ServerCapabilities.builder()
+             → look for: .tools(), .resources(), .prompts() calls
+             → look for: registerTools(), registerResources(), registerPrompts() methods
+             → check: IResource/ITool/IPrompt implementation classes in subdirs
+
+Go:          main.go / server.go
+             → search: server.AddTool(), server.AddResource()
+```
+
+**Prevention Rule:**
+```
+🔒 NEVER mark Resources/Prompts/Sampling = No based on README alone
+🔒 ALWAYS read entry point source to confirm absence
+🔒 For Java: check both the capabilities builder AND the register methods
+🔒 Check subdirectories: tools/, resources/, prompts/ may exist even if README omits them
+```
+
+---
+
+### Learning 9: Tool Names — Never Use Placeholder Format (2026-03-27)
+
+**CRITICAL RULE:** Tool names in the CSV must be concrete documented names — never placeholder format.
+
+**❌ WRONG (placeholder format):**
+```
+  • {servername}_get_tables – List tables
+  • {prefix}_run_query – Execute query
+  • {name}_get_columns – List columns
+```
+
+**✅ CORRECT options:**
+
+Option A — Use the actual default prefix from README/config example:
+```
+  • sapbusinessobjectsbi_get_tables – List all available tables
+  • sapbusinessobjectsbi_get_columns – List all columns for a table
+  • sapbusinessobjectsbi_run_query – Execute a SQL SELECT query
+```
+
+Option B — Use base name only (when no default prefix is documented):
+```
+  • get_tables – List all available tables
+  • get_columns – List all columns for a table
+  • run_query – Execute a SQL SELECT query
+```
+
+**Where to find the default prefix:**
+- CData servers: check the `.prp` file example in README → `Prefix=sapbusinessobjectsbi`
+- Other servers: check README config examples, `claude_desktop_config.json` examples, or `.env.example`
+
+**Prevention Rule:**
+```
+🔒 NEVER write {servername}_, {prefix}_, {name}_ in any CSV cell
+🔒 Check Capabilities - Tools, Capabilities - Resources, Non-Read-Only Tools cells
+🔒 If no default prefix documented → use base name only
+🔒 Placeholder format is invisible/confusing in reports — always resolve to actual names
+```
+
+---
+
 ---
 
 ## Integration Rules
 
 **Session Start (MANDATORY — never skip):**
-- Read `references/learned-fixes.md` all error patterns (#1-#4, #7-#11)
-- Read Learnings 1-7 in this file
+- Read `references/learned-fixes.md` all error patterns (#1-#4, #7-#16)
+- Read Learnings 1-9 in this file
 - These are not suggestions — they are gates. Skipping them causes the same mistakes to recur.
+- Read Learnings 1-9: L8 = capabilities from source, L9 = no placeholder tool names
 
 **During Research (enforce at every attribute):**
 - Verify Transport Protocol FIRST, then determine TLS (never reverse)
