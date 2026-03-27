@@ -1151,65 +1151,51 @@ Does server have ONLY read operations?
 
 ### Learning 6: Capabilities - Tools Categorization (Updated 2026-03-27)
 
+**CRITICAL RULE:** Apply the **standard taxonomy** below. These titles are reused consistently across ALL servers — they are not invented per server, not sourced from README, not derived from paths. Classify each tool into the best-fit standard category.
+
+**Standard Taxonomy — Capabilities - Tools:**
+
+| Title | Use for |
+|-------|---------|
+| `Search & Query Utilities` | get_, list_, search_, find_, query_, fetch_ operations |
+| `Project Management` | project-scoped CRUD operations |
+| `Issue Management` | issue/ticket/log-related operations |
+| `Team & Workspace Metadata` | user, org, team, workspace info retrieval |
+| `Admin & Miscellaneous` | admin ops, token info, access control |
+| `Other` | tools that don't fit any category above |
+
+**Standard Taxonomy — Non-Read-Only Tools:**
+
+| Title | Use for |
+|-------|---------|
+| `Import/Export Tools` | upload, download, transfer, sync operations |
+| `Content Management` | create/update/delete stored content or files |
+| `Configuration Tools` | install, setup, configure, deploy operations |
+| `Other Write Operations` | write/delete ops that don't fit above categories |
+
+**Classification Rules:**
+- Assign each tool to the BEST-FIT category from the standard taxonomy
+- A tool can only appear in ONE category
+- If a tool fits multiple → use the more specific one (e.g. "Import/Export" over "Other Write Operations")
+- `Other` / `Other Write Operations` = catch-all for unclassifiable tools
+
 **❌ WRONG:**
-- Creating custom categories based on assumptions (e.g., "GPU Management", "SSH Management")
-- Randomly inventing titles (e.g., "Video Generation & Management")
-- Reorganizing or renaming categories
-- Grouping tools based on personal logic
-
-**✅ CORRECT:** Use EXACT category titles from actual source documentation
-
-**CRITICAL RULE - STRICT ENFORCEMENT:**
 ```
-🔒 NEVER randomly invent category titles with no evidence
-🔒 NEVER rename categories that exist in source
-🔒 Categories MUST come from source OR be derived from API endpoint paths
-🔒 Use source titles EXACTLY as shown — derivations must cite path/code evidence
+❌ "Media Generation" (custom title — use "Other" instead)
+❌ "Video Generation & Management" (invented — not in taxonomy)
+❌ "GPU Management" (invented — not in taxonomy)
+❌ "Task Management" (invented — not in taxonomy, use "Search & Query Utilities" for get/list, "Other Write Operations" for cancel/delete)
 ```
 
-**Source Priority (in order - STOP at first match):**
-1. Tool documentation / README (official groupings)
-2. Source code organization / comments
-3. Official API documentation
-4. User-provided research
-5. API endpoint path structure (derive functional groupings from paths)
-6. ❌ NEVER invent random titles - ask user if derivation is unclear
-
-**Real Examples:**
-
-FROM SOURCE (use exactly):
+**✅ CORRECT (Runway API MCP example):**
 ```
-✅ "Project Management"
-✅ "Team & Workspace Metadata"
-✅ "Search & Query Utilities"
-✅ "Import/Export Tools"
-✅ "Content Management"
-✅ "Other Write Operations"
-```
+Capabilities - Tools:
+  Search & Query Utilities → runway_getTask, runway_getOrg
+  Other → runway_generateVideo, runway_generateImage, runway_upscaleVideo, runway_editVideo, runway_cancelTask
 
-DERIVED FROM API PATHS (acceptable when no explicit source groupings exist):
+Non-Read-Only Tools:
+  Other Write Operations → runway_generateVideo, runway_generateImage, runway_upscaleVideo, runway_editVideo, runway_cancelTask
 ```
-✅ "Media Generation"  (from /image_to_video, /text_to_image, /video_upscale, /video_to_video)
-✅ "Task Management"   (from /tasks/{taskId})
-✅ "Organization"      (from /organization)
-```
-
-NOT FROM SOURCE AND NOT DERIVABLE (don't create):
-```
-❌ "Video Generation & Management" (arbitrary — not from path or code)
-❌ "GPU Management" (assumed — no path/code evidence)
-❌ "SSH Management" (assumed — no path/code evidence)
-```
-
-**Process:**
-1. Search README for category names
-2. Search source code for organization/comments
-3. Search API docs for groupings
-4. Search user research for categories
-5. If none found → derive from API endpoint paths (group by path prefix/function type)
-6. If derivation is unclear → ask user
-
-**Example:** If source shows "Team & Workspace Metadata" and "Search & Query Utilities" → use EXACTLY those. Don't rename, reorganize, or create new ones. If no source groupings exist, derive from endpoint paths and document the source evidence.
 
 ---
 
