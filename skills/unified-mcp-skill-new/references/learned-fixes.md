@@ -4,7 +4,7 @@
 
 > These patterns were identified from real MCP research sessions and documented to prevent future errors in attribute research.
 >
-> **Error Index:** #1-#4 (Buildkite/Hyperbolic, 2026-03-26), #7-#8 (Runway, 2026-03-27), #9-#11 (CSV format/capability rows, 2026-03-27), #12-#13 (Stadia Maps — description newlines + Protocol Version/Pricing blank Status, 2026-03-27)
+> **Error Index:** #1-#4 (Buildkite/Hyperbolic, 2026-03-26), #7-#8 (Runway, 2026-03-27), #9-#11 (CSV format/capability rows, 2026-03-27), #12-#13 (Stadia Maps — description newlines + Protocol Version/Pricing blank Status, 2026-03-27), #14 (Java SDK protocol version mapping — jira-service-management-mcp-server-by-cdata, 2026-03-27), #15-#16 (SAP BusinessObjects BI — capabilities from source + placeholder tool names, 2026-03-27)
 > Patterns #5-#6 are documented as SKILL.md Learnings 5-6 (no separate case study needed).
 > Authoritative rules for all patterns live in SKILL.md Learnings 1-7.
 
@@ -774,10 +774,104 @@ io.modelcontextprotocol.sdk:mcp (Java SDK):
 
 ---
 
+## Error Pattern #15: Capabilities Marked No Without Reading Source Code
+
+**Date:** 2026-03-27 | **Server:** SAP BusinessObjects BI MCP Server by CData | **Severity:** HIGH
+
+**Signals (What Went Wrong)**
+- `Capabilities,Resources` marked `No` — source had a full `resources/` directory with `TableMetadataResource.java`
+- README made no mention of resources at all
+- Capability verdict based on README scan only, entry point source not read
+
+**Root Cause:**
+Relied on README to determine capabilities. README documented only tools (`get_tables`, `get_columns`, `run_query`). The `resources/` subdirectory and `TableMetadataResource.java` were never mentioned in README but were fully registered MCP resources in `Program.java`.
+
+**Fix (Verification Checklist - MANDATORY):**
+```
+BEFORE marking any Capability as No:
+
+□ Step 1: Read entry point source file
+   - Java:       Program.java — look for McpSchema.ServerCapabilities.builder()
+   - Python:     main.py / server.py — look for @mcp.resource(), @mcp.prompt()
+   - TypeScript: index.ts — look for server.resource(), server.prompt()
+
+□ Step 2: Check subdirectories for capability implementations
+   - Java: tools/, resources/, prompts/ subdirs under src/
+   - Python: tools/, resources/ modules
+   - TypeScript: tools/, resources/ directories
+
+□ Step 3: For Java — read capabilities builder explicitly
+   McpSchema.ServerCapabilities.builder()
+   .tools(true)         → Tools = Yes
+   .resources(x, y)    → Resources = Yes
+   .prompts()           → Prompts = Yes
+   (absence = No)
+
+□ Step 4: Cross-check register methods
+   registerTools(), registerResources(), registerPrompts() existence in entry point
+```
+
+**Prevention Rule:**
+```
+🔒 README alone is NEVER sufficient for capabilities
+🔒 Always read entry point source file
+🔒 Check tools/, resources/, prompts/ subdirectories directly
+🔒 For Java: capabilities builder + register methods are the ground truth
+```
+
+**Reference:** SKILL.md Learning 8
+
+---
+
+## Error Pattern #16: Tool Names Used Placeholder Format in CSV
+
+**Date:** 2026-03-27 | **Server:** SAP BusinessObjects BI MCP Server by CData | **Severity:** Medium
+
+**Signals (What Went Wrong)**
+- `Capabilities - Tools` cell contained `{servername}_get_tables`, `{servername}_get_columns`, `{servername}_run_query`
+- Placeholder format `{servername}_` was copied from the README's documentation notation into the CSV
+- Tool names in reports must be concrete, not placeholder syntax
+
+**Root Cause:**
+The README uses `{servername}` as a documentation placeholder for the configurable prefix. This was copied verbatim into the CSV instead of using the actual documented default prefix from the `.prp` config example (`sapbusinessobjectsbi`) or the base name.
+
+**Fix:**
+```
+Option A — Use actual documented default prefix:
+  ✅ sapbusinessobjectsbi_get_tables
+  ✅ sapbusinessobjectsbi_get_columns
+  ✅ sapbusinessobjectsbi_run_query
+
+Option B — Use base name only (no prefix):
+  ✅ get_tables
+  ✅ get_columns
+  ✅ run_query
+
+❌ NEVER: {servername}_get_tables
+❌ NEVER: {prefix}_run_query
+❌ NEVER: {name}_get_columns
+```
+
+**Where to find the default prefix:**
+- CData servers: README `.prp` file example → `Prefix=sapbusinessobjectsbi`
+- Other servers: `claude_desktop_config.json` example, `.env.example`, or README setup section
+
+**Prevention Rule:**
+```
+🔒 NEVER copy {placeholder} format from README into the CSV
+🔒 Resolve to actual name before writing the CSV
+🔒 Check Capabilities - Tools, Capabilities - Resources, Non-Read-Only Tools cells
+```
+
+**Reference:** SKILL.md Learning 9
+
+---
+
 ## Version History
 
 | Version | Date | Changes |
 |---------|------|---------|
+| 3.0 | 2026-03-27 | Added Error Patterns #15-#16: Capabilities from source (not README) + placeholder tool names — from SAP BusinessObjects BI MCP research |
 | 2.8 | 2026-03-27 | Added Error Pattern #14: Java MCP SDK mapping — CData Jira/eBay research |
 | 2.7 | 2026-03-27 | Added Error Pattern #13: Protocol Version and Pricing blank/overwritten Status values |
 | 2.6 | 2026-03-27 | Added Error Pattern #12: Description newlines cause Protocol Version + Pricing to disappear — from Stadia Maps MCP research |
@@ -791,9 +885,9 @@ io.modelcontextprotocol.sdk:mcp (Java SDK):
 ---
 
 **Last Updated:** 2026-03-27
-**Skill Version:** Unified MCP Skill 3.0.0 (Self-Learning v2.7)
+**Skill Version:** Unified MCP Skill 3.0.0 (Self-Learning v3.0)
 **Status:** Active — Auto-referenced in research workflows
-**Critical Rules:** 11 error patterns documented in this file (Patterns #1-#4, #7-#13); authoritative rules in SKILL.md Learnings 1-7
+**Critical Rules:** 13 error patterns documented in this file (Patterns #1-#4, #7-#16); authoritative rules in SKILL.md Learnings 1-9
 
 
 ---
@@ -867,3 +961,46 @@ VIOLATIONS ARE CRITICAL — blocks report submission until corrected
 
 **Reference:** SKILL.md Learning 6 + Memory.md Violation Log
 
+
+---
+
+### Error Pattern #14: Java SDK Protocol Version — No Mapping Table in SKILL.md
+
+**Date:** 2026-03-27 | **Server:** jira-service-management-mcp-server-by-cdata | **Severity:** Medium
+
+**Signals:**
+- pom.xml declares `io.modelcontextprotocol.sdk:mcp` as a dependency (Java SDK)
+- SKILL.md Step 1 has no Java SDK mapping table (only FastMCP, TypeScript, Python, Go)
+- Cannot determine protocol version from the standard lookup table
+
+**Root Cause:**
+The Java MCP SDK (`io.modelcontextprotocol.sdk:mcp`) is not covered by the SKILL.md protocol version mapping table. Need a different verification strategy for Java servers.
+
+**Resolution (Java SDK Protocol Version):**
+When a Java project uses `io.modelcontextprotocol.sdk:mcp`, determine protocol version by checking
+`McpSchema.LATEST_PROTOCOL_VERSION` in the SDK source for that exact version tag:
+
+```
+URL pattern:
+https://raw.githubusercontent.com/modelcontextprotocol/java-sdk/v{VERSION}/mcp/src/main/java/io/modelcontextprotocol/spec/McpSchema.java
+
+Look for: public static final String LATEST_PROTOCOL_VERSION = "...";
+```
+
+**Known Mappings (Java SDK):**
+| Java SDK Version | Release Date | Protocol Version |
+|-----------------|-------------|-----------------|
+| v0.8.1          | 2025-03-26  | 2024-11-05       |
+| v0.8.0          | 2025-03-21  | 2024-11-05 (inferred, same era) |
+| v0.9.0+         | 2025-04-10+ | UNVERIFIED — check McpSchema.java for exact version |
+
+**Prevention:**
+```
+For Java servers using io.modelcontextprotocol.sdk:mcp:
+1. Extract version from pom.xml (e.g., 0.8.1)
+2. Fetch McpSchema.java from that tagged release
+3. Read LATEST_PROTOCOL_VERSION constant directly
+4. Do NOT guess based on release date alone
+```
+
+**Result:** Protocol = 2024-11-05 confirmed for jira-service-management-mcp-server-by-cdata.
