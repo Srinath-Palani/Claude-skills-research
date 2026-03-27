@@ -110,6 +110,11 @@ MANDATORY LEARNING WALKTHROUGH (check each one, document result):
   → ALL FIVE required — no exceptions
 
 □ L3 recheck: TLS/Bearer independence confirmed? (STDIO → TLS always No)
+
+□ L8 Description Single-Line: Is MCP Info,Description a single unbroken line?
+  → NO embedded newlines — all sentences joined with spaces only
+  → If Protocol Version or Pricing rows appear empty/missing → description has newlines (fix first)
+  → Verify in raw CSV: description must start and end on the same line
 ```
 
 **If ANY checkbox cannot be confirmed → STOP. Do not create CSV. Resolve first.**
@@ -519,6 +524,18 @@ All 5 threads must have returned results or confirmed-empty. If any thread is in
 | Distribution | Official OR Community |
 | Pricing | Free OR Paid |
 | Tools Operations | Choose HIGHEST: Read-only / R+Update / R+Update+Delete |
+
+**🔒 MCP Protocol Version — Mutual Exclusion Rule (MANDATORY):**
+- Exactly ONE version row = Yes. ALL other version rows = No. NO blanks. NO omissions.
+- If `2025-06-18 = Yes` → `2025-11-25 = No`, `2025-03-26 = No`, `2024-11-05 = No`
+- Never leave a version row blank — blank = broken CSV row (overwritten data risk)
+- Never write extra text, notes, or commentary in a version row's Status column
+
+**🔒 Pricing — Mutual Exclusion Rule (MANDATORY):**
+- If `Free = Yes` → `Paid = No`. Write exactly that. Nothing else in those two rows.
+- If `Paid = Yes` → `Free = No`. Write exactly that. Nothing else in those two rows.
+- Never leave Pricing rows blank. Never add commentary in the Status column.
+- The Status column for Pricing rows contains ONLY `Yes` or `No` — no other text.
 
 **Non-Exclusive Attributes (mark ALL that apply):**
 

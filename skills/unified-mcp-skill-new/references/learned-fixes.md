@@ -4,7 +4,7 @@
 
 > These patterns were identified from real MCP research sessions and documented to prevent future errors in attribute research.
 >
-> **Error Index:** #1-#4 (Buildkite/Hyperbolic, 2026-03-26), #7-#8 (Runway, 2026-03-27), #9-#11 (CSV format/capability rows, 2026-03-27)
+> **Error Index:** #1-#4 (Buildkite/Hyperbolic, 2026-03-26), #7-#8 (Runway, 2026-03-27), #9-#11 (CSV format/capability rows, 2026-03-27), #12-#13 (Stadia Maps — description newlines + Protocol Version/Pricing blank Status, 2026-03-27)
 > Patterns #5-#6 are documented as SKILL.md Learnings 5-6 (no separate case study needed).
 > Authoritative rules for all patterns live in SKILL.md Learnings 1-7.
 
@@ -605,10 +605,123 @@ MCP Info,Git Repo Version,"UNVERIFIED"
 
 ---
 
+## Error Pattern #12: Description Newlines Cause MCP Protocol Version and Pricing Rows to Disappear
+
+**Date:** 2026-03-27 | **Server:** Stadia Maps MCP Server | **Severity:** HIGH
+
+**Signals (What Went Wrong)**
+- `MCP Protocol Version` rows missing from report (no Yes/No visible in any version row)
+- `Pricing` rows missing from report (Free = ?, Paid = ?)
+- Description appears truncated or continues into rows below it
+- Rows that should follow Description (Git Repo Version, Category, Distribution Type, MCP Protocol Version, Pricing…) are displaced or show description text as their Status value
+
+**Root Cause:**
+This is a **cascade failure from Error Pattern #9**. The `MCP Info,Description` cell was written with embedded newlines. The CSV parser splits the description into multiple rows at each newline. Every row that should come after Description gets displaced — their Status column is either blank or filled with the continuation of the description text. The rows appear "missing" even though the row labels exist, because their Status values were overwritten.
+
+**What Happened (Stadia Maps MCP):**
+```
+❌ WRITTEN (with newline inside description):
+MCP Info,Description,"Stadia Maps MCP Server (TypeScript) provides AI assistants with access to Stadia Maps API.
+It supports map tiles, routing, geocoding, and place search."
+
+← Parser sees TWO rows:
+   Row A: MCP Info | Description | "Stadia Maps MCP Server... Stadia Maps API."
+   Row B: (empty) | (empty)      | "It supports map tiles..."   ← spurious row
+
+← Rows that follow (Distribution Type, MCP Protocol Version, Pricing) are still
+   in the file but their Status column shows "" or description overflow — not Yes/No
+```
+
+**Correct Fix:**
+```
+✅ CORRECT (single continuous line):
+MCP Info,Description,"Stadia Maps MCP Server (TypeScript) provides AI assistants with access to Stadia Maps API. It supports map tiles, routing, geocoding, and place search."
+
+← Parser sees ONE row — all subsequent rows land in correct columns
+```
+
+**Prevention Rule (STRICT):**
+```
+🔒 Description = single line ALWAYS — NO embedded newlines
+🔒 Join all sentences with a space, not a line break
+🔒 VERIFY: after writing Description row, check that MCP Protocol Version
+   rows appear immediately after Distribution Type with Yes/No values
+🔒 If Protocol Version or Pricing rows are missing → description has newlines (fix first)
+```
+
+**Gate 3 Check (L8 — added):**
+```
+□ L8 Description Single-Line: Is MCP Info,Description a single unbroken line?
+  → Open raw CSV in text editor — description must end on same line it starts
+  → If MCP Protocol Version or Pricing rows appear empty → fix description first
+  → NO embedded newlines — sentences joined with spaces only
+```
+
+**Reference:** Error Pattern #9 (root cause), SKILL.md Formatting Rule #9, Gate 3 L8
+
+---
+
+## Error Pattern #13: MCP Protocol Version and Pricing — Blank or Overwritten Status Values
+
+**Date:** 2026-03-27 | **Server:** Stadia Maps MCP Server | **Severity:** HIGH
+
+**Signals (What Went Wrong)**
+- One MCP Protocol Version row marked Yes, but remaining version rows left blank or omitted
+- Pricing row `Free = Yes` written, but `Paid` row missing or left blank
+- Status column of Protocol Version or Pricing rows contains description text (overwritten by description newline cascade)
+
+**Rules (MANDATORY — no exceptions):**
+
+**MCP Protocol Version:**
+```
+✅ CORRECT — exactly one Yes, all others explicitly No:
+MCP Protocol Version,2025-11-25,No
+MCP Protocol Version,2025-06-18,Yes
+MCP Protocol Version,2025-03-26,No
+MCP Protocol Version,2024-11-05,No
+
+❌ WRONG — blank rows:
+MCP Protocol Version,2025-06-18,Yes
+(other version rows missing)
+
+❌ WRONG — commentary in Status:
+MCP Protocol Version,2025-06-18,"Yes (from SDK v1.4.1)"
+```
+
+**Pricing:**
+```
+✅ CORRECT — both rows always present, status only Yes or No:
+Pricing,Free,Yes
+Pricing,Paid,No
+
+❌ WRONG — only one row written:
+Pricing,Free,Yes
+(Paid row missing)
+
+❌ WRONG — commentary in Status:
+Pricing,Free,"Yes (MIT License)"
+Pricing,Paid,"No (open source)"
+```
+
+**Prevention Rule (STRICT):**
+```
+🔒 Protocol Version: ALL four version rows ALWAYS present — exactly one Yes, rest No
+🔒 Pricing: BOTH Free and Paid rows ALWAYS present — exactly one Yes, one No
+🔒 Status column for both = ONLY "Yes" or "No" — no text, no notes, no commentary
+🔒 Never leave any of these rows blank
+🔒 If Status looks wrong → check description row for embedded newlines (Error Pattern #12)
+```
+
+**Reference:** SKILL.md Step 5 Mutually Exclusive Attributes, Error Pattern #12
+
+---
+
 ## Version History
 
 | Version | Date | Changes |
 |---------|------|---------|
+| 2.7 | 2026-03-27 | Added Error Pattern #13: Protocol Version and Pricing blank/overwritten Status values |
+| 2.6 | 2026-03-27 | Added Error Pattern #12: Description newlines cause Protocol Version + Pricing to disappear — from Stadia Maps MCP research |
 | 2.5 | 2026-03-27 | Added Error Pattern #11: Missing Capability rows — all four always mandatory with "None" fallback |
 | 2.4 | 2026-03-27 | Added Error Pattern #10: Git Repo Version "UNVERIFIED" → use "No" — from keeper/axiomhq/mcp-croit/mercadolibre research |
 | 2.3 | 2026-03-27 | Added Error Pattern #9: Description field corrupts Status column — from keeper/axiomhq/mcp-croit/mercadolibre research |
@@ -619,7 +732,7 @@ MCP Info,Git Repo Version,"UNVERIFIED"
 ---
 
 **Last Updated:** 2026-03-27
-**Skill Version:** Unified MCP Skill 3.0.0 (Self-Learning v2.5)
+**Skill Version:** Unified MCP Skill 3.0.0 (Self-Learning v2.7)
 **Status:** Active — Auto-referenced in research workflows
-**Critical Rules:** 9 error patterns documented in this file (Patterns #1-#4, #7-#11); authoritative rules in SKILL.md Learnings 1-7
+**Critical Rules:** 11 error patterns documented in this file (Patterns #1-#4, #7-#13); authoritative rules in SKILL.md Learnings 1-7
 
