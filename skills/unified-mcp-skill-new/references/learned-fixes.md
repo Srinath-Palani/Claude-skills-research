@@ -567,38 +567,54 @@ Capabilities - Sampling,No,
 
 ---
 
-## Error Pattern #10: Git Repo Version — "UNVERIFIED" Instead of "No"
+## Error Pattern #10: Git Repo Version — Wrong Fallback Value
 
-**Date:** 2026-03-27 | **Servers:** keeper-mcp-golang-docker, axiomhq-mcp, mcp-croit-ceph, mercadolibre-mcp-server | **Severity:** Low
+**Date:** 2026-03-27 (updated 2026-03-27) | **Servers:** keeper-mcp-golang-docker, axiomhq-mcp, mcp-croit-ceph, mercadolibre-mcp-server, jira-service-management-mcp-server-by-cdata | **Severity:** Low
 
 **Signals (What Went Wrong)**
-- After checking all 3 sources (Releases → Tags → package.json), no version was found
-- Field was left as `UNVERIFIED` in the final CSV instead of being resolved
+- After checking all 3 sources (Releases → Tags → package.json), no real version was found
+- Field was left as `UNVERIFIED` or filled with a SNAPSHOT/dev version string
 
 **Root Cause:**
-The general ZERO-ASSUMPTION policy says to use `UNVERIFIED` when a value cannot be confirmed. But Git Repo Version has a defined fallback — when no version exists in any source, the correct value is `No`, not `UNVERIFIED`.
+Two variants:
+1. The general ZERO-ASSUMPTION policy says to use `UNVERIFIED` when a value cannot be confirmed — but Git Repo Version has a defined fallback of `NA`.
+2. SNAPSHOT versions (e.g. `1.0-SNAPSHOT`, `0.1.0-alpha`) were treated as real versions when they are Maven/dev placeholders, not released versions.
 
 **Fix:**
 ```
 □ Step 1: Check GitHub Releases → not found
 □ Step 2: Check GitHub Tags → not found
-□ Step 3: Check package.json → not found
-□ Step 4: Mark as "No" (do NOT leave as UNVERIFIED)
+□ Step 3: Check package.json/pom.xml → not found OR found SNAPSHOT/pre-release
+□ Step 4: Mark as "NA" (do NOT use UNVERIFIED, do NOT use SNAPSHOT string)
+```
+
+**SNAPSHOT/pre-release recognition:**
+```
+These are NOT real versions → treat as not found → use "NA":
+  - 1.0-SNAPSHOT       (Maven snapshot)
+  - 0.1.0-alpha        (pre-release)
+  - 0.1.0-beta.1       (pre-release)
+  - 1.0.0-rc1          (release candidate)
+  - 1.0.0-dev          (dev build)
 ```
 
 **CSV output:**
 ```
 ✅ CORRECT:
-MCP Info,Git Repo Version,"No"
+MCP Info,Git Repo Version,"NA"
 
 ❌ WRONG:
 MCP Info,Git Repo Version,"UNVERIFIED"
+MCP Info,Git Repo Version,"1.0-SNAPSHOT"
+MCP Info,Git Repo Version,"No"
 ```
 
 **Prevention Rule:**
 ```
-🔒 Git Repo Version fallback when nothing found = "No"
+🔒 Git Repo Version fallback when nothing found = "NA"
+🔒 SNAPSHOT/alpha/beta/rc/dev version strings = NOT real versions → "NA"
 🔒 Never leave Git Repo Version as UNVERIFIED in final CSV
+🔒 Never copy a SNAPSHOT version string into the CSV
 ```
 
 **Reference:** SKILL.md Row Order — Git Repo Version
@@ -716,10 +732,53 @@ Pricing,Paid,"No (open source)"
 
 ---
 
+## Error Pattern #14: Java MCP SDK — Missing Protocol Version Mapping
+
+**Date:** 2026-03-27 | **Servers:** jira-service-management-mcp-server-by-cdata, ebay-mcp-server-by-cdata | **Severity:** Medium
+
+**Signals:**
+- pom.xml contains `io.modelcontextprotocol.sdk:mcp` (Java SDK) dependency
+- No mapping existed in SKILL.md for Java SDK versions
+- Risk of guessing protocol version without evidence
+
+**Root Cause:**
+Java MCP SDK (`io.modelcontextprotocol.sdk:mcp` from Maven Central) is a distinct SDK family not previously documented in the framework mapping tables. Without a mapping, protocol version would either be guessed or marked UNVERIFIED.
+
+**Java SDK Version → Protocol Version Mapping (verified from GitHub releases):**
+```
+Evidence source: https://api.github.com/repos/modelcontextprotocol/java-sdk/releases
+Key data point: v0.13.0 release notes explicitly state "Added MCP protocol version 2025-06-18 support"
+
+io.modelcontextprotocol.sdk:mcp (Java SDK):
+  < 0.13.0  → Protocol 2024-11-05   (pre-2025-06-18 support)
+  0.13.0–0.x → Protocol 2025-06-18  (first version to add this)
+  ≥ 1.0.0   → Protocol 2025-06-18  (verify if 2025-11-25 was added in 1.x)
+```
+
+**Applied to:**
+- CData Jira SM MCP: pom.xml `io.modelcontextprotocol.sdk:mcp:0.8.1` → 0.8.1 < 0.13.0 → Protocol 2024-11-05 = Yes
+
+**Detection:**
+- Maven pom.xml → look for `<groupId>io.modelcontextprotocol.sdk</groupId>` + `<artifactId>mcp</artifactId>`
+- Gradle build.gradle → `io.modelcontextprotocol.sdk:mcp:VERSION`
+
+**Prevention Rule:**
+```
+🔒 Java SDK pom.xml: extract version from <version> under io.modelcontextprotocol.sdk:mcp
+🔒 Apply Java SDK mapping table in SKILL.md Step 1
+🔒 Java SDK < 0.13.0 → Protocol 2024-11-05 (confirmed)
+🔒 Java SDK ≥ 0.13.0 → Protocol 2025-06-18 (confirmed)
+```
+
+**Reference:** SKILL.md Step 1 — Java SDK Mapping added 2026-03-27
+
+---
+
 ## Version History
 
 | Version | Date | Changes |
 |---------|------|---------|
+| 2.8 | 2026-03-27 | Added Error Pattern #14: Java MCP SDK mapping — CData Jira/eBay research |
 | 2.7 | 2026-03-27 | Added Error Pattern #13: Protocol Version and Pricing blank/overwritten Status values |
 | 2.6 | 2026-03-27 | Added Error Pattern #12: Description newlines cause Protocol Version + Pricing to disappear — from Stadia Maps MCP research |
 | 2.5 | 2026-03-27 | Added Error Pattern #11: Missing Capability rows — all four always mandatory with "None" fallback |
@@ -735,4 +794,76 @@ Pricing,Paid,"No (open source)"
 **Skill Version:** Unified MCP Skill 3.0.0 (Self-Learning v2.7)
 **Status:** Active — Auto-referenced in research workflows
 **Critical Rules:** 11 error patterns documented in this file (Patterns #1-#4, #7-#13); authoritative rules in SKILL.md Learnings 1-7
+
+
+---
+
+### Error #12: CRITICAL — Invented Domain-Specific Category Titles (2026-03-27)
+
+**Date:** 2026-03-27 | **Server:** ThingsBoard MCP | **Severity:** 🔴 CRITICAL
+
+**Signals:**
+- CSV "Capabilities - Tools" contains custom titles like "Device Management", "Asset Management"
+- Titles match the server's domain (devices, assets, alarms) instead of taxonomy
+- Different MCPs have different category titles (inconsistent)
+
+**Root Cause:**
+- Domain-specific thinking: "ThingsBoard manages devices → title it Device Management"
+- Failure to apply standard taxonomy blindly
+- Confusion between tool MANAGEMENT DOMAIN vs. tool OPERATION TYPE
+
+**Fix (Step-by-Step):**
+
+**Step 1: Identify the violation**
+```
+Question: Does this title appear in SKILL.md Learning 6?
+  "Device Management" → NO ❌ VIOLATION
+  "Search & Query Utilities" → YES ✅ ALLOWED
+```
+
+**Step 2: Reclassify tools by OPERATION, not DOMAIN**
+```
+❌ WRONG:
+  Device Management
+    • createOrUpsertDevice
+    • deleteDevice
+
+✅ CORRECT:
+  Search & Query Utilities (read operations)
+    • getDeviceById
+    • getTenantDevices
+  
+  Content Management (write/delete operations)
+    • createOrUpsertDevice
+    • deleteDevice
+```
+
+**Step 3: Apply MANDATORY verification**
+```
+Before finalizing CSV:
+  □ EVERY title in Capabilities - Tools from the 6-title list?
+  □ EVERY title in Non-Read-Only Tools from the 4-title list?
+  □ ZERO custom/invented titles?
+  □ Would this same title work for GitHub MCP? Zoho MCP? Jira?
+     (If NO → it's domain-specific, WRONG)
+```
+
+**Result:**
+- ✅ Corrected thingsboard-mcp.csv with standard taxonomy
+- ✅ All 120+ tools reclassified to Search & Query, Team & Workspace, Admin & Misc, Content Management
+- ✅ Consistent with other MCP reports
+- ✅ Searchable/filterable across all MCPs
+
+**Prevention Rules (LOCKED):**
+```
+🔒 ABSOLUTE: Never invent any category title
+🔒 ABSOLUTE: Never create custom structure
+🔒 ABSOLUTE: Always strictly follow the fixed taxonomy
+🔒 ABSOLUTE: Focus on WHAT TOOL DOES, not WHAT IT MANAGES
+🔒 ABSOLUTE: Run verification checklist before every CSV
+
+VIOLATIONS ARE CRITICAL — blocks report submission until corrected
+```
+
+**Reference:** SKILL.md Learning 6 + Memory.md Violation Log
 
