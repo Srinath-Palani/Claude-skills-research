@@ -218,19 +218,6 @@ Gate 4=Self-Improvement (new patterns documented)
 
 ---
 
-## Core Capabilities
-
-| Capability | Description | Invocation Signal |
-|-----------|-------------|------------------|
-| **MCP Research** | Research and document MCP servers | "Research the GitHub MCP server", "Analyze this MCP: https://..." |
-| **Attribute Docs** | Fill every MCP attribute with evidence | "Document attributes for...", "Catalogue this MCP server" |
-| **Local Setup** | Clone, install, configure MCP servers | "Set up this server locally", "Clone and run..." |
-| **Error Recovery** | 7-phase inline diagnosis and auto-fix | Automatic on connection fail |
-| **Project Audit** | Audit project and skills for compliance | "Review the project", "Is this ready to commit?" |
-| **Multi-Server Research** | Parallel batch research + comparison of N servers | "Research these MCPs: X, Y, Z", "Compare GitHub and Slack MCPs" |
-
----
-
 ## 🔐 Security Mandate — Always Enforced
 
 ### Enterprise Security Quick-Reference (Audit Checklist)
@@ -307,39 +294,6 @@ If URL resolves to a blocked range → REJECT immediately, do NOT probe.
 
 ---
 
-## Usage
-
-**Invoke with:** `/unified-mcp-skill-new`
-
-> ✅ **UNLOCKED — Invocation command updated to `/unified-mcp-skill-new` with explicit user approval (2026-03-27).**
-
-```
-RESEARCH
-/unified-mcp-skill-new "Research the GitHub MCP server"
-/unified-mcp-skill-new "Get full report on the Slack MCP server"
-/unified-mcp-skill-new "Document this MCP server: https://github.com/org/repo"
-/unified-mcp-skill-new "Analyze and score this MCP: https://mcp.example.com"
-
-LOCAL SETUP
-/unified-mcp-skill-new "Set up the GitHub MCP server locally"
-/unified-mcp-skill-new "Clone and get the Slack MCP running"
-
-ERROR RECOVERY (automatic)
-/unified-mcp-skill-new "The MCP server won't connect"
-/unified-mcp-skill-new [paste error or stack trace]
-
-PROJECT AUDIT
-/unified-mcp-skill-new "Review the project"
-/unified-mcp-skill-new "Is this ready to commit?"
-
-MULTI-SERVER / BATCH
-/unified-mcp-skill-new "Research these MCPs: GitHub, Slack, Linear"
-/unified-mcp-skill-new "Compare the GitHub and Stripe MCP servers"
-/unified-mcp-skill-new "Batch report on: [server1], [server2], [server3]"
-```
-
----
-
 ## Workflow
 
 1. **Classify Input** — endpoint / GitHub URL / server name / package name
@@ -363,7 +317,7 @@ MULTI-SERVER / BATCH
 
 **Path configuration — always ask, never assume:**
 
-**Path Validation (MANDATORY before use):**
+#### Path Validation (MANDATORY before use)
 ```
 REJECT any path that contains:
 - ".." segments           (path traversal)
@@ -406,7 +360,7 @@ Last used clone path: /Users/you/projects/mcp
 ```
 Only save as default if user explicitly selects option 3.
 
-**Classify input to determine starting point — then ALWAYS find the other source too:**
+#### Input Classification — Find BOTH sources always
 
 | Input Given | Starting Point | Also MUST Find |
 |-------------|---------------|----------------|
@@ -415,7 +369,7 @@ Only save as default if user explicitly selects option 3.
 | **Server Name** | Search both simultaneously | GitHub URL + remote endpoint |
 | **Package Name (npm/PyPI/Cargo)** | Locate source repo and registry listing | Search GitHub for source repo |
 
-**MANDATORY DUAL-SOURCE RULE:**
+#### Mandatory Dual-Source Rule
 Regardless of input type, research is NEVER complete with only one source.
 - Given GitHub URL → always search for remote endpoint (README, docs, curl probe)
 - Given remote endpoint → always find GitHub repo
@@ -435,7 +389,7 @@ Sequential research misses interdependencies. Endpoint found in Thread 3 reveals
 ### Step 0.5 — 5 Concurrent Threads
 **⛔ LOCKED — Do not modify this step without explicit user permission.**
 
-**Thread 1: GitHub Repository Research** *(always run — find repo if not given)*
+#### Thread 1: GitHub Repository Research *(always run — find repo if not given)*
 → Feeds: **Step 5.1** (Name, Description, Category, GitHub Repo) · **Step 5.2** (Official/Community) · **Step 5.12** (Capabilities source) · **Step 5.13** (tool names)
 - If only endpoint given → search for GitHub repo first, then read it
 - Read ENTIRE README (all sections)
@@ -451,7 +405,7 @@ Sequential research misses interdependencies. Endpoint found in Thread 3 reveals
   [ 2 ] Cancel research
   ```
 
-**Thread 2: Repository File Search** *(always run)*
+#### Thread 2: Repository File Search *(always run)*
 → Feeds: **Step 5.6** (Authentication — server.json, .env.example, config files) · **Step 5.6.B** (Implicit Auth Detection — env / args / headers) · **Built-in Security Controls** (see below)
 - Files: .env.example, config.json, setup.md, mcp.json, server.json, docs/
 - Grep: "https://", "endpoint", "url", "host" patterns
@@ -463,7 +417,7 @@ Sequential research misses interdependencies. Endpoint found in Thread 3 reveals
   - Scan `headers` block in any JSON config for: `Authorization: Bearer`, `Authorization: token`, `X-API-Key`, `X-Auth-Token`, `Authorization: Basic`
   - If ANY match found → mark applicable auth attributes Yes in Step 5.6; record field + file in Evidence Ledger; trigger Step 5.6.A auth prompt
 
-**While in Thread 2 — also scan source code for Built-in Security Controls:**
+#### Built-in Security Controls (Thread 2 — Secondary Scan)
 These do not change any CSV attribute values, but must be documented as risk context in the research notes.
 ```
 □ Write gates     — env var flags that disable destructive ops by default
@@ -478,7 +432,7 @@ These do not change any CSV attribute values, but must be documented as risk con
 If any controls found → note them in research summary as: "Security mitigations present: [list]"
 If none found → note: "No built-in write gates or response sanitization detected"
 
-**Thread 3: Remote Endpoint Probing** *(run unless short-circuited)*
+#### Thread 3: Remote Endpoint Probing *(run unless short-circuited)*
 → Feeds: **Step 5.1** (Endpoint URL) · **Step 5.6.B** (Implicit Auth Detection — headers) · **Step 5.7** (TLS — L3) · **Step 5.8** (Transport) · **Step 5.10** (Deployment Remote)
 - **SHORT-CIRCUIT:** If Thread 1 confirmed STDIO-only AND zero remote/endpoint URLs found in README → skip probing, mark Endpoint URL = N/A, TLS = No. Document: "STDIO-only server, no remote endpoint references in README."
 - If only GitHub given → extract candidate endpoint URLs from README/docs first
@@ -506,7 +460,7 @@ If none found → note: "No built-in write gates or response sanitization detect
   - 401 / 403 response → confirms auth required; inspect `WWW-Authenticate` to identify auth type
   - If ANY header signal found → mark applicable auth attributes Yes in Step 5.6; record header field + endpoint in Evidence Ledger; trigger Step 5.6.A auth prompt
 
-**Thread 4: Dependency Extraction**
+#### Thread 4: Dependency Extraction
 → Feeds: **Step 5.3** (Protocol Version — apply L1 framework priority mapping from Step 1)
 - Priority 1: FastMCP version (if present)
 - Priority 2: Framework version (Langchain, etc.)
@@ -514,7 +468,7 @@ If none found → note: "No built-in write gates or response sanitization detect
 - Check for HTTP frameworks: FastAPI, Express, Flask
 - Dependency files to check: `package.json` (Node), `pyproject.toml` / `requirements.txt` (Python), `Cargo.toml` (Rust), `go.mod` (Go)
 
-**Thread 5: Vendor Compliance & Security**
+#### Thread 5: Vendor Compliance & Security
 → Feeds: **Step 5.11** (Compliance — HIPAA / GDPR / SOC 2 / FedRAMP)
 - HIPAA, GDPR, SOC 2, FedRAMP badges
 - GitHub issues for compliance
@@ -548,38 +502,37 @@ If either source is missing → continue searching until found or confirmed non-
 
 **CRITICAL:** Run BEFORE filling attributes. Framework priority takes absolute precedence.
 
-**Source Priority (use first match):**
+#### Source Priority (use first match)
 1. Check dependencies for **FastMCP** (Python) → Use FastMCP mapping
 2. Check dependencies for **@modelcontextprotocol/sdk** (TypeScript) → Use SDK mapping
 3. Check base **mcp** SDK (Python) → Use mcp mapping
 
-**Framework Mapping (FastMCP, Python):**
+#### Framework Mapping — FastMCP (Python)
 - `fastmcp ≥3.0.0` → Protocol `2025-11-25` (FastMCP 3.x pulls in `mcp ≥1.24.0,<2.0` as a hard transitive requirement — the protocol version is governed by the underlying mcp SDK range, not the fastmcp version number itself)
 - `fastmcp ≥0.4.x` → Protocol `2025-06-18`
 - `fastmcp 0.3.x` → Protocol `2025-03-26`
 - `fastmcp <0.3` → Protocol `2024-11-05`
 
-**SDK Mapping (Python mcp):**
+#### SDK Mapping — Python mcp
 - `mcp ≥1.24` → Protocol `2025-11-25`
 - `mcp 1.15–1.23` → Protocol `2025-06-18`
 - `mcp 1.5–1.14` → Protocol `2025-03-26`
 - `mcp <1.5` → Protocol `2024-11-05`
 
-**SDK Mapping (TypeScript @modelcontextprotocol/sdk):**
+#### SDK Mapping — TypeScript (@modelcontextprotocol/sdk)
 - `sdk ≥1.12` → Protocol `2025-11-25`
 - `sdk 1.8–1.11` → Protocol `2025-06-18`
 - `sdk 1.5–1.7` → Protocol `2025-03-26`
 - `sdk <1.5` → Protocol `2024-11-05`
 
-**SDK Mapping (Go github.com/modelcontextprotocol/go-sdk):**
+#### SDK Mapping — Go (github.com/modelcontextprotocol/go-sdk)
 - `go-sdk ≥1.12` → Protocol `2025-11-25`
 - `go-sdk 1.4–1.11` → Protocol `2025-06-18` ← **COMMON MISS: Don't assume latest**
 - `go-sdk <1.4` → Protocol `2024-11-05`
 
 **NOTE:** Protocol `2025-03-26` applies to: FastMCP 0.3.x, TypeScript SDK 1.5–1.7, Python mcp SDK 1.5–1.14. Go SDK has no equivalent band for this version — if only Go SDK is found, `2025-03-26` does NOT apply.
 
-**CRITICAL VERIFICATION CHECKLIST (to prevent mistakes):**
-Before marking protocol version as final:
+#### Verification Checklist (before marking protocol version final)
 ```
 □ Step 1: Extract exact version from dependency file (go.mod, requirements.txt, package.json)
 □ Step 2: Cross-reference version against the mapping table above (DO NOT guess/assume)
@@ -588,7 +541,7 @@ Before marking protocol version as final:
 □ Step 5: Check learned-fixes.md for "Protocol Version Mapping Error" to avoid repeat mistakes
 ```
 
-**Common Mistake Patterns:**
+#### Common Mistake Patterns
 - ❌ WRONG: "Latest protocol must be v2025-11-25" (assumes without checking)
 - ✅ RIGHT: "SDK v1.4.1 maps to 2025-06-18" (checked version table)
 - ❌ WRONG: "Go SDK in go.mod but no mapping" (missing Go SDK mapping)
@@ -619,7 +572,7 @@ Record: Framework name, exact version, protocol version, mapping source, verific
 ### Step 3 — GitHub Repository URL (Conditional Local Setup)
 **⛔ LOCKED — Do not modify this step without explicit user permission.**
 
-**Ask deployment preference:**
+#### Deployment Preference
 
 ```
 How do you want to run this server?
@@ -634,7 +587,7 @@ How do you want to run this server?
       → Skip local setup, proceed to research only
 ```
 
-**If Option 1 (Local Setup) — Execute sub-steps:**
+#### Local Setup Sub-steps (Option 1)
 
 | Sub-step | Action | Verify |
 |----------|--------|--------|
@@ -645,7 +598,7 @@ How do you want to run this server?
 | 3.5 | Extract configuration | Read command, args, env vars from README + code |
 | 3.6 | Test connection | Send initialize JSON-RPC, verify response |
 
-**Connection Methods (Step 3.2):**
+#### Connection Methods (Step 3.2)
 
 | Method | Indicator | Setup |
 |--------|-----------|-------|
@@ -654,7 +607,7 @@ How do you want to run this server?
 | **Docker** | Dockerfile in repo | Clone + docker build |
 | **Remote** | Vendor URL endpoint | Skip all setup |
 
-**Dependency Installation:**
+#### Dependency Installation
 
 | Language | Command | Verify |
 |----------|---------|--------|
@@ -663,7 +616,7 @@ How do you want to run this server?
 | Docker | `docker build -t <repo-name> .` | `docker images \| grep <repo-name>` |
 | uv | `uv sync` | `uv run python -c "import mcp"` |
 
-**Docker Security Check (before building):**
+#### Docker Security Check (before building)
 - Verify Dockerfile uses pinned base image (e.g., `python:3.12-slim`, NOT `python:latest`)
 - If `:latest` tag found → WARN user: "Unpinned base image detected — may introduce supply chain risk"
 - Check for `USER` directive (non-root execution preferred)
@@ -677,7 +630,7 @@ Skip local setup, proceed to attribute research.
 ### Step 4 — Server Name Only
 **⛔ LOCKED — Do not modify this step without explicit user permission.**
 
-**Resolution order (always top-down — stop at first confirmed match):**
+#### Resolution Order (always top-down — stop at first confirmed match)
 
 1. **STEP 1 (always) — Check MCP reference servers repo first** (`modelcontextprotocol/servers`): contains or links to hundreds of servers across all vendors. Always start here.
 
@@ -699,7 +652,7 @@ Skip local setup, proceed to attribute research.
    [ 3 ] Help me decide
    ```
 
-**Known Official Vendor Sources:**
+#### Known Official Vendor Sources
 
 **Universal — Always check (every server, every research run):**
 
@@ -726,7 +679,7 @@ Skip local setup, proceed to attribute research.
 | Datadog | `DataDog` | `DataDog/datadog-mcp-server` |
 | JetBrains | `JetBrains` | `JetBrains/mcp-jetbrains` |
 
-**If server not found (neither endpoint nor repo):**
+#### If Server Not Found
 ```
 Could not find an MCP server matching "[server name]".
 
@@ -760,6 +713,8 @@ All 5 threads must have returned results or confirmed-empty. If any thread is in
 
 ---
 
+**MCP INFO:**
+
 ### Step 5.1 — MCP Info
 
 | # | Attribute | Source | Rule |
@@ -777,6 +732,8 @@ All 5 threads must have returned results or confirmed-empty. If any thread is in
 - Description = functional purpose + capabilities ONLY (what the server does, what tools it exposes, what platform it integrates with)
 
 ---
+
+**DISTRIBUTION TYPE:**
 
 ### Step 5.2 — Distribution Type
 
@@ -806,6 +763,8 @@ More signals present = higher confidence. A single signal (e.g., org name alone)
 
 ---
 
+**MCP PROTOCOL VERSION:**
+
 ### Step 5.3 — MCP Protocol Version
 
 **Fill from Step 1 result. EXACTLY ONE row = Yes. ALL others = No. NO blanks.**
@@ -819,7 +778,7 @@ More signals present = higher confidence. A single signal (e.g., org name alone)
 
 🔒 Never leave a version row blank. Status column = `Yes` or `No` only — no extra text or notes.
 
-**🔒 L1 — Framework Priority Rule:**
+#### 🔒 L1 — Framework Priority Rule
 
 Framework version determines protocol — NOT base SDK. Check in this order:
 1. FastMCP present? → Use FastMCP mapping
@@ -845,6 +804,8 @@ Framework version determines protocol — NOT base SDK. Check in this order:
 
 ---
 
+**PRICING:**
+
 ### Step 5.4 — Pricing
 
 **MUTUALLY EXCLUSIVE — mark exactly ONE as Yes. Status column = `Yes` or `No` only.**
@@ -856,7 +817,7 @@ Framework version determines protocol — NOT base SDK. Check in this order:
 
 🔒 API key requirements and downstream service costs do NOT affect Pricing — server license only.
 
-**🔒 L4 — Pricing vs Service Rule:**
+#### 🔒 L4 — Pricing vs Service Rule
 
 Pricing reflects the **MCP server itself**, not the service it accesses or authentication required.
 
@@ -879,6 +840,8 @@ Pricing reflects the **MCP server itself**, not the service it accesses or authe
 - ❌ Proprietary MCP: Requires license → Paid = Yes
 
 ---
+
+**HOSTING PROVIDER:**
 
 ### Step 5.5 — Hosting Provider
 
@@ -903,6 +866,8 @@ HOSTING PROVIDER DETECTION CHECKLIST:
 - **SourceHut/Gitea/Gogs:** Repository URL contains `sr.ht`, custom Gitea/Gogs instance
 
 ---
+
+**AUTHENTICATION:**
 
 ### Step 5.6 — Authentication
 
@@ -930,7 +895,7 @@ AUTHENTICATION VERIFICATION CHECKLIST:
 - ❌ WRONG: "No auth in README, so Authentication = No" (incomplete search)
 - ✅ RIGHT: "BUILDKITE_API_TOKEN found in server.json → (3) Bearer Token, (4) PAT, (5) API Token all = Yes"
 
-**🔒 Authentication Detection Rules:**
+#### 🔒 Authentication Detection Rules
 
 **Core Principle:** Bearer Token is a DELIVERY METHOD, not a credential type. Multiple auth fields can be Yes simultaneously.
 
@@ -959,7 +924,7 @@ API Key (credential type — app identification, NOT user-specific)
 3. API Token + Bearer = both Yes — if API key sent via `Authorization: Bearer`
 4. API Token ≠ PAT — API keys are app-level static keys; PATs are user-level tokens
 
-**Detection Patterns (from source code):**
+#### Detection Patterns (from source code)
 ```
 Bearer Token = Yes if: "Authorization: Bearer" in source/docs
 PAT = Yes if: "personal access token" OR "PAT" explicitly in docs
@@ -967,6 +932,8 @@ API Token = Yes if: "api key" OR "api_token" OR "api_key" in source/docs
 ```
 
 ---
+
+**AUTHENTICATION KEY PROMPT:**
 
 ### Step 5.6.A — Authentication Key Prompt Workflow
 
@@ -985,13 +952,13 @@ How do you want to proceed?
 [ 3 ] Proceed without authentication (manual verification only)
 ```
 
-**Option 1 — User has key/token:**
+#### Option 1 — User Has Key/Token
 - **NEVER ask for the actual key, secret, or token value in chat** (Security Mandate — absolute rule, no exceptions)
 - Show the config file path and the correct `<PLACEHOLDER>` field name
 - Direct user to open and edit the file directly to paste their credential
 - After user confirms the edit is done → proceed with connection test / research
 
-**Option 2 — User needs to create the key:**
+#### Option 2 — User Needs to Create Key
 - Retrieve the vendor authentication / API key creation URL from README or vendor source docs
 - Provide step-by-step creation instructions:
   1. Direct URL to the vendor's token / API key creation page
@@ -999,7 +966,7 @@ How do you want to proceed?
   3. Config field name and `<PLACEHOLDER>` format to use when storing the key
 - After user creates the key → redirect to Option 1 flow above
 
-**Option 3 — Proceed without authentication:**
+#### Option 3 — Proceed Without Authentication
 - Show this warning before continuing:
   ```
   ⚠️  API auth will fail — expect authentication errors (401 / 403).
@@ -1008,6 +975,8 @@ How do you want to proceed?
 - Continue research and attribute filling with manual verification; note auth status in Evidence Ledger
 
 ---
+
+**IMPLICIT AUTH DETECTION:**
 
 ### Step 5.6.B — Implicit Auth Detection (env / args / headers)
 
@@ -1023,7 +992,7 @@ Even when the README or vendor source URL does not explicitly document authentic
 | GitHub Repository URL | `env` vars in `server.json` / `.env.example` / `config.json`; `args` fields in `mcp.json` |
 | Server Name | All of the above — resolve to GitHub URL first, then apply same scans |
 
-**Signal patterns by field type:**
+#### Signal Patterns by Field Type
 
 ```
 headers (remote endpoint — JSON config):
@@ -1052,6 +1021,8 @@ This rule applies during both single-server (Step 5.6) and multi-server (Layer 1
 
 ---
 
+**DATA PROTECTION:**
+
 ### Step 5.7 — Data Protection
 
 **Determine transport (Step 5.8) FIRST, then apply TLS rule.**
@@ -1067,7 +1038,7 @@ This rule applies during both single-server (Step 5.6) and multi-server (Layer 1
 - Alternative: `openssl s_client -connect host:443` — reports negotiated TLS version and certificate details
 - For STDIO-only servers: mark all TLS rows as No, note "local transport — no network layer"
 
-**🔒 L3 — TLS vs Bearer Independence Rule:**
+#### 🔒 L3 — TLS vs Bearer Independence Rule
 
 Bearer Token = authentication delivery method. TLS = transport encryption. These are completely independent layers.
 
@@ -1090,6 +1061,8 @@ Bearer Token = authentication delivery method. TLS = transport encryption. These
 
 ---
 
+**TRANSPORT PROTOCOL:**
+
 ### Step 5.8 — Transport Protocol
 
 **NOT mutually exclusive — mark ALL that apply:**
@@ -1106,6 +1079,8 @@ TRANSPORT PROTOCOL VERIFICATION CHECKLIST:
 ```
 
 ---
+
+**TOOLS OPERATIONS:**
 
 ### Step 5.9 — Tools Operations
 
@@ -1134,7 +1109,7 @@ TOOLS OPERATIONS VERIFICATION CHECKLIST:
 - ❌ WRONG: "Tool names: create_build, cancel_build" → mark (2) (missed delete pattern)
 - ✅ RIGHT: "cancel_* = delete operation" → mark (3)
 
-**🔒 L5 — Tools Operations Decision Tree:**
+#### 🔒 L5 — Tools Operations Decision Tree
 ```
 Does server have delete/terminate operations? (delete_*, cancel_*, remove_*, destroy_*)
     → Yes: Mark (3) Read-only update and/or delete = Yes. Mark (1) and (2) = No.
@@ -1148,6 +1123,8 @@ Does server have ONLY read operations?
 **Example:** list (read) + create (write) + terminate (delete) → Highest = Delete → Mark (3) = Yes, others = No.
 
 ---
+
+**DEPLOYMENT APPROACH:**
 
 ### Step 5.10 — Deployment Approach
 
@@ -1174,6 +1151,8 @@ DEPLOYMENT APPROACH VERIFICATION CHECKLIST:
 
 ---
 
+**COMPLIANCE & CERTIFICATIONS:**
+
 ### Step 5.11 — Compliance & Certifications
 
 Fill from Thread 5 (compliance docs search) of Step 0.5:
@@ -1186,6 +1165,8 @@ Fill from Thread 5 (compliance docs search) of Step 0.5:
 | 4 | FedRAMP | FedRAMP authorization stated |
 
 ---
+
+**CAPABILITIES:**
 
 ### Step 5.12 — Capabilities
 
@@ -1223,7 +1204,7 @@ CAPABILITIES VERIFICATION CHECKLIST:
     → Only capabilities explicitly in builder are enabled. Absence = No.
 ```
 
-**🔒 L9 — Capabilities Source Verification Rule:**
+#### 🔒 L9 — Capabilities Source Verification Rule
 
 README does NOT reliably document all capabilities. Always read the server's entry point source file.
 
@@ -1237,6 +1218,8 @@ README does NOT reliably document all capabilities. Always read the server's ent
 ```
 
 ---
+
+**CAPABILITY DETAILS & NON-READ-ONLY TOOLS:**
 
 ### Step 5.13 — Capability Details & Non-Read-Only Tools
 
@@ -1301,7 +1284,7 @@ Another Category
   • tool_name: Description
 ```
 
-**🔒 L6 — Standard Taxonomy Rule (applies to (1) and (5) above):**
+#### 🔒 L6 — Standard Taxonomy Rule (applies to (1) and (5) above)
 
 NEVER invent category titles. ALWAYS use these fixed titles only:
 
@@ -1330,7 +1313,7 @@ NEVER invent category titles. ALWAYS use these fixed titles only:
 - Each tool appears in ONE category only
 - If a tool fits multiple → use the more specific one
 
-**🔒 L10 — No Placeholders Rule:**
+#### 🔒 L10 — No Placeholders Rule
 ```
 🔒 NEVER write {servername}_, {prefix}_, {name}_ in any CSV cell
 🔒 Check Capabilities - Tools, Capabilities - Resources, Non-Read-Only Tools cells
@@ -1359,7 +1342,7 @@ NEVER invent category titles. ALWAYS use these fixed titles only:
 **Filename:** `<servername>.csv`
 **CSV Rules:** Use `csv.QUOTE_ALL` for proper multiline handling
 
-**Step 6.1 — Save Cost File (MANDATORY — always runs after CSV is saved)**
+#### Step 6.1 — Save Cost File (MANDATORY — always runs after CSV is saved)
 
 After saving the CSV, immediately generate and save `<servername>-cost.txt` at the same path.
 
@@ -1523,79 +1506,6 @@ Overall: PASS (review 1 WARN item before commit)
 
 **If 1 server detected** → skip this section, continue with standard workflow from Step 0.
 **If 2+ servers detected** → load and follow `references/multi-server.md`.
-
----
-
-## Key Learnings from Research & Verification
-
-### Learning 1: Framework Priority
-
-> Core rule: FastMCP > framework > base SDK — always DO NUMERIC COMPARISON, never assume.
-> Full mapping tables, verification checklist, and ✅/❌ examples: **Step 1** and **Step 5.3**.
-
-### Learning 2: Endpoint Verification Strategy
-
-README claims ≠ actual implementation. "Remote MCP Now Available" ≠ endpoint is functional.
-
-**Three-Step Verification:**
-
-Step 1: GET request (HTTP/SSE detection)
-```
-curl -I https://api.vendor.com/v2/mcp
-Result: 404 → not SSE endpoint
-```
-
-Step 2: POST with JSON-RPC (StreamableHttp detection)
-```
-curl -X POST https://api.vendor.com/v2/mcp \
-  -H "Content-Type: application/json" \
-  -d '{"jsonrpc":"2.0",...}'
-Result: 401 → endpoint recognized, requires auth
-        404 → endpoint doesn't exist
-```
-
-Step 3: Response format analysis
-- POST returns JSON-RPC → Real MCP endpoint
-- POST returns vendor API error → Placeholder (not MCP yet)
-- Both GET & POST return 404 → Endpoint doesn't exist
-
-**Critical Distinction:**
-- ❌ WRONG: 404 on GET → Assume endpoint doesn't exist
-- ✅ RIGHT: GET=404 but POST=401 → Endpoint exists but not SSE (could be StreamableHttp)
-
-**When README Claims Remote But Endpoint Doesn't Work:**
-1. Check documentation links → 404? Not deployed yet
-2. Check repository status → Archived? Outdated claim
-3. Verify actual implementation → Can you call MCP methods?
-
-If endpoint returns vendor API errors (not JSON-RPC) → Mark as: Endpoint URL = N/A (not functional yet).
-
----
-
-## Authentication Detection Rules
-
-> Canonical rules, co-occurrence table, and detection patterns are defined in **Step 5.6**.
-> (Authentication Verification Checklist, visual relationship diagram, detection table, Key Rules 1–5, and Detection Patterns from source code.)
-> Step 5.6 is the single source of truth for authentication detection — rules are not duplicated here.
-
----
-
-## Key Learnings — Reference Index
-
-> Full rule text, checklists, and ✅/❌ examples for each learning: see the canonical step listed below.
-> Learning 2 (Endpoint Verification) is preserved in full above — it has unique three-step verification logic not covered in Step 2.
-
-| Learning | Core Rule (Summary) | Canonical Step |
-|---------|---------------------|----------------|
-| L1 Framework Priority | FastMCP > framework > base SDK — DO NUMERIC COMPARISON, never assume | Step 1 + Step 5.3 |
-| L3 TLS vs Bearer | TLS = transport layer. STDIO = always TLS No. Bearer Token ≠ TLS (independent layers) | Step 5.7 |
-| L4 Pricing vs Service | Mark Free/Paid based on MCP server license only — not API key requirement or service cost | Step 5.4 |
-| L5 Tools Operations | Mark HIGHEST level only — mutually exclusive (Read-only / R+U / R+U+D) | Step 5.9 |
-| L6 Taxonomy Categories | NEVER invent titles — use only 6 fixed titles (Tools) / 4 fixed titles (Non-Read-Only) | Step 5.13 |
-| L7 Five Mandatory Rows | All 5 detailed_info rows always present — "None" if absent, NEVER omit any | Step 5.13 |
-| L8 Description Format | Description = 2–3 line paragraph, functional purpose + capabilities ONLY — NEVER transport/TLS/auth/hosting details | Step 5.1 |
-| L9 Capabilities Source | Read entry point source file — README alone is NOT sufficient for capabilities | Step 5.12 |
-| L10 No Placeholders | Never write {servername}_ / {prefix}_ in any CSV cell — resolve to actual names | Step 5.13 |
 
 ---
 
@@ -1839,7 +1749,7 @@ Both are marked Yes because both are real hosting locations. SaaS Vendor takes p
 ║   REPORT SUCCESSFULLY GENERATED                                   ║
 ║   CSV  : /path/to/report/<servername>.csv                         ║
 ║   COST : /path/to/report/<servername>-cost.txt                    ║
-╚═══════════════════════════════════════════════════════════════════╝
+╚═══════════════════════════════════════════════════════════════════╝/cos
 ```
 
 Both files are always saved together. The cost file contains:
@@ -1847,3 +1757,122 @@ Both files are always saved together. The cost file contains:
 - Research date and model
 - Token breakdown (input, output, cache read)
 - Per-category cost and total cost
+
+---
+
+## Core Capabilities
+
+| Capability | Description | Invocation Signal |
+|-----------|-------------|------------------|
+| **MCP Research** | Research and document MCP servers | "Research the GitHub MCP server", "Analyze this MCP: https://..." |
+| **Attribute Docs** | Fill every MCP attribute with evidence | "Document attributes for...", "Catalogue this MCP server" |
+| **Local Setup** | Clone, install, configure MCP servers | "Set up this server locally", "Clone and run..." |
+| **Error Recovery** | 7-phase inline diagnosis and auto-fix | Automatic on connection fail |
+| **Project Audit** | Audit project and skills for compliance | "Review the project", "Is this ready to commit?" |
+| **Multi-Server Research** | Parallel batch research + comparison of N servers | "Research these MCPs: X, Y, Z", "Compare GitHub and Slack MCPs" |
+
+---
+
+## Usage
+
+**Invoke with:** `/unified-mcp-skill-new`
+
+> ✅ **UNLOCKED — Invocation command updated to `/unified-mcp-skill-new` with explicit user approval (2026-03-27).**
+
+```
+RESEARCH
+/unified-mcp-skill-new "Research the GitHub MCP server"
+/unified-mcp-skill-new "Get full report on the Slack MCP server"
+/unified-mcp-skill-new "Document this MCP server: https://github.com/org/repo"
+/unified-mcp-skill-new "Analyze and score this MCP: https://mcp.example.com"
+
+LOCAL SETUP
+/unified-mcp-skill-new "Set up the GitHub MCP server locally"
+/unified-mcp-skill-new "Clone and get the Slack MCP running"
+
+ERROR RECOVERY (automatic)
+/unified-mcp-skill-new "The MCP server won't connect"
+/unified-mcp-skill-new [paste error or stack trace]
+
+PROJECT AUDIT
+/unified-mcp-skill-new "Review the project"
+/unified-mcp-skill-new "Is this ready to commit?"
+
+MULTI-SERVER / BATCH
+/unified-mcp-skill-new "Research these MCPs: GitHub, Slack, Linear"
+/unified-mcp-skill-new "Compare the GitHub and Stripe MCP servers"
+/unified-mcp-skill-new "Batch report on: [server1], [server2], [server3]"
+```
+
+---
+
+## Key Learnings from Research & Verification
+
+### Learning 1: Framework Priority
+
+> Core rule: FastMCP > framework > base SDK — always DO NUMERIC COMPARISON, never assume.
+> Full mapping tables, verification checklist, and ✅/❌ examples: **Step 1** and **Step 5.3**.
+
+### Learning 2: Endpoint Verification Strategy
+
+README claims ≠ actual implementation. "Remote MCP Now Available" ≠ endpoint is functional.
+
+**Three-Step Verification:**
+
+Step 1: GET request (HTTP/SSE detection)
+```
+curl -I https://api.vendor.com/v2/mcp
+Result: 404 → not SSE endpoint
+```
+
+Step 2: POST with JSON-RPC (StreamableHttp detection)
+```
+curl -X POST https://api.vendor.com/v2/mcp \
+  -H "Content-Type: application/json" \
+  -d '{"jsonrpc":"2.0",...}'
+Result: 401 → endpoint recognized, requires auth
+        404 → endpoint doesn't exist
+```
+
+Step 3: Response format analysis
+- POST returns JSON-RPC → Real MCP endpoint
+- POST returns vendor API error → Placeholder (not MCP yet)
+- Both GET & POST return 404 → Endpoint doesn't exist
+
+**Critical Distinction:**
+- ❌ WRONG: 404 on GET → Assume endpoint doesn't exist
+- ✅ RIGHT: GET=404 but POST=401 → Endpoint exists but not SSE (could be StreamableHttp)
+
+**When README Claims Remote But Endpoint Doesn't Work:**
+1. Check documentation links → 404? Not deployed yet
+2. Check repository status → Archived? Outdated claim
+3. Verify actual implementation → Can you call MCP methods?
+
+If endpoint returns vendor API errors (not JSON-RPC) → Mark as: Endpoint URL = N/A (not functional yet).
+
+---
+
+## Authentication Detection Rules
+
+> Canonical rules, co-occurrence table, and detection patterns are defined in **Step 5.6**.
+> (Authentication Verification Checklist, visual relationship diagram, detection table, Key Rules 1–5, and Detection Patterns from source code.)
+> Step 5.6 is the single source of truth for authentication detection — rules are not duplicated here.
+
+---
+
+## Key Learnings — Reference Index
+
+> Full rule text, checklists, and ✅/❌ examples for each learning: see the canonical step listed below.
+> Learning 2 (Endpoint Verification) is preserved in full above — it has unique three-step verification logic not covered in Step 2.
+
+| Learning | Core Rule (Summary) | Canonical Step |
+|---------|---------------------|----------------|
+| L1 Framework Priority | FastMCP > framework > base SDK — DO NUMERIC COMPARISON, never assume | Step 1 + Step 5.3 |
+| L3 TLS vs Bearer | TLS = transport layer. STDIO = always TLS No. Bearer Token ≠ TLS (independent layers) | Step 5.7 |
+| L4 Pricing vs Service | Mark Free/Paid based on MCP server license only — not API key requirement or service cost | Step 5.4 |
+| L5 Tools Operations | Mark HIGHEST level only — mutually exclusive (Read-only / R+U / R+U+D) | Step 5.9 |
+| L6 Taxonomy Categories | NEVER invent titles — use only 6 fixed titles (Tools) / 4 fixed titles (Non-Read-Only) | Step 5.13 |
+| L7 Five Mandatory Rows | All 5 detailed_info rows always present — "None" if absent, NEVER omit any | Step 5.13 |
+| L8 Description Format | Description = 2–3 line paragraph, functional purpose + capabilities ONLY — NEVER transport/TLS/auth/hosting details | Step 5.1 |
+| L9 Capabilities Source | Read entry point source file — README alone is NOT sufficient for capabilities | Step 5.12 |
+| L10 No Placeholders | Never write {servername}_ / {prefix}_ in any CSV cell — resolve to actual names | Step 5.13 |
