@@ -18,11 +18,24 @@ description: >
 
 ---
 
+🔒 **SKILL MODIFICATION POLICY — ABSOLUTE ENFORCEMENT**
+
+When modifying ANY part of this skill (format, rule, instruction, workflow step, output template):
+
+1. **Read the full context first** — understand how the existing instruction works before changing it
+2. **Change only what was asked** — never silently remove working logic, calculation methods, enforcement rules, or checklists
+3. **Preserve the working method** — if changing a format or presentation, keep the underlying rules and instructions intact
+4. **No collateral removal** — dropping an instruction while reformatting its container is a violation
+
+> Example: Changing a cost file output format → update the format block only. The calculation method, script reference, and timestamp instructions remain unchanged.
+
+---
+
 🚫 **ZERO-ASSUMPTION POLICY — ABSOLUTE ENFORCEMENT**
 
 **Every Yes/No in the final CSV MUST have a verified source. No exceptions. No guessing. No skipping.**
 
-If you cannot verify an attribute from source → mark it `UNVERIFIED` and flag to user. NEVER guess Yes or No.
+If you cannot verify an attribute from source → mark it `No` and flag to user. NEVER guess Yes or No.
 
 ---
 
@@ -77,54 +90,18 @@ BEFORE filling ANY attribute:
 **Before creating final CSV, walk through EVERY learning. This is NOT optional. Do NOT skip any.**
 
 ```
-MANDATORY LEARNING WALKTHROUGH (check each one, document result):
+MANDATORY LEARNING WALKTHROUGH — confirm each was applied (full rules in referenced step):
 
-□ L1 Framework Priority: Which framework/SDK found? Version? Mapping result?
-  → Numeric comparison done? (e.g., "1.7.0 < 1.8 = YES → 2024-11-05")
-
-□ L2 Endpoint Verification: GET test result? POST test result? Response format?
-  → Both tests run? If skipped, why?
-
-□ L3 TLS vs Bearer: Transport protocol identified FIRST?
-  → If STDIO: All TLS = No (confirmed, not assumed)
-  → Bearer Token presence did NOT influence TLS decision?
-
-□ L4 Pricing: Is MCP server code open-source? License file checked?
-  → API key requirement NOT confused with pricing?
-  → Downstream service cost NOT confused with server cost?
-
-□ L5 Tools Ops: All tool names parsed? Delete/cancel patterns searched?
-  → HIGHEST level only marked? Only ONE level = Yes?
-
-□ L6 Categories: Category titles from standard taxonomy (Learning 6)?
-  → Each tool classified into best-fit standard category?
-  → ZERO invented categories (only taxonomy titles used)?
-
-□ L7 Five Mandatory Rows: Are ALL five rows present in the CSV with correct format?
-  → Capabilities - Tools,detailed_info     present? (use "None" if no tools)
-  → Capabilities - Resources,detailed_info present? (use "None" if no resources)
-  → Capabilities - Prompts,detailed_info   present? (use "None" if no prompts)
-  → Capabilities - Sampling,detailed_info  present? (use "None" if no sampling)
-  → Non-Read-Only Tools,detailed_info      present? (use "None" if all read-only)
-  → Attribute column is "detailed_info" for ALL five — never "No" or blank
-  → ALL FIVE required — no exceptions
-
-□ L3 recheck: TLS/Bearer independence confirmed? (STDIO → TLS always No)
-
-□ L8 Description Single-Line: Is MCP Info,Description a single unbroken line?
-  → NO embedded newlines — all sentences joined with spaces only
-  → If Protocol Version or Pricing rows appear empty/missing → description has newlines (fix first)
-  → Verify in raw CSV: description must start and end on the same line
-
-□ L9 Capabilities Source Verification: Were capabilities verified from source code?
-  → Entry point file read? (Program.java / main.py / index.ts)
-  → README alone is NOT sufficient — resources/prompts/sampling may be absent from docs
-  → Java: McpSchema.ServerCapabilities.builder() checked? registerResources/Tools/Prompts methods found?
-
-□ L10 Tool Names No Placeholders: Are all tool names in CSV concrete names?
-  → NO {servername}_, {prefix}_, {name}_ placeholder format anywhere in the report
-  → Use actual documented default name from README/config example, or base name only
-  → Check Capabilities - Tools, Capabilities - Resources, Non-Read-Only Tools cells
+□ L1  Framework Priority      → Step 5.3  Was framework/SDK version extracted? Numeric comparison done?
+□ L2  Endpoint Verification   → Step 2    GET + POST tests run? Response format recorded?
+□ L3  TLS vs Bearer           → Step 5.7  Transport identified FIRST? STDIO → all TLS = No confirmed?
+□ L4  Pricing                 → Step 5.4  LICENSE file checked? API key NOT confused with pricing?
+□ L5  Tools Ops               → Step 5.9  All tool names parsed? HIGHEST level only marked?
+□ L6  Taxonomy Categories     → Step 5.13 Only standard taxonomy titles used? Zero invented categories?
+□ L7  Five Mandatory Rows     → Step 5.13 All five detailed_info rows present? "None" used if absent?
+□ L8  Description Single-Line → Step 5.1  Description is single unbroken line? No embedded newlines?
+□ L9  Capabilities Source     → Step 5.12 Entry point source file read? README alone NOT used?
+□ L10 No Placeholders         → Step 5.13 Zero {servername}_ / {prefix}_ in any CSV cell?
 ```
 
 **If ANY checkbox cannot be confirmed → STOP. Do not create CSV. Resolve first.**
@@ -181,14 +158,21 @@ Step 1   Protocol Version     → Map SDK/framework version to protocol date (NU
 Step 2   Remote Endpoint      → Probe URL, detect transport, test TLS, build config
 Step 3   GitHub Repo          → Ask: local setup / remote / research-only? Clone if local
 Step 4   Server Name Only     → Search vendor docs + GitHub, resolve to URL
-Step 5   Attribute Filling    → Fill all fields with evidence + logic enforcement
-  5.1    Auth Verification    → Check server.json, README, .env, vendor docs
-  5.2    Tools Ops Check      → Highest level only (mutually exclusive)
-  5.3    Deployment Check     → Mark ALL applicable (not exclusive)
-  5.4    Hosting Check        → SaaS priority over GitHub
-Step 6   Transport & Caps     → Detect transports, extract capabilities
-Step 7   Basic Info           → Name, description, category, version
-Step 8   Save Report          → CSV to user-configured path
+Step 5   Attribute Filling    → Fill CSV top-to-bottom, one pass per section (numbered order)
+  5.1    MCP Info             → (1) Name  (2) Description  (3) Category  (4) Git Repo  (5) Endpoint URL
+  5.2    Distribution Type    → (1) Official / (2) Community — mutually exclusive
+  5.3    MCP Protocol Version → (1) 2025-11-25  (2) 2025-06-18  (3) 2025-03-26  (4) 2024-11-05 — ONE Yes only, from Step 1
+  5.4    Pricing              → (1) Free / (2) Paid — mutually exclusive, L4 check
+  5.5    Hosting Provider     → (1) SaaS Vendor  (2) 3rd Party SaaS  (3) GitHub  (4) GitLab  (5) Bitbucket  (6) SourceHut/Gitea/Gogs
+  5.6    Authentication       → (1) OAuth 2.1 Auth Code  (2) OAuth 2.1 Client Creds  (3) Bearer Token  (4) PAT  (5) API Token
+  5.7    Data Protection      → (1) TLS 1.3  (2) TLS 1.2  (3) Lower/None — STDIO → all No; remote → probe result
+  5.8    Transport Protocol   → (1) STDIO  (2) HTTP/SSE  (3) StreamableHttp  (4) FastAPI — mark all that apply
+  5.9    Tools Operations     → (1) Read-only  (2) Read+Update  (3) Read+Update+Delete — HIGHEST level only
+  5.10   Deployment Approach  → (1) Local  (2) Container  (3) Remote — mark all that apply
+  5.11   Compliance           → (1) HIPAA  (2) GDPR  (3) SOC 2  (4) FedRAMP
+  5.12   Capabilities         → (1) Tools  (2) Resources  (3) Prompts  (4) Sampling — from source code
+  5.13   Capability Details   → (1) Capabilities-Tools  (2) Capabilities-Resources  (3) Capabilities-Prompts  (4) Capabilities-Sampling  (5) Non-Read-Only Tools
+Step 6   Save Report          → CSV to user-configured path + cost file
 
 On fail → 7-phase Error Recovery (auto-triggered)
 2+ servers → Multi-Server mode (see references/multi-server.md)
@@ -518,156 +502,136 @@ Do NOT fabricate a server or guess URLs. Always confirm with user before proceed
 
 ---
 
-### Step 5 — Attribute Filling with Logic Enforcement
+### Step 5 — Attribute Filling (Top-to-Bottom, One Pass per CSV Section)
 
 **HARD PREREQUISITE:** Step 0.5 (Parallel Search) MUST be complete before entering Step 5.
 All 5 threads must have returned results or confirmed-empty. If any thread is incomplete → go back and finish it.
 
+**Execution order mirrors CSV output order — fill sections 5.1 through 5.13 in sequence.**
+
 **Transport ↔ Deployment Auto-Rules:**
-- STDIO=Yes → Auto-set: Local=Yes
-- HTTP/SSE OR StreamableHttp=Yes → Auto-set: Remote=Yes
+- STDIO=Yes → Auto-set: (1) Local=Yes
+- HTTP/SSE OR StreamableHttp=Yes → Auto-set: (3) Remote=Yes
 
-**Mutually Exclusive Attributes (mark exactly ONE as Yes):**
-
-| Attribute | Options |
-|-----------|---------|
-| Distribution | Official OR Community |
-| Pricing | Free OR Paid |
-| Tools Operations | Choose HIGHEST: Read-only / R+Update / R+Update+Delete |
-
-**🔒 MCP Protocol Version — Mutual Exclusion Rule (MANDATORY):**
-- Exactly ONE version row = Yes. ALL other version rows = No. NO blanks. NO omissions.
-- If `2025-06-18 = Yes` → `2025-11-25 = No`, `2025-03-26 = No`, `2024-11-05 = No`
-- Never leave a version row blank — blank = broken CSV row (overwritten data risk)
-- Never write extra text, notes, or commentary in a version row's Status column
-
-**🔒 Pricing — Mutual Exclusion Rule (MANDATORY):**
-- If `Free = Yes` → `Paid = No`. Write exactly that. Nothing else in those two rows.
-- If `Paid = Yes` → `Free = No`. Write exactly that. Nothing else in those two rows.
-- Never leave Pricing rows blank. Never add commentary in the Status column.
-- The Status column for Pricing rows contains ONLY `Yes` or `No` — no other text.
-
-**Non-Exclusive Attributes (mark ALL that apply):**
-
-| Attribute | Options |
-|-----------|---------|
-| Hosting Provider | SaaS Vendor / 3rd Party SaaS / GitHub / GitLab / Bitbucket / SourceHut/Gitea/Gogs (multiple Yes allowed, SaaS Vendor takes display priority) |
-| Transport Protocol | STDIO / HTTP/SSE / StreamableHttp / FastAPI (multiple Yes allowed if server supports both) |
-| Deployment Approach | Local / Container / Remote (multiple Yes allowed) |
-| Authentication | All types can be Yes simultaneously (see Auth Detection Rules) |
-
-**ZERO-ASSUMPTION ATTRIBUTE RULE:**
-
-For EVERY attribute below — you MUST cite the source. If you cannot find evidence:
-- Do NOT mark Yes or No by guessing
-- Mark as `UNVERIFIED` and flag to user: "Could not verify [attribute] — source not found"
-- Ask user to provide source or confirm before proceeding
-
-Every "Yes" must have source + exact quote or file path. Every "No" must have evidence of absence (searched X, Y, Z — not found).
-
-| Attribute | Type | Source |
-|-----------|------|--------|
-| Name | Text | GitHub or vendor docs |
-| Description | Text | README (2–3 sentences, MUST start with "[Server Name] MCP Server…") |
-| Category | Choice (File and Document Management / Developer and Coding Tools / Data and Information Retrieval / Productivity and Communication) | mcp.md or vendor classification |
-| Git Repo | URL | GitHub link (or N/A) |
-| Git Version | Tag | Latest only — Releases first, Tags second (format: v1.2.3) |
-| Authentication | Choice | Vendor docs or source code (env vars, decorators) — see Authentication Detection Rules below |
-| Transport | Choice | Server startup code analysis |
-| Deployment | Choice | Based on transport + availability |
+**ZERO-ASSUMPTION RULE:** Every Yes/No must have source + exact quote or file path. Every No must have evidence of absence. If evidence is missing → mark `No` and flag to user.
 
 ---
 
-### Step 5.1 — Authentication Verification (Self-Learning Fix)
+### Step 5.1 — MCP Info
 
-**CRITICAL:** Authentication is often MISSED. Use this checklist:
+| # | Attribute | Source | Rule |
+|---|-----------|--------|------|
+| 1 | Name | GitHub repo name or vendor docs | Exact name only |
+| 2 | Description | README first paragraph | 2–3 sentences, MUST start with "[Server Name] MCP Server…", single unbroken line — no embedded newlines (L8) |
+| 3 | Category | mcp.md or vendor classification | Choose: File and Document Management / Developer and Coding Tools / Data and Information Retrieval / Productivity and Communication |
+| 4 | GitHub Repository | GitHub URL | Full URL or N/A |
+| 5 | Endpoint URL | README or probe result | Full URL or N/A |
 
-```
-AUTHENTICATION VERIFICATION CHECKLIST:
-□ Step 1: Search server.json for "TOKEN", "API_KEY", "SECRET", "BEARER"
-□ Step 2: Search README for "authentication", "auth", "credentials", "token"
-□ Step 3: Search .env.example for credential fields
-□ Step 4: Search vendor docs for API access / token setup page
-□ Step 5: If ANY credential found → mark ALL applicable auth types as Yes
-□ Step 6: Check learned-fixes.md for "Authentication Fields Marked No" pattern
-```
-
-**Common Mistake Pattern (LEARNED):**
-- ❌ WRONG: "No authentication fields found" (didn't search server.json)
-- ✅ RIGHT: "BUILDKITE_API_TOKEN found in server.json → Bearer Token, PAT, API Token all = Yes"
-- ❌ WRONG: "No auth in README, so Authentication = No" (incomplete search)
-- ✅ RIGHT: "Check server.json, .env.example, config files, vendor docs"
-
-**Why All Three Can Be "Yes":** See Authentication Detection Rules below (Bearer = delivery, PAT = credential type, API Token = app key — not mutually exclusive).
+**🔒 L8 — Description Single-Line Rule:**
+- Description MUST be a single unbroken line — NO embedded newlines
+- All sentences joined with spaces only
+- If Protocol Version or Pricing rows appear empty/missing in final CSV → description has embedded newlines (fix first)
+- Verify in raw CSV: description must start and end on the same line
 
 ---
 
-### Step 5.2 — Tools Operations Verification (Self-Learning Fix)
+### Step 5.2 — Distribution Type
 
-**CRITICAL:** Tools Operations is MUTUALLY EXCLUSIVE. Choose ONE level only.
+**MUTUALLY EXCLUSIVE — mark exactly ONE as Yes:**
 
-```
-TOOLS OPERATIONS VERIFICATION CHECKLIST:
-□ Step 1: Parse ALL tool names from documentation
-□ Step 2: Look for patterns: create_*, update_*, delete_*, cancel_*, remove_*
-□ Step 3: If ONLY read operations found → mark "Read-only" = Yes
-□ Step 4: If read + create/update found → mark "Read+Update" = Yes
-□ Step 5: If read + create/update + delete/cancel found → mark "Read+Update+Delete" = Yes
-□ Step 6: Mark ONLY the HIGHEST level (not multiple levels)
-□ Step 7: Check learned-fixes.md for "Tools Operations Violation" pattern
-```
-
-**Common Mistake Patterns (LEARNED):**
-- ❌ WRONG: Mark both "Read+Update = Yes" AND "Read+Update+Delete = Yes" (violates exclusivity)
-- ✓ RIGHT: Mark ONLY "Read+Update+Delete = Yes" (highest level)
-- ❌ WRONG: "Tool names: create_build, cancel_build" → mark "Read+Update" (missed delete pattern)
-- ✅ RIGHT: "Tool names show cancel_* pattern" → mark "Read+Update+Delete" (delete operations present)
-
-**Cancel/Delete Pattern Recognition:**
-- `cancel_*` → Delete operation
-- `delete_*` → Delete operation
-- `remove_*` → Delete operation
-- `destroy_*` → Delete operation
+| # | Attribute | Mark Yes if… |
+|---|-----------|-------------|
+| 1 | Official | Published by the service's own vendor/org |
+| 2 | Community | Published by a third-party contributor |
 
 ---
 
-### Step 5.3 — Deployment Approach Verification (Self-Learning Fix)
+### Step 5.3 — MCP Protocol Version
 
-**CRITICAL:** Deployment Approach allows MULTIPLE selections (NOT mutually exclusive).
+**Fill from Step 1 result. EXACTLY ONE row = Yes. ALL others = No. NO blanks.**
 
+| # | Attribute | Rule |
+|---|-----------|------|
+| 1 | 2025-11-25 | Yes only if Step 1 mapped here |
+| 2 | 2025-06-18 | Yes only if Step 1 mapped here |
+| 3 | 2025-03-26 | Yes only if Step 1 mapped here (FastMCP 0.3.x only) |
+| 4 | 2024-11-05 | Yes only if Step 1 mapped here |
+
+🔒 Never leave a version row blank. Status column = `Yes` or `No` only — no extra text or notes.
+
+**🔒 L1 — Framework Priority Rule:**
+
+Framework version determines protocol — NOT base SDK. Check in this order:
+1. FastMCP present? → Use FastMCP mapping
+2. Framework present? → Use framework mapping
+3. Otherwise → Use base SDK mapping
+
+**Example:** FastMCP 0.4.1 + mcp 1.3.0 → use 2025-06-18 (FastMCP wins), not mcp mapping.
+
+**Verification steps (MANDATORY before marking):**
 ```
-DEPLOYMENT APPROACH VERIFICATION CHECKLIST:
-□ Step 1: Search for Dockerfile, docker.json, Dockerfile.local in repo
-□ Step 2: Search server.json for "docker", "container", "run"
-□ Step 3: Search for OCI registry references (ghcr.io, etc.)
-□ Step 4: Check for PyPI/npm package (published package = Local possible)
-□ Step 5: Check for STDIO support (stdin/stdout = Local)
-□ Step 6: Check for vendor endpoint (= Remote)
-□ Step 7: If multiple found → mark ALL applicable approaches
-□ Step 8: Check learned-fixes.md for "Deployment Container Marked No" pattern
+□ 1: Extract exact version from dependency file (pyproject.toml / package.json / go.mod)
+□ 2: Cross-reference against Step 1 mapping table — DO NOT guess
+□ 3: If version is between ranges → use LOWER protocol (e.g., sdk 1.4.1 < 1.12 → 2025-06-18)
+□ 4: Document exact version + mapping source (file + line number)
+□ 5: Check learned-fixes.md for "Protocol Version Mapping Error" patterns
 ```
 
-**Common Mistake Patterns (LEARNED):**
-- ❌ WRONG: "Go binary exists, so Container = No" (missed Docker config)
-- ✅ RIGHT: "Found Dockerfile + docker image + STDIO" → mark Local = Yes AND Container = Yes
-- ❌ WRONG: "Check README only for deployment" (incomplete search)
-- ✅ RIGHT: "Check README + server.json + Dockerfile + OCI registry"
+**Common Mistakes:**
+- ❌ WRONG: "Latest protocol must be 2025-11-25" (assumes without checking)
+- ✅ RIGHT: "SDK v1.4.1 maps to 2025-06-18" (checked version table)
+- ❌ WRONG: Go SDK found but no mapping applied
+- ✅ RIGHT: "Go SDK v1.4.1 → 2025-06-18 per Go SDK mapping in Step 1"
 
 ---
 
-### Step 5.4 — Hosting Provider Verification
+### Step 5.4 — Pricing
 
-**Detection Context — Determine where the MCP server is hosted:**
+**MUTUALLY EXCLUSIVE — mark exactly ONE as Yes. Status column = `Yes` or `No` only.**
+
+| # | Attribute | Mark Yes if… |
+|---|-----------|-------------|
+| 1 | Free | Server code is open-source (check LICENSE file) |
+| 2 | Paid | Server itself requires a license/subscription to use |
+
+🔒 API key requirements and downstream service costs do NOT affect Pricing — server license only.
+
+**🔒 L4 — Pricing vs Service Rule:**
+
+Pricing reflects the **MCP server itself**, not the service it accesses or authentication required.
+
+| Scenario | Free | Paid |
+|----------|------|------|
+| Open-source server (MIT), paid downstream service | Yes | No |
+| Open-source server, free downstream service | Yes | No |
+| Open-source server, API key required | Yes | No |
+| Server requires paid license to use | No | Yes |
+| Closed-source proprietary server | No | Yes |
+
+**NEVER confuse with:**
+- API key requirement → that's authentication, not pricing
+- Downstream service costs (GPU, API calls, subscriptions) → separate concern
+- Service fees paid by end users → not the server cost
+
+**Examples:**
+- ✅ Runway MCP: MIT License → Free = Yes (even though Runway AI service is paid)
+- ✅ Telnyx MCP: Open-source → Free = Yes (even though Telnyx service charges per SMS)
+- ❌ Proprietary MCP: Requires license → Paid = Yes
+
+---
+
+### Step 5.5 — Hosting Provider
+
+**NOT mutually exclusive — mark ALL that apply:**
 
 ```
 HOSTING PROVIDER DETECTION CHECKLIST:
-□ Step 1: Is it offered by the official vendor as SaaS? → SaaS Vendor = Yes
-□ Step 2: Is it hosted by a third-party SaaS provider? (e.g., Vercel, Heroku, AWS) → 3rd Party SaaS = Yes
-□ Step 3: Is the source code on GitHub? → GitHub = Yes
-□ Step 4: Is the source code on GitLab? → GitLab = Yes
-□ Step 5: Is the source code on Bitbucket? → Bitbucket = Yes
-□ Step 6: Is the source code on SourceHut/Gitea/Gogs? → SourceHut/Gitea/Gogs = Yes
-□ Step 7: Multiple sources possible → mark ALL applicable platforms
+□ 1: Is it offered by the official vendor as SaaS? → SaaS Vendor = Yes
+□ 2: Is it hosted by a third-party SaaS provider? (e.g., Vercel, Heroku, AWS) → 3rd Party SaaS = Yes
+□ 3: Is the source code on GitHub? → GitHub = Yes
+□ 4: Is the source code on GitLab? → GitLab = Yes
+□ 5: Is the source code on Bitbucket? → Bitbucket = Yes
+□ 6: Is the source code on SourceHut/Gitea/Gogs? → SourceHut/Gitea/Gogs = Yes
 ```
 
 **Detection Patterns:**
@@ -678,62 +642,279 @@ HOSTING PROVIDER DETECTION CHECKLIST:
 - **Bitbucket:** Repository URL path contains `bitbucket.org`
 - **SourceHut/Gitea/Gogs:** Repository URL contains `sr.ht`, custom Gitea/Gogs instance
 
-**Note:** Hosting Provider is NOT mutually exclusive — mark all platforms where the server is available.
+---
+
+### Step 5.6 — Authentication
+
+**NOT mutually exclusive — mark ALL that apply. Authentication is often MISSED.**
+
+```
+AUTHENTICATION VERIFICATION CHECKLIST:
+□ 1: Search server.json for "TOKEN", "API_KEY", "SECRET", "BEARER"
+□ 2: Search README for "authentication", "auth", "credentials", "token"
+□ 3: Search .env.example for credential fields
+□ 4: Search vendor docs for API access / token setup page
+□ 5: If ANY credential found → mark ALL applicable auth types as Yes
+□ 6: Check learned-fixes.md for "Authentication Fields Marked No" pattern
+```
+
+| # | Attribute | Mark Yes if… |
+|---|-----------|-------------|
+| 1 | OAuth 2.1 - Authorization Code Flow | OAuth flow with user redirect found |
+| 2 | OAuth 2.1 - Client Credentials Flow | Machine-to-machine OAuth found |
+| 3 | Bearer Token | Token passed in Authorization header |
+| 4 | Personal Access Token | User-generated PAT found |
+| 5 | API Token | App-level API key found |
+
+**Common Mistake Pattern (LEARNED):**
+- ❌ WRONG: "No auth in README, so Authentication = No" (incomplete search)
+- ✅ RIGHT: "BUILDKITE_API_TOKEN found in server.json → (3) Bearer Token, (4) PAT, (5) API Token all = Yes"
+
+**🔒 Authentication Detection Rules:**
+
+**Core Principle:** Bearer Token is a DELIVERY METHOD, not a credential type. Multiple auth fields can be Yes simultaneously.
+
+```
+Visual Relationship:
+Bearer Token (delivery method — how it's sent)
+    ├── Personal Access Token  (user-specific, acts on behalf of user)
+    ├── OAuth Access Token     (from OAuth 2.1 flow)
+    └── JWT Token              (signed token)
+
+API Key (credential type — app identification, NOT user-specific)
+    └── Can be delivered via Bearer header OR X-API-Key header OR query param
+```
+
+| Auth Type | Mark Yes When | Co-occurrence |
+|-----------|--------------|---------------|
+| Bearer Token | `Authorization: Bearer` found anywhere in source/docs | Always Yes when PAT, OAuth token, or API key uses Bearer delivery |
+| Personal Access Token | "personal access token", "PAT" explicitly in docs/README/code | → Also set Bearer Token = Yes |
+| API Token | `"api key"`, `"api_token"`, `"api_key"` in source or docs | → Also set Bearer Token = Yes if sent via Bearer |
+| OAuth 2.1 - Authorization Code Flow | OAuth 2.1 auth code flow documented; user redirected to auth page | → Also set Bearer Token = Yes |
+| OAuth 2.1 - Client Credentials Flow | OAuth 2.1 client credentials documented; machine-to-machine auth | → Also set Bearer Token = Yes |
+
+**Key Rules:**
+1. Bearer Token ≠ credential type — it's the transport mechanism. Never mark ONLY Bearer Token without also identifying the underlying credential type (PAT / API Token / OAuth)
+2. PAT + Bearer = both Yes — PAT is delivered via Bearer header
+3. API Token + Bearer = both Yes — if API key sent via `Authorization: Bearer`
+4. API Token ≠ PAT — API keys are app-level static keys; PATs are user-level tokens
+
+**Detection Patterns (from source code):**
+```
+Bearer Token = Yes if: "Authorization: Bearer" in source/docs
+PAT = Yes if: "personal access token" OR "PAT" explicitly in docs
+API Token = Yes if: "api key" OR "api_token" OR "api_key" in source/docs
+```
 
 ---
 
-### Step 6 — Transport Protocol & Capabilities Verification
+### Step 5.7 — Data Protection
 
-**Transport Protocol Detection:**
+**Determine transport (Step 5.8) FIRST, then apply TLS rule.**
 
-Check for these transports in source code and documentation:
+| # | Attribute | Rule |
+|---|-----------|------|
+| 1 | TLS 1.3 | Yes only if remote endpoint confirmed TLS 1.3 via probe |
+| 2 | TLS 1.2 | Yes only if remote endpoint confirmed TLS 1.2 via probe |
+| 3 | Lower versions or no encryption | Yes if STDIO (no network layer) OR probe shows no TLS |
+
+**🔒 L3 — TLS vs Bearer Independence Rule:**
+
+Bearer Token = authentication delivery method. TLS = transport encryption. These are completely independent layers.
+
+| Transport | TLS Apply? | Reason |
+|-----------|-----------|--------|
+| STDIO (local) | Always No | stdin/stdout on local machine, no network |
+| HTTP/SSE (remote) | Yes | Network transmission requires TLS |
+| StreamableHttp (remote) | Yes | Network transmission requires TLS |
+
+**Rules:**
+- STDIO transport → ALL TLS fields = No (no exceptions)
+- Bearer Token present does NOT imply TLS present
+- TLS decision is based ONLY on transport protocol, never on authentication
+- Check transport FIRST, then determine TLS independently
+
+**Examples:**
+- STDIO server with Bearer Token → TLS = No (auth is local process, no network)
+- HTTP endpoint with no auth → TLS = Yes (network needs encryption regardless)
+- HTTP endpoint with Bearer Token → TLS = Yes AND Bearer = Yes (both, independently)
+
+---
+
+### Step 5.8 — Transport Protocol
+
+**NOT mutually exclusive — mark ALL that apply:**
+
 ```
 TRANSPORT PROTOCOL VERIFICATION CHECKLIST:
-□ Step 1: Does README mention stdin/stdout or STDIO? → STDIO = Yes
-□ Step 2: Is there an HTTP endpoint with GET (Content-Type: text/event-stream)? → HTTP/SSE = Yes
-□ Step 3: Is there an HTTP endpoint with POST (JSON-RPC streaming)? → StreamableHttp = Yes
-□ Step 4: Is the server built with FastAPI or similar async web framework? → FastAPI = Yes
-□ Step 5: Check for @app.post(), @app.get(), async def patterns
-□ Step 6: Mark ALL applicable transport protocols (not mutually exclusive)
+□ 1: Does README mention stdin/stdout or STDIO? → STDIO = Yes
+□ 2: Is there an HTTP endpoint with GET (Content-Type: text/event-stream)? → HTTP/SSE = Yes
+□ 3: Is there an HTTP endpoint with POST (JSON-RPC streaming)? → StreamableHttp = Yes
+□ 4: Is the server built with FastAPI or similar async web framework? → FastAPI = Yes
+□   Check for @app.post(), @app.get(), async def patterns
 ```
 
-**Capabilities Detection:**
+---
 
-Extract from source code — **README alone is NOT sufficient** (capabilities may not be documented there).
+### Step 5.9 — Tools Operations
+
+**MUTUALLY EXCLUSIVE — mark HIGHEST level only:**
+
+```
+TOOLS OPERATIONS VERIFICATION CHECKLIST:
+□ 1: Parse ALL tool names from documentation
+□ 2: Look for patterns: create_*, update_*, delete_*, cancel_*, remove_*, destroy_*
+□ 3: If ONLY read operations found → mark (1) Read-only = Yes
+□ 4: If read + create/update found → mark (2) Read+Update = Yes
+□ 5: If read + create/update + delete/cancel found → mark (3) Read+Update+Delete = Yes
+□ 6: Mark ONLY the HIGHEST level — all others = No
+□ 7: Check learned-fixes.md for "Tools Operations Violation" pattern
+```
+
+| # | Attribute | Pattern |
+|---|-----------|---------|
+| 1 | Read-only operations | get_*, list_*, search_*, fetch_* only |
+| 2 | Read-only and/or update operations | create_*, update_* present, no delete |
+| 3 | Read-only update and/or delete operations | delete_*, cancel_*, remove_*, destroy_* present |
+
+**Common Mistake Patterns (LEARNED):**
+- ❌ WRONG: Mark both (2) and (3) as Yes (violates exclusivity)
+- ✅ RIGHT: Mark ONLY (3) = Yes when delete patterns found
+- ❌ WRONG: "Tool names: create_build, cancel_build" → mark (2) (missed delete pattern)
+- ✅ RIGHT: "cancel_* = delete operation" → mark (3)
+
+**🔒 L5 — Tools Operations Decision Tree:**
+```
+Does server have delete/terminate operations? (delete_*, cancel_*, remove_*, destroy_*)
+    → Yes: Mark (3) Read-only update and/or delete = Yes. Mark (1) and (2) = No.
+
+Does server have only create/update (no delete)?
+    → Yes: Mark (2) Read-only and/or update = Yes. Mark (1) and (3) = No.
+
+Does server have ONLY read operations?
+    → Yes: Mark (1) Read-only = Yes. Mark (2) and (3) = No.
+```
+**Example:** list (read) + create (write) + terminate (delete) → Highest = Delete → Mark (3) = Yes, others = No.
+
+---
+
+### Step 5.10 — Deployment Approach
+
+**NOT mutually exclusive — mark ALL that apply:**
+
+```
+DEPLOYMENT APPROACH VERIFICATION CHECKLIST:
+□ 1: Check for STDIO support (stdin/stdout) → Local = Yes
+□ 2: Search for Dockerfile, docker.json, OCI registry refs (ghcr.io) → Container = Yes
+□ 3: Check for vendor endpoint or remote URL in README → Remote = Yes
+□   Also check server.json for "docker", "container", "run"
+□   Check learned-fixes.md for "Deployment Container Marked No" pattern
+```
+
+| # | Attribute | Mark Yes if… |
+|---|-----------|-------------|
+| 1 | Local | STDIO transport or published package (pip/npx) found |
+| 2 | Container | Dockerfile, docker-compose, or OCI image reference found |
+| 3 | Remote | Vendor endpoint or hosted URL available |
+
+**Common Mistake Pattern (LEARNED):**
+- ❌ WRONG: "Go binary exists, so (2) Container = No" (missed Docker config)
+- ✅ RIGHT: "Found Dockerfile + STDIO" → (1) Local = Yes AND (2) Container = Yes
+
+---
+
+### Step 5.11 — Compliance & Certifications
+
+Fill from Thread 5 (compliance docs search) of Step 0.5:
+
+| # | Attribute | Mark Yes if… |
+|---|-----------|-------------|
+| 1 | HIPAA | Explicit HIPAA compliance statement in docs |
+| 2 | GDPR | Explicit GDPR compliance statement in docs |
+| 3 | SOC 2 | SOC 2 Type I or II certification stated |
+| 4 | FedRAMP | FedRAMP authorization stated |
+
+---
+
+### Step 5.12 — Capabilities
+
+**Extract from source code — README alone is NOT sufficient (L9).**
+
 ```
 CAPABILITIES VERIFICATION CHECKLIST:
-□ Step 1: Read the server's entry point source file first
+□ 1: Read the server's entry point source file first
    → Python: main.py / server.py
    → TypeScript: index.ts / server.ts
    → Java: Program.java / Application.java (look for McpSchema.ServerCapabilities.builder())
    → Go: main.go / server.go
-   → NEVER mark Resources/Prompts/Sampling from README alone — check source
+   → NEVER mark Resources/Prompts/Sampling from README alone
 
-□ Step 2: Look for tool registrations → Tools = Yes if found
+□ 2: Look for tool registrations → (1) Tools = Yes if found
    - Python:     @mcp.tool() decorators or server.add_tool()
    - TypeScript: server.tool() calls
    - Java:       ITool implementations + registerTools(), .tools(true) in capabilities builder
    - Go:         mcp.NewTool() + server.AddTool()
 
-□ Step 3: Look for resource registrations → Resources = Yes if found
+□ 3: Look for resource registrations → (2) Resources = Yes if found
    - Python:     @mcp.resource() decorators
    - TypeScript: server.resource() calls
    - Java:       IResource implementations + registerResources(), .resources(...) in capabilities builder
    - Go:         server.AddResource()
 
-□ Step 4: Look for prompt registrations → Prompts = Yes if found
+□ 4: Look for prompt registrations → (3) Prompts = Yes if found
    - Python:     @mcp.prompt() decorators
    - TypeScript: server.prompt() calls
    - Java:       registerPrompts() + .prompts() in capabilities builder
 
-□ Step 5: Look for sampling handlers → Sampling = Yes if found
+□ 5: Look for sampling handlers → (4) Sampling = Yes if found
 
-□ Step 6: For Java — cross-check McpSchema.ServerCapabilities.builder() call
-   → Only capabilities explicitly listed in the builder are enabled
-   → .tools(true) = Tools, .resources(...) = Resources — absence = No
+□   For Java — cross-check McpSchema.ServerCapabilities.builder() call
+    → Only capabilities explicitly in builder are enabled. Absence = No.
 ```
 
-**Format for Capabilities - Tools (CSV cell):**
+**🔒 L9 — Capabilities Source Verification Rule:**
+
+README does NOT reliably document all capabilities. Always read the server's entry point source file.
+
+**Why this matters:** SAP BusinessObjects BI MCP by CData — README listed 3 tools only. Source had a `resources/` directory with `TableMetadataResource.java` — a fully registered MCP resource — never mentioned in README. `Capabilities,Resources` was initially marked `No` (wrong). Corrected only after reading `Program.java`.
+
+```
+🔒 NEVER mark Resources/Prompts/Sampling = No based on README alone
+🔒 ALWAYS read entry point source to confirm absence
+🔒 For Java: check both the capabilities builder AND the register methods
+🔒 Check subdirectories: tools/, resources/, prompts/ may exist even if README omits them
+```
+
+---
+
+### Step 5.13 — Capability Details & Non-Read-Only Tools
+
+**ALL FIVE rows ALWAYS present. Use `"None"` if capability is absent. Attribute column = `detailed_info` for all five.**
+
+| # | CSV Row | Content |
+|---|---------|---------|
+| 1 | Capabilities - Tools,detailed_info | Tool list grouped by standard taxonomy (L6) |
+| 2 | Capabilities - Resources,detailed_info | Resource list — bullet points only, no category headers |
+| 3 | Capabilities - Prompts,detailed_info | Prompt list or "None" |
+| 4 | Capabilities - Sampling,detailed_info | Sampling details or "None" |
+| 5 | Non-Read-Only Tools,detailed_info | Write/delete ops grouped by standard taxonomy (L6) or "None" |
+
+**🔒 L7 — Five Mandatory Rows Rule:**
+- ALL five rows are MANDATORY in every CSV report — NEVER omit any
+- If content not found → row value = `"None"` (attribute is still `detailed_info`)
+- NEVER use `No` as the Attribute value — always use `detailed_info`
+
+**Example (server with tools only, no resources/prompts/sampling, read-only):**
+```csv
+Capabilities - Tools,detailed_info,"Search & Query Utilities
+  • list_items – List all items"
+Capabilities - Resources,detailed_info,"None"
+Capabilities - Prompts,detailed_info,"None"
+Capabilities - Sampling,detailed_info,"None"
+Non-Read-Only Tools,detailed_info,"None"
+```
+
+**Format for (1) Capabilities - Tools (CSV cell) — standard taxonomy only (L6):**
 ```
 Category Name
   • tool_name – Description
@@ -742,25 +923,25 @@ Another Category
   • tool_name – Description
 ```
 
-**Format for Capabilities - Resources (CSV cell):**
+**Format for (2) Capabilities - Resources (CSV cell):**
 ```
   • resource_uri – Description (resource type: text/image/document)
 ```
-🔒 **NO category header** — bullet points only. Never add a title line like "Table Metadata Resources" above the bullets.
+🔒 **NO category header** — bullet points only. Never add a title line above the bullets.
 
-**Format for Capabilities - Prompts (CSV cell):**
+**Format for (3) Capabilities - Prompts (CSV cell):**
 ```
   • prompt_name – Description (inputs: param1, param2)
 ```
 
-**Format for Capabilities - Sampling (CSV cell):**
+**Format for (4) Capabilities - Sampling (CSV cell):**
 ```
 Model Capabilities
   • model_name – Sampling support (temperature, top_p, max_tokens)
   • completion_method – Inference optimization details
 ```
 
-**Format for Non-Read-Only Tools (CSV cell):**
+**Format for (5) Non-Read-Only Tools (CSV cell) — standard taxonomy only (L6):**
 ```
 Category Name
   • tool_name: Description of the write/delete operation
@@ -769,43 +950,107 @@ Another Category
   • tool_name: Description
 ```
 
+**🔒 L6 — Standard Taxonomy Rule (applies to (1) and (5) above):**
+
+NEVER invent category titles. ALWAYS use these fixed titles only:
+
+**Capabilities - Tools — 6 fixed titles:**
+| Title | Use for |
+|-------|---------|
+| `Search & Query Utilities` | get_, list_, search_, find_, query_, fetch_ operations |
+| `Project Management` | project-scoped CRUD operations |
+| `Issue Management` | issue/ticket/log-related operations |
+| `Team & Workspace Metadata` | user, org, team, workspace info retrieval |
+| `Admin & Miscellaneous` | admin ops, token info, access control |
+| `Other` | tools that don't fit any category above |
+
+**Non-Read-Only Tools — 4 fixed titles:**
+| Title | Use for |
+|-------|---------|
+| `Import/Export Tools` | upload, download, transfer, sync operations |
+| `Content Management` | create/update/delete stored content or files |
+| `Configuration Tools` | install, setup, configure, deploy operations |
+| `Other Write Operations` | write/delete ops that don't fit above categories |
+
+**❌ NEVER use invented titles:** "Device Management", "Asset Management", "Media Generation", "Task Management", "GPU Management", "Repository Management", or ANY domain-specific custom title.
+
+**Classification rules:**
+- Classify by WHAT THE TOOL DOES (get_, list_, create_) — NOT what it manages (devices, assets, tables)
+- Each tool appears in ONE category only
+- If a tool fits multiple → use the more specific one
+
+**🔒 L10 — No Placeholders Rule:**
+```
+🔒 NEVER write {servername}_, {prefix}_, {name}_ in any CSV cell
+🔒 Check Capabilities - Tools, Capabilities - Resources, Non-Read-Only Tools cells
+🔒 If no default prefix documented → use base name only
+🔒 Placeholder format is invisible/confusing in reports — always resolve to actual names
+```
+
+**❌ WRONG (placeholder format):**
+```
+  • {servername}_get_tables – List tables
+  • {prefix}_run_query – Execute query
+```
+**✅ CORRECT — use base name only:**
+```
+  • get_tables – List all available tables
+  • run_query – Execute a SQL SELECT query
+```
+
 ---
 
-### Step 7 — Basic Information
-
-Extract from vendor docs + GitHub:
-- Name, Description, Category, Git Repo Version
-
----
-
-### Step 8 — Save Report
+### Step 6 — Save Report
 
 **Location:** User-configured path
 **Format:** CSV (3 columns: Category, Attribute, Status)
 **Filename:** `<servername>.csv`
 **CSV Rules:** Use `csv.QUOTE_ALL` for proper multiline handling
 
-**Step 8.1 — Save Cost File (MANDATORY — always runs after CSV is saved)**
+**Step 6.1 — Save Cost File (MANDATORY — always runs after CSV is saved)**
 
 After saving the CSV, immediately generate and save `<servername>-cost.txt` at the same path.
 
-**Timestamp capture (MANDATORY):**
-- **Before Thread 1 starts:** capture `RESEARCH_START = datetime.utcnow().isoformat()` (e.g. `"2026-03-27T19:08:03"`)
-- **After Gate 4 completes:** capture `RESEARCH_END = datetime.utcnow().isoformat()`
-- These timestamps define the window for token counting
+**Required format for `<servername>-cost.txt`:**
+```
+MCP Server     : <GitHub repository URL or Remote MCP endpoint URL or Server Name>
+Date           : <YYYY-MM-DD HH:MM:SS>
+Model          : <model-id>
 
-**How to compute token delta for this research session:**
+Token Usage
+  Input        : <n>
+  Output       : <n>
+  Cache Read   : <n>
 
-1. Find the current session JSONL file (auto-detect from working directory):
+Cost
+  Input        : $<amount>  (<n> x $3.00/1M)
+  Output       : $<amount>  (<n> x $15.00/1M)
+  Cache Read   : $<amount>  (<n> x $0.30/1M)
+  Total        : $<amount>
+```
+
+**How to populate:**
+
+1. **Token counts** — run `references/cost-script.py` to extract from the session JSONL:
    ```bash
-   CWD_SLUG=$(pwd | tr '/' '-' | sed 's/^-//')
-   ls -t ~/.claude/projects/-${CWD_SLUG}/*.jsonl | head -1
+   python3 references/cost-script.py \
+     --start "<YYYY-MM-DDThh:mm:ss>" \
+     --end   "<YYYY-MM-DDThh:mm:ss>" \
+     --server "<servername-kebab-case>"
    ```
-2. Sum all `message.usage.input_tokens`, `output_tokens`, `cache_read_input_tokens` where timestamp is between `RESEARCH_START` and `RESEARCH_END`
-3. That sum = tokens used for this MCP research
+   - `--start` = timestamp when Step 0.5 Thread 1 began
+   - `--end`   = timestamp when Gate 4 completed
+   - Script sums `input_tokens`, `output_tokens`, `cache_read_input_tokens` from the session JSONL within that window
 
-**Cost script:** `references/cost-script.py` — set `RESEARCH_START`, `RESEARCH_END`, `SERVER_NAME` then run.
-`SERVER_NAME` = kebab-case (e.g. `"abacatepay-mcp"`). Timestamps = ISO 8601 (e.g. `"2026-03-27T19:08:03"`).
+2. **Cost calculation** — apply these rates to the token counts:
+   - Input       : tokens × $3.00 / 1,000,000
+   - Output      : tokens × $15.00 / 1,000,000
+   - Cache Read  : tokens × $0.30 / 1,000,000
+   - Total       : sum of all three
+
+3. **Date** — UTC timestamp when the report was saved
+4. **Model** — model ID used for this session (e.g. `claude-sonnet-4-6`)
+
 
 ---
 
@@ -930,6 +1175,7 @@ Sequential research misses interdependencies. Endpoint found in Thread 3 reveals
 ### Step 0.5 — 5 Concurrent Threads
 
 **Thread 1: GitHub Repository Research** *(always run — find repo if not given)*
+→ Feeds: **Step 5.1** (Name, Description, Category, GitHub Repo) · **Step 5.2** (Official/Community) · **Step 5.12** (Capabilities source) · **Step 5.13** (tool names)
 - If only endpoint given → search for GitHub repo first, then read it
 - Read ENTIRE README (all sections)
 - Search: endpoint, https://, remote, hosted, cloud
@@ -945,12 +1191,14 @@ Sequential research misses interdependencies. Endpoint found in Thread 3 reveals
   ```
 
 **Thread 2: Repository File Search** *(always run)*
+→ Feeds: **Step 5.6** (Authentication — server.json, .env.example, config files)
 - Files: .env.example, config.json, setup.md, docs/
 - Grep: "https://", "endpoint", "url", "host" patterns
 - API paths: /api/v2, /v1, /mcp
 - Comments with example URLs
 
 **Thread 3: Remote Endpoint Probing** *(run unless short-circuited)*
+→ Feeds: **Step 5.1** (Endpoint URL) · **Step 5.7** (TLS — L3) · **Step 5.8** (Transport) · **Step 5.10** (Deployment Remote)
 - **SHORT-CIRCUIT:** If Thread 1 confirmed STDIO-only AND zero remote/endpoint URLs found in README → skip probing, mark Endpoint URL = N/A, TLS = No. Document: "STDIO-only server, no remote endpoint references in README."
 - If only GitHub given → extract candidate endpoint URLs from README/docs first
 - **BEFORE probing:** Validate URL against SSRF blocklist (see Security Mandate)
@@ -971,12 +1219,14 @@ Sequential research misses interdependencies. Endpoint found in Thread 3 reveals
   - 404 both → Doesn't exist
 
 **Thread 4: Dependency Extraction**
+→ Feeds: **Step 5.3** (Protocol Version — apply L1 framework priority mapping from Step 1)
 - Priority 1: FastMCP version (if present)
 - Priority 2: Framework version (Langchain, etc.)
 - Priority 3: Base SDK version (mcp, @modelcontextprotocol/sdk)
 - Check for HTTP frameworks: FastAPI, Express, Flask
 
 **Thread 5: Vendor Compliance & Security**
+→ Feeds: **Step 5.11** (Compliance — HIPAA / GDPR / SOC 2 / FedRAMP)
 - HIPAA, GDPR, SOC 2, FedRAMP badges
 - GitHub issues for compliance
 - Vendor blog/documentation
@@ -1364,17 +1614,16 @@ Go:          main.go / server.go
 
 **Session Start (MANDATORY — never skip):**
 - Read `references/learned-fixes.md` all error patterns (#1-#4, #7-#16)
-- Read Learnings 1-9 in this file
-- These are not suggestions — they are gates. Skipping them causes the same mistakes to recur.
-- Read Learnings 1-9: L8 = capabilities from source, L9 = no placeholder tool names
+- All learnings (L1–L10) are embedded in Step 5.1–5.13 — follow each section's rules directly
+- These are gates — skipping them causes the same mistakes to recur
 
 **During Research (enforce at every attribute):**
-- Verify Transport Protocol FIRST, then determine TLS (never reverse)
-- Verify Pricing = server license, NOT service cost (ask: "Is the MCP server itself paid?")
-- Verify Categories from source documentation (never invent)
-- Verify Tools Operations = HIGHEST level only (never mark multiple)
-- All five capability rows ALWAYS present with attribute "detailed_info": Capabilities-Tools, Capabilities-Resources, Capabilities-Prompts, Capabilities-Sampling, Non-Read-Only Tools — use "None" for any that have no content
-- Every Yes/No MUST have source evidence — if missing, flag to user
+- Verify Transport Protocol FIRST, then determine TLS (never reverse) → Step 5.7 (L3)
+- Verify Pricing = server license, NOT service cost (ask: "Is the MCP server itself paid?") → Step 5.4 (L4)
+- Verify Categories using standard taxonomy only — NEVER invent → Step 5.13 (L6)
+- Verify Tools Operations = HIGHEST level only (never mark multiple) → Step 5.9 (L5)
+- All five capability rows ALWAYS present with attribute "detailed_info" — use "None" if absent → Step 5.13 (L7)
+- Every Yes/No MUST have source evidence — if missing, mark `No` and flag to user
 
 **Workflow Gates:**
 - Step 3 decision: Ask user preference (local vs. research)
