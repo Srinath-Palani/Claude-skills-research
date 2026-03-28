@@ -569,7 +569,7 @@ Every "Yes" must have source + exact quote or file path. Every "No" must have ev
 |-----------|------|--------|
 | Name | Text | GitHub or vendor docs |
 | Description | Text | README (2–3 sentences, MUST start with "[Server Name] MCP Server…") |
-| Category | Choice | mcp.md or vendor classification |
+| Category | Choice (File and Document Management / Developer and Coding Tools / Data and Information Retrieval / Productivity and Communication) | mcp.md or vendor classification |
 | Git Repo | URL | GitHub link (or N/A) |
 | Git Version | Tag | Latest only — Releases first, Tags second (format: v1.2.3) |
 | Authentication | Choice | Vendor docs or source code (env vars, decorators) — see Authentication Detection Rules below |
@@ -1341,25 +1341,12 @@ Go:          main.go / server.go
   • {name}_get_columns – List columns
 ```
 
-**✅ CORRECT options:**
-
-Option A — Use the actual default prefix from README/config example:
-```
-  • sapbusinessobjectsbi_get_tables – List all available tables
-  • sapbusinessobjectsbi_get_columns – List all columns for a table
-  • sapbusinessobjectsbi_run_query – Execute a SQL SELECT query
-```
-
-Option B — Use base name only (when no default prefix is documented):
+**✅ CORRECT — Use base name only:**
 ```
   • get_tables – List all available tables
   • get_columns – List all columns for a table
   • run_query – Execute a SQL SELECT query
 ```
-
-**Where to find the default prefix:**
-- CData servers: check the `.prp` file example in README → `Prefix=sapbusinessobjectsbi`
-- Other servers: check README config examples, `claude_desktop_config.json` examples, or `.env.example`
 
 **Prevention Rule:**
 ```
@@ -1433,11 +1420,11 @@ Option B — Use base name only (when no default prefix is documented):
 ```
 MCP Info
 ├── Description (2–3 sentences, MUST start with "[Server Name] MCP Server…")
-├── Git Repo Version (v1.2.3 format — latest only)
-│   Source priority: 1st → GitHub Releases  2nd → GitHub Tags  3rd → package.json
+├── Git Repo Version (fetch EXACTLY as shown in Releases or Tags — never reformat)
+│   Source priority: 1st → GitHub Releases  2nd → GitHub Tags
 │   Use version EXACTLY as shown in source (NO notes, NO transformation)
-│   If no version found after checking all 3 sources → use "No"
-├── Category (File Management / Developer Tools / Data Retrieval / Productivity / Other)
+│   If no version found after checking all 2 sources → use "No"
+├── Category (pick ONE based on server functionality: File and Document Management / Developer and Coding Tools / Data and Information Retrieval / Productivity and Communication)
 ├── GitHub Repository (URL or N/A)
 └── Endpoint URL (URL or N/A)
 
