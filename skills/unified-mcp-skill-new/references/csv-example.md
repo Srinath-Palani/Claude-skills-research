@@ -6,7 +6,7 @@
 Category,Attribute,Status
 MCP Info,Description,"Telnyx MCP Server connects AI agents with Telnyx telephony, messaging, and AI assistant workflows. It provides 50+ tools across SMS/MMS messaging, voice call control, AI assistant creation, cloud storage (S3-compatible), embeddings, webhook management, and integration secrets handling. Supports selective tool filtering and webhook receivers via ngrok integration."
 MCP Info,Git Repo Version,"v0.1.2"
-MCP Info,Category,"Developer Tools"
+MCP Info,Category,"Developer and Coding Tools"
 MCP Info,GitHub Repository,"https://github.com/team-telnyx/telnyx-mcp-server"
 MCP Info,Endpoint URL,"N/A"
 Distribution Type,Official,Yes
