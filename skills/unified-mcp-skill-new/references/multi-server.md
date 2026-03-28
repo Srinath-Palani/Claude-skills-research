@@ -22,6 +22,18 @@ When modifying ANY part of this file (format, rule, instruction, workflow step, 
 > 5. If an agent cannot verify an attribute → return `"No"` and flag, never `"UNVERIFIED"` or `"unknown"`
 > SKILL.md is the single source of truth — rules are not duplicated here.
 
+## Workflow
+
+1. **Detect** — Step 0-M identifies 2+ servers in input
+2. **Parse & Classify** — Step M1: resolve all server names to GitHub URLs
+3. **Confirm** — show list to user, allow adjustment before proceeding
+4. **Dispatch** — Step M2: launch one Layer 1 Research Agent per server in parallel
+5. **Collect** — wait for all agents to return JSON results
+6. **Finalize** — Step M3: render individual CSVs + comparison table
+7. **Prompt** — offer: set up locally / view full report / re-sort / done
+
+---
+
 **Trigger:** Auto-detected via Step 0-M (see below). No explicit command needed.
 
 **Architecture:** 2-layer sub-agent system. Token-bounded. Parallel per server. No scoring.
