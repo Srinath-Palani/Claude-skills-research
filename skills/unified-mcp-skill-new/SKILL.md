@@ -8,7 +8,34 @@ description: >
   fewer tokens, full functionality.
 ---
 
-<!-- SKILL_VERSION: 3.0.0 | Updated: 2026-03-27 -->
+<!-- SKILL_VERSION: 3.0.1 | Updated: 2026-03-28 -->
+
+---
+
+## Table of Contents
+
+| # | Section |
+|---|---------|
+| 1 | [Modification Policy & Zero-Assumption](#modification-policy) |
+| 2 | [Enforcement Gates 1–4](#gates) |
+| 3 | [Rules Summary 1–5](#rules-summary) |
+| 4 | [Quick Reference Workflow](#quick-reference) |
+| 5 | [Security Mandate — SSRF, Credentials, Network Safety](#security-mandate) |
+| 6 | [Step 0 — Configuration & Input Classification](#step-0) |
+| 7 | [Step 0.5 — Parallel Search (5 Concurrent Threads)](#step-05) |
+| 8 | [Step 1 — Protocol Version Verification](#step-1) |
+| 9 | [Steps 2–4 — Endpoint / GitHub Repo / Server Name](#steps-2-4) |
+| 10 | [Step 5 — Attribute Filling (5.1–5.13)](#step-5) |
+| 11 | [Step 6 — Save Report + Cost File](#step-6) |
+| 12 | [Error Recovery — 7 Phases](#error-recovery) |
+| 13 | [Project Audit — Compliance Review](#project-audit) |
+| 14 | [Multi-Server Mode](#multi-server) |
+| 15 | [Key Learnings — Reference Index](#key-learnings) |
+| 16 | [Integration Rules](#integration-rules) |
+| 17 | [Credential Placeholder Map](#credential-map) |
+| 18 | [Report Format — CSV Structure](#report-format) |
+
+---
 
 🔒 **SYNC NOTE**
 > SKILL.md is the single source of truth for all rules, learnings, and formats.
@@ -181,7 +208,7 @@ On fail → 7-phase Error Recovery (auto-triggered)
 **Enforcement Gates (MANDATORY — block CSV until passed):**
 Gate 1=Evidence Ledger (every Yes/No has source proof)
 Gate 2=Connection Verified (all 5 threads complete)
-Gate 3=Learning Walkthrough (L1-L7 checked)
+Gate 3=Learning Walkthrough (L1-L10 checked)
 Gate 4=Self-Improvement (new patterns documented)
 
 ---
@@ -200,6 +227,28 @@ Gate 4=Self-Improvement (new patterns documented)
 ---
 
 ## 🔐 Security Mandate — Always Enforced
+
+### Enterprise Security Quick-Reference (Audit Checklist)
+
+```
+NEVER:
+□ Ask for credentials in chat
+□ Write actual keys/tokens in any config, report, or CSV
+□ Probe private IP ranges (127.x, 10.x, 172.16.x, 192.168.x, 169.254.x)
+□ Follow redirects to blocked IP ranges
+□ Store credentials in README, .env (committed), or settings.json
+
+ALWAYS:
+□ Use <PLACEHOLDER> in all config examples
+□ Direct user to edit files directly for credentials
+□ Validate paths before file write (no .., symlinks, system dirs)
+□ Apply curl timeouts: --connect-timeout 5 --max-time 10 --max-redirs 3
+□ Revoke + regenerate if credential accidentally appears in chat
+```
+
+→ Full rules, alert templates, blocklists, and path validation: detailed below.
+
+---
 
 **CRITICAL RULES (No exceptions):**
 
@@ -338,6 +387,7 @@ Only save as default if user explicitly selects option 3.
 | **Remote Endpoint** | Probe endpoint (TLS, auth, transport) | Search GitHub for source repo |
 | **GitHub URL** | Read repo (README, deps, tools) | Search for + probe remote endpoint |
 | **Server Name** | Search both simultaneously | GitHub URL + remote endpoint |
+| **Package Name (npm/PyPI/Cargo)** | Locate source repo and registry listing | Search GitHub for source repo |
 
 **MANDATORY DUAL-SOURCE RULE:**
 Regardless of input type, research is NEVER complete with only one source.
@@ -345,6 +395,112 @@ Regardless of input type, research is NEVER complete with only one source.
 - Given remote endpoint → always find GitHub repo
 - Given server name → find both before proceeding
 Run both searches in parallel via Step 0.5. Combine results using Report Generation Rules 2–5.
+
+---
+
+## Parallel Search & Data Collection (Critical Learning)
+
+**CRITICAL:** Execute Step 0.5 with 5 CONCURRENT threads (not sequentially).
+
+### Why Parallel Matters
+
+Sequential research misses interdependencies. Endpoint found in Thread 3 reveals framework for Thread 4, which determines protocol for Thread 1. Parallel execution catches everything simultaneously.
+
+### Step 0.5 — 5 Concurrent Threads
+
+**Thread 1: GitHub Repository Research** *(always run — find repo if not given)*
+→ Feeds: **Step 5.1** (Name, Description, Category, GitHub Repo) · **Step 5.2** (Official/Community) · **Step 5.12** (Capabilities source) · **Step 5.13** (tool names)
+- If only endpoint given → search for GitHub repo first, then read it
+- Read ENTIRE README (all sections)
+- Search: endpoint, https://, remote, hosted, cloud
+- Extract ALL external URLs
+- Look for deprecation notices (may point to new versions)
+- **If GitHub API returns 403 (rate limited):** Wait 60s, retry once. If still 403 → flag to user, do NOT guess attributes.
+- **If repo returns 404:** Confirm private/non-existent. Flag to user: "Repo not accessible. Provide URL or skip?"
+- **If repo is archived:** WARN user immediately:
+  ```
+  This repository is ARCHIVED. Research may be outdated.
+  [ 1 ] Continue anyway (results marked as potentially stale)
+  [ 2 ] Cancel research
+  ```
+
+**Thread 2: Repository File Search** *(always run)*
+→ Feeds: **Step 5.6** (Authentication — server.json, .env.example, config files) · **Built-in Security Controls** (see below)
+- Files: .env.example, config.json, setup.md, docs/
+- Grep: "https://", "endpoint", "url", "host" patterns
+- API paths: /api/v2, /v1, /mcp
+- Comments with example URLs
+
+**While in Thread 2 — also scan source code for Built-in Security Controls:**
+These do not change any CSV attribute values, but must be documented as risk context in the research notes.
+```
+□ Write gates     — env var flags that disable destructive ops by default
+                    (e.g., ALLOW_WRITE=true, READ_ONLY_MODE, --dangerouslyAllowBrowser)
+□ Output scrubbing — patterns that strip credentials, PII, or secrets from
+                    tool responses before they reach the client
+□ Input guards     — regex validation on tool parameters, path traversal
+                    prevention, template injection checks
+□ Auth wrappers    — permission decorators or functions wrapping tool execution
+                    (e.g., secure_tool(), @requires_auth, permission check before call)
+```
+If any controls found → note them in research summary as: "Security mitigations present: [list]"
+If none found → note: "No built-in write gates or response sanitization detected"
+
+**Thread 3: Remote Endpoint Probing** *(run unless short-circuited)*
+→ Feeds: **Step 5.1** (Endpoint URL) · **Step 5.7** (TLS — L3) · **Step 5.8** (Transport) · **Step 5.10** (Deployment Remote)
+- **SHORT-CIRCUIT:** If Thread 1 confirmed STDIO-only AND zero remote/endpoint URLs found in README → skip probing, mark Endpoint URL = N/A, TLS = No. Document: "STDIO-only server, no remote endpoint references in README."
+- If only GitHub given → extract candidate endpoint URLs from README/docs first
+- **BEFORE probing:** Validate URL against SSRF blocklist (see Security Mandate)
+- **All probes use:** `--connect-timeout 5 --max-time 10 --max-redirs 3`
+- **Rate limit:** Max 3 attempts per endpoint, 2-second delay between retries
+
+- Test 1: GET request (check HTTP/SSE)
+  - `curl -I --connect-timeout 5 --max-time 10 https://api.{vendor}.com/v2/mcp`
+  - 200/401/403 → exists; 404 → not GET-based
+
+- Test 2: POST with JSON-RPC (check StreamableHttp)
+  - `curl -X POST --connect-timeout 5 --max-time 10 https://.../ -d '{"jsonrpc":"2.0",...}'`
+  - 401/403 → exists; 404 → doesn't exist
+
+- Test 3: Response format
+  - JSON-RPC response → Real MCP endpoint
+  - Vendor API error → Placeholder endpoint
+  - 404 both → Doesn't exist
+
+**Thread 4: Dependency Extraction**
+→ Feeds: **Step 5.3** (Protocol Version — apply L1 framework priority mapping from Step 1)
+- Priority 1: FastMCP version (if present)
+- Priority 2: Framework version (Langchain, etc.)
+- Priority 3: Base SDK version (mcp, @modelcontextprotocol/sdk)
+- Check for HTTP frameworks: FastAPI, Express, Flask
+- Dependency files to check: `package.json` (Node), `pyproject.toml` / `requirements.txt` (Python), `Cargo.toml` (Rust), `go.mod` (Go)
+
+**Thread 5: Vendor Compliance & Security**
+→ Feeds: **Step 5.11** (Compliance — HIPAA / GDPR / SOC 2 / FedRAMP)
+- HIPAA, GDPR, SOC 2, FedRAMP badges
+- GitHub issues for compliance
+- Vendor blog/documentation
+- BAA (Business Associate Agreement) availability
+
+### After All Threads Complete — HARD CHECKPOINT
+
+**BLOCKING GATE: Do NOT proceed to Step 1 until ALL threads report results.**
+
+```
+Thread Status Check (ALL must be ✅ or ❌-confirmed):
+
+□ Thread 1 — GitHub repo: ✅ Found and README read / ❌ Confirmed not found (searched 3+ patterns)
+□ Thread 2 — File search:  ✅ Config files checked / ❌ No config files exist (ls confirmed)
+□ Thread 3 — Endpoint:     ✅ Probed (GET + POST results recorded) / ❌ No endpoint (404 both, documented)
+□ Thread 4 — Dependencies: ✅ SDK/framework version extracted / ❌ No deps file (confirmed absence)
+□ Thread 5 — Compliance:   ✅ Checked vendor docs / ❌ No compliance info found (documented)
+```
+
+**If ANY thread is still pending → DO NOT proceed. Complete it first.**
+**If a thread returned empty → document WHY it's empty (e.g., "no releases page, no tags, version from package.json").**
+
+**Both GitHub + remote endpoint MUST be researched before moving to Step 1.**
+If either source is missing → continue searching until found or confirmed non-existent with evidence.
 
 ---
 
@@ -358,6 +514,7 @@ Run both searches in parallel via Step 0.5. Combine results using Report Generat
 3. Check base **mcp** SDK (Python) → Use mcp mapping
 
 **Framework Mapping (FastMCP, Python):**
+- `fastmcp ≥3.0.0` → Protocol `2025-11-25` (FastMCP 3.x pulls in `mcp ≥1.24.0,<2.0` as a hard transitive requirement — the protocol version is governed by the underlying mcp SDK range, not the fastmcp version number itself)
 - `fastmcp ≥0.4.x` → Protocol `2025-06-18`
 - `fastmcp 0.3.x` → Protocol `2025-03-26`
 - `fastmcp <0.3` → Protocol `2024-11-05`
@@ -365,19 +522,21 @@ Run both searches in parallel via Step 0.5. Combine results using Report Generat
 **SDK Mapping (Python mcp):**
 - `mcp ≥1.24` → Protocol `2025-11-25`
 - `mcp 1.15–1.23` → Protocol `2025-06-18`
-- `mcp <1.15` → Protocol `2024-11-05`
+- `mcp 1.5–1.14` → Protocol `2025-03-26`
+- `mcp <1.5` → Protocol `2024-11-05`
 
 **SDK Mapping (TypeScript @modelcontextprotocol/sdk):**
 - `sdk ≥1.12` → Protocol `2025-11-25`
 - `sdk 1.8–1.11` → Protocol `2025-06-18`
-- `sdk <1.8` → Protocol `2024-11-05`
+- `sdk 1.5–1.7` → Protocol `2025-03-26`
+- `sdk <1.5` → Protocol `2024-11-05`
 
 **SDK Mapping (Go github.com/modelcontextprotocol/go-sdk):**
 - `go-sdk ≥1.12` → Protocol `2025-11-25`
 - `go-sdk 1.4–1.11` → Protocol `2025-06-18` ← **COMMON MISS: Don't assume latest**
 - `go-sdk <1.4` → Protocol `2024-11-05`
 
-**NOTE:** Protocol `2025-03-26` ONLY applies to FastMCP 0.3.x. No Python/TypeScript/Go SDK maps to this version. If you don't find FastMCP 0.3.x, this protocol version does NOT apply.
+**NOTE:** Protocol `2025-03-26` applies to: FastMCP 0.3.x, TypeScript SDK 1.5–1.7, Python mcp SDK 1.5–1.14. Go SDK has no equivalent band for this version — if only Go SDK is found, `2025-03-26` does NOT apply.
 
 **CRITICAL VERIFICATION CHECKLIST (to prevent mistakes):**
 Before marking protocol version as final:
@@ -475,24 +634,50 @@ Skip local setup, proceed to attribute research.
 
 ### Step 4 — Server Name Only
 
-1. Search vendor documentation for remote endpoint
-2. Search for GitHub repository (try: `{vendor}-mcp-server`, `mcp-{vendor}`, `{vendor}-mcp`)
-3. If both found, ask:
+**Resolution order (always top-down — stop at first confirmed match):**
+
+1. **Check known official vendor monorepos first** (see table below) — many vendors bundle all their MCP servers inside a single repo (e.g., `awslabs/mcp` hosts `src/bedrock-kb-retrieval-mcp-server/`, `src/lambda-mcp-server/`, etc.). If the server name maps to a known vendor → go to that monorepo before any generic search.
+   - When a server lives inside a monorepo subdirectory, use the Git Trees API to locate it:
+     `https://api.github.com/repos/{owner}/{repo}/git/trees/{branch}?recursive=1`
+     then fetch files from that subdirectory path.
+
+2. **Search GitHub API** (if no monorepo match):
+   `https://api.github.com/search/repositories?q={name}+mcp+server&sort=stars`
+   Also try patterns: `{vendor}-mcp-server`, `mcp-{vendor}`, `{vendor}-mcp`
+
+3. **Check MCP reference servers repo** (`modelcontextprotocol/servers`) for reference implementations.
+
+4. Search vendor documentation for a hosted remote endpoint.
+
+5. If both GitHub repo and remote endpoint found, ask:
    ```
    [ 1 ] Use remote endpoint
    [ 2 ] Use GitHub repository
    [ 3 ] Help me decide
    ```
-4. Continue with chosen path
+
+**Known Official Vendor Sources (check these before generic GitHub search):**
+
+| Vendor | GitHub Org | Repo / Pattern | Notes |
+|--------|-----------|----------------|-------|
+| AWS | `awslabs` | `awslabs/mcp` (monorepo — subdirs: `src/{service}-mcp-server/`) | PyPI namespace: `awslabs.*`. All AWS MCP servers in one repo. |
+| Stripe | `stripe` | `stripe/agent-toolkit` | npm: `@stripe/agent-toolkit` |
+| Cloudflare | `cloudflare` | `cloudflare/mcp-server-cloudflare` | — |
+| Shopify | `Shopify` | `Shopify/shopify-mcp` | — |
+| GitHub | `github` | `github/github-mcp-server` | — |
+| Sentry | `getsentry` | `getsentry/sentry-mcp` | — |
+| Datadog | `DataDog` | `DataDog/datadog-mcp-server` | — |
+| MCP Reference | `modelcontextprotocol` | `modelcontextprotocol/servers` | Reference implementations by spec authors |
 
 **If server not found (neither endpoint nor repo):**
 ```
 Could not find an MCP server matching "[server name]".
 
 Searched:
+- Known vendor monorepos (see table above)
 - GitHub: github.com/*/[name]-mcp-server, mcp-[name], [name]-mcp
 - Vendor: [name].com, api.[name].com
-- MCP directory: https://github.com/modelcontextprotocol/servers
+- MCP reference repo: github.com/modelcontextprotocol/servers
 
 [ 1 ] Try a different name or URL
 [ 2 ] Provide GitHub URL directly
@@ -541,8 +726,25 @@ All 5 threads must have returned results or confirmed-empty. If any thread is in
 
 | # | Attribute | Mark Yes if… |
 |---|-----------|-------------|
-| 1 | Official | Published by the service's own vendor/org |
-| 2 | Community | Published by a third-party contributor |
+| 1 | Official | Published or actively maintained by the service's own vendor/org |
+| 2 | Community | Published by a third-party contributor, unverified publisher, or independent author |
+
+**Confirming Official status — check for multiple of these signals:**
+```
+□ Repo is under the vendor's own GitHub org
+  (e.g., github org = "getsentry" for Sentry MCP, "DataDog" for Datadog MCP)
+□ Manifest author/email matches vendor identity
+  (e.g., pyproject.toml author = "Datadog, Inc. <packages@datadoghq.com>")
+□ Package name uses vendor namespace
+  (e.g., awslabs.bedrock-kb-retrieval-mcp-server, @stripe/agent-toolkit)
+□ Source file copyright headers name the vendor
+□ Server is part of a vendor-owned monorepo alongside other confirmed official servers
+□ Documentation is hosted under the vendor's own domain
+  (e.g., cloudflare.github.io/mcp-server-cloudflare/)
+```
+More signals present = higher confidence. A single signal (e.g., org name alone) may be sufficient for well-known vendors; less-known publishers need multiple signals.
+
+**Monorepo trust note:** When a server belongs to a confirmed official monorepo (e.g., `awslabs/mcp`), the trust signals (stars, contributor count, commit activity) apply across the whole repo — not just the individual server subdirectory. Do not mark Community simply because the subdirectory folder has no dedicated stargazers.
 
 ---
 
@@ -718,6 +920,11 @@ API Token = Yes if: "api key" OR "api_token" OR "api_key" in source/docs
 | 2 | TLS 1.2 | Yes only if remote endpoint confirmed TLS 1.2 via probe |
 | 3 | Lower versions or no encryption | Yes if STDIO (no network layer) OR probe shows no TLS |
 
+**Probe tools:**
+- Primary: `curl -sIv https://endpoint` — check TLS version in verbose output
+- Alternative: `openssl s_client -connect host:443` — reports negotiated TLS version and certificate details
+- For STDIO-only servers: mark all TLS rows as No, note "local transport — no network layer"
+
 **🔒 L3 — TLS vs Bearer Independence Rule:**
 
 Bearer Token = authentication delivery method. TLS = transport encryption. These are completely independent layers.
@@ -749,6 +956,8 @@ Bearer Token = authentication delivery method. TLS = transport encryption. These
 TRANSPORT PROTOCOL VERIFICATION CHECKLIST:
 □ 1: Does README mention stdin/stdout or STDIO? → STDIO = Yes
 □ 2: Is there an HTTP endpoint with GET (Content-Type: text/event-stream)? → HTTP/SSE = Yes
+     ⚠️  NOTE: HTTP/SSE is deprecated as of the 2025-06-18 spec revision. If found, mark Yes but
+     note it as legacy. Newer servers use StreamableHTTP instead.
 □ 3: Is there an HTTP endpoint with POST (JSON-RPC streaming)? → StreamableHttp = Yes
 □ 4: Is the server built with FastAPI or similar async web framework? → FastAPI = Yes
 □   Check for @app.post(), @app.get(), async def patterns
@@ -1164,97 +1373,10 @@ Overall: PASS (review 1 WARN item before commit)
 
 ---
 
-## Parallel Search & Data Collection (Critical Learning)
-
-**CRITICAL:** Execute Step 0.5 with 5 CONCURRENT threads (not sequentially).
-
-### Why Parallel Matters
-
-Sequential research misses interdependencies. Endpoint found in Thread 3 reveals framework for Thread 4, which determines protocol for Thread 1. Parallel execution catches everything simultaneously.
-
-### Step 0.5 — 5 Concurrent Threads
-
-**Thread 1: GitHub Repository Research** *(always run — find repo if not given)*
-→ Feeds: **Step 5.1** (Name, Description, Category, GitHub Repo) · **Step 5.2** (Official/Community) · **Step 5.12** (Capabilities source) · **Step 5.13** (tool names)
-- If only endpoint given → search for GitHub repo first, then read it
-- Read ENTIRE README (all sections)
-- Search: endpoint, https://, remote, hosted, cloud
-- Extract ALL external URLs
-- Look for deprecation notices (may point to new versions)
-- **If GitHub API returns 403 (rate limited):** Wait 60s, retry once. If still 403 → flag to user, do NOT guess attributes.
-- **If repo returns 404:** Confirm private/non-existent. Flag to user: "Repo not accessible. Provide URL or skip?"
-- **If repo is archived:** WARN user immediately:
-  ```
-  This repository is ARCHIVED. Research may be outdated.
-  [ 1 ] Continue anyway (results marked as potentially stale)
-  [ 2 ] Cancel research
-  ```
-
-**Thread 2: Repository File Search** *(always run)*
-→ Feeds: **Step 5.6** (Authentication — server.json, .env.example, config files)
-- Files: .env.example, config.json, setup.md, docs/
-- Grep: "https://", "endpoint", "url", "host" patterns
-- API paths: /api/v2, /v1, /mcp
-- Comments with example URLs
-
-**Thread 3: Remote Endpoint Probing** *(run unless short-circuited)*
-→ Feeds: **Step 5.1** (Endpoint URL) · **Step 5.7** (TLS — L3) · **Step 5.8** (Transport) · **Step 5.10** (Deployment Remote)
-- **SHORT-CIRCUIT:** If Thread 1 confirmed STDIO-only AND zero remote/endpoint URLs found in README → skip probing, mark Endpoint URL = N/A, TLS = No. Document: "STDIO-only server, no remote endpoint references in README."
-- If only GitHub given → extract candidate endpoint URLs from README/docs first
-- **BEFORE probing:** Validate URL against SSRF blocklist (see Security Mandate)
-- **All probes use:** `--connect-timeout 5 --max-time 10 --max-redirs 3`
-- **Rate limit:** Max 3 attempts per endpoint, 2-second delay between retries
-
-- Test 1: GET request (check HTTP/SSE)
-  - `curl -I --connect-timeout 5 --max-time 10 https://api.{vendor}.com/v2/mcp`
-  - 200/401/403 → exists; 404 → not GET-based
-
-- Test 2: POST with JSON-RPC (check StreamableHttp)
-  - `curl -X POST --connect-timeout 5 --max-time 10 https://.../ -d '{"jsonrpc":"2.0",...}'`
-  - 401/403 → exists; 404 → doesn't exist
-
-- Test 3: Response format
-  - JSON-RPC response → Real MCP endpoint
-  - Vendor API error → Placeholder endpoint
-  - 404 both → Doesn't exist
-
-**Thread 4: Dependency Extraction**
-→ Feeds: **Step 5.3** (Protocol Version — apply L1 framework priority mapping from Step 1)
-- Priority 1: FastMCP version (if present)
-- Priority 2: Framework version (Langchain, etc.)
-- Priority 3: Base SDK version (mcp, @modelcontextprotocol/sdk)
-- Check for HTTP frameworks: FastAPI, Express, Flask
-
-**Thread 5: Vendor Compliance & Security**
-→ Feeds: **Step 5.11** (Compliance — HIPAA / GDPR / SOC 2 / FedRAMP)
-- HIPAA, GDPR, SOC 2, FedRAMP badges
-- GitHub issues for compliance
-- Vendor blog/documentation
-- BAA (Business Associate Agreement) availability
-
-### After All Threads Complete — HARD CHECKPOINT
-
-**BLOCKING GATE: Do NOT proceed to Step 1 until ALL threads report results.**
-
-```
-Thread Status Check (ALL must be ✅ or ❌-confirmed):
-
-□ Thread 1 — GitHub repo: ✅ Found and README read / ❌ Confirmed not found (searched 3+ patterns)
-□ Thread 2 — File search:  ✅ Config files checked / ❌ No config files exist (ls confirmed)
-□ Thread 3 — Endpoint:     ✅ Probed (GET + POST results recorded) / ❌ No endpoint (404 both, documented)
-□ Thread 4 — Dependencies: ✅ SDK/framework version extracted / ❌ No deps file (confirmed absence)
-□ Thread 5 — Compliance:   ✅ Checked vendor docs / ❌ No compliance info found (documented)
-```
-
-**If ANY thread is still pending → DO NOT proceed. Complete it first.**
-**If a thread returned empty → document WHY it's empty (e.g., "no releases page, no tags, version from package.json").**
-
-**Both GitHub + remote endpoint MUST be researched before moving to Step 1.**
-If either source is missing → continue searching until found or confirmed non-existent with evidence.
-
----
-
 ## Multi-Server Parallel Research
+
+**Single-server mode** uses Step 0.5's 5-thread parallel search directly (no sub-agents).
+**Multi-server mode** dispatches one Layer 1 agent per server, each running the same Step 0.5 dual-source workflow. Gates 1–4, all Learnings, and all attribute rules are identical in both modes — only the orchestration layer differs.
 
 **If 1 server detected** → skip this section, continue with standard workflow from Step 0.
 **If 2+ servers detected** → load and follow `references/multi-server.md`.
@@ -1265,20 +1387,8 @@ If either source is missing → continue searching until found or confirmed non-
 
 ### Learning 1: Framework Priority
 
-Framework version determines protocol, NOT base SDK.
-
-**Check order:**
-1. FastMCP present? → Use FastMCP mapping
-2. Framework present? → Use framework mapping
-3. Otherwise → Use base SDK mapping
-
-**Example:** Telnyx with FastMCP 0.4.1 + mcp 1.3.0 → 2025-06-18 (FastMCP), not 2025-03-26 (mcp).
-
-**🔒 LOCKED:** Before marking protocol version in CSV:
-1. Extract exact version from source (package.json, pyproject.toml, etc.)
-2. **DO NUMERIC COMPARISON** against SKILL.md mapping ranges (NOT assumptions)
-3. Example: SDK 1.7.0 < 1.8? YES → 2024-11-05 (NOT 2025-06-18)
-4. **NEVER proceed without explicit verification**
+> Core rule: FastMCP > framework > base SDK — always DO NUMERIC COMPARISON, never assume.
+> Full mapping tables, verification checklist, and ✅/❌ examples: **Step 1** and **Step 5.3**.
 
 ### Learning 2: Endpoint Verification Strategy
 
@@ -1321,299 +1431,35 @@ If endpoint returns vendor API errors (not JSON-RPC) → Mark as: Endpoint URL =
 
 ## Authentication Detection Rules
 
-**Core Principle:** Bearer Token is a DELIVERY METHOD, not a credential type. Multiple auth fields can be Yes simultaneously.
-
-### Visual Relationship
-```
-Bearer Token (delivery method — how it's sent)
-    ├── Personal Access Token  (user-specific, acts on behalf of user)
-    ├── OAuth Access Token     (from OAuth 2.1 flow)
-    └── JWT Token              (signed token)
-
-API Key (credential type — app identification, NOT user-specific)
-    └── Can be delivered via Bearer header OR X-API-Key header OR query param
-```
-
-### Detection Rules per Auth Type
-
-> 🔒 **LOCKED — Do NOT modify this table without explicit user approval.**
-
-| Auth Type | Mark Yes When | Example Header | Co-occurrence |
-|-----------|--------------|----------------|---------------|
-| **Bearer Token** | `Authorization: Bearer` found anywhere in source/docs | `Authorization: Bearer <token>` | Always Yes when PAT, OAuth token, or API key uses Bearer delivery |
-| **Personal Access Token** | "personal access token", "PAT" explicitly in docs/README/code; user-specific token acting on behalf of user | `Authorization: Bearer <pat>` | → Also set Bearer Token = Yes |
-| **API Token** | `"api key"`, `"api_token"`, `"api_key"` in source or docs; static key for app identification | `X-API-Key: abc123` OR `Authorization: Bearer <api_key>` | → Also set Bearer Token = Yes if sent via Bearer |
-| **OAuth 2.1 - Authorization Code Flow** | OAuth 2.1 auth code flow documented; user redirected to auth page | `Authorization: Bearer <oauth_token>` | → Also set Bearer Token = Yes |
-| **OAuth 2.1 - Client Credentials Flow** | OAuth 2.1 client credentials documented; machine-to-machine auth | `Authorization: Bearer <token>` | → Also set Bearer Token = Yes |
-
-### Key Rules
-
-> 🔒 **LOCKED — Do NOT modify these rules without explicit user approval.**
-
-1. **Bearer Token ≠ credential type** — it's the transport mechanism. Never mark ONLY Bearer Token without also identifying the underlying credential type (PAT / API Token / OAuth).
-2. **PAT + Bearer = both Yes** — PAT is delivered via Bearer header, so both are always Yes together.
-3. **API Token + Bearer = both Yes** — if API key is sent via `Authorization: Bearer`, both are Yes.
-4. **API Token ≠ PAT** — API keys are app-level static keys; PATs are user-level tokens. Do not conflate.
-5. **Multiple Yes allowed** — Auth fields are NOT mutually exclusive. Mark all that apply.
-
-### Detection Patterns (from source code)
-
-```
-Bearer Token = Yes if:
-  "Authorization: Bearer" in source/docs
-
-PAT = Yes if:
-  "personal access token" in combined_text OR
-  "PAT" explicitly mentioned in docs
-
-API Token = Yes if:
-  "api key" in combined_text OR
-  "api_token" in combined_text OR
-  "api_key" in combined_text
-```
+> Canonical rules, co-occurrence table, and detection patterns are defined in **Step 5.6**.
+> (Authentication Verification Checklist, visual relationship diagram, detection table, Key Rules 1–5, and Detection Patterns from source code.)
+> Step 5.6 is the single source of truth for authentication detection — rules are not duplicated here.
 
 ---
 
-## Key Learnings — Attribute Documentation
+## Key Learnings — Reference Index
 
-### Learning 3: TLS vs Bearer Token (INDEPENDENT Concepts)
+> Full rule text, checklists, and ✅/❌ examples for each learning: see the canonical step listed below.
+> Learning 2 (Endpoint Verification) is preserved in full above — it has unique three-step verification logic not covered in Step 2.
 
-**Core Principle:** Bearer Token = authentication delivery method. TLS = transport encryption. These are completely independent layers.
-
-| Transport | TLS Apply? | Reason |
-|-----------|-----------|--------|
-| **STDIO** (local) | **Always No** | stdin/stdout on local machine, no network |
-| **HTTP/SSE** (remote) | Yes | Network transmission requires TLS |
-| **StreamableHttp** (remote) | Yes | Network transmission requires TLS |
-
-**Rules:**
-- STDIO transport → All TLS fields = No (no exceptions)
-- Bearer Token present does NOT imply TLS present
-- TLS decision is based ONLY on transport protocol, never on authentication
-- Check transport FIRST, then determine TLS independently
-
-**Examples:**
-- STDIO server with Bearer Token → TLS = No (auth is local process, no network)
-- HTTP endpoint with no auth → TLS = Yes (network needs encryption regardless)
-- HTTP endpoint with Bearer Token → TLS = Yes AND Bearer = Yes (both, independently)
-
-> See also: `references/learned-fixes.md` Error #1 (Buildkite) and Error #7 (Runway) for real case studies.
-
----
-
-### Learning 4: Pricing Attribute — Server vs Service (Updated 2026-03-27)
-
-**❌ WRONG:** Marking Paid = Yes because:
-- API key is required
-- The downstream service charges money
-- Authentication requirement exists
-
-**✅ CORRECT:** Pricing reflects the **MCP SERVER itself**, not the service it accesses or authentication required
-
-| Scenario | Free | Paid | Notes |
-|----------|------|------|-------|
-| **Open-source server (MIT), paid Runway service** | Yes | No | MCP server is free; Runway AI service is paid (separate concern) |
-| **Open-source server, free service** | Yes | No | Both free |
-| **Open-source server, paid service** | Yes | No | MCP is free regardless of service costs |
-| **Paid server (requires license)** | No | Yes | The server itself costs money |
-| **Closed-source vendor server** | No | Yes | Proprietary licensing |
-
-**CRITICAL RULE:**
-- Mark **Free = Yes** if the **MCP server code is open-source** (regardless of API key requirement)
-- Mark **Paid = Yes** ONLY if **you must pay to access/use the MCP server itself** (proprietary license)
-- **NEVER confuse with:**
-  - API key requirement (that's authentication, not pricing)
-  - Downstream service costs (GPU rentals, API calls, subscriptions)
-  - Service fees (paid by users of the service, not the MCP server)
-
-**Examples:**
-- ✅ Runway MCP: MIT License → Free = Yes (even though Runway AI service is paid)
-- ✅ Telnyx MCP: Open-source → Free = Yes (even though Telnyx service is paid)
-- ❌ Proprietary MCP: Requires license purchase → Free = No, Paid = Yes
-
----
-
-### Learning 5: Tools Operations — Presence vs Absence
-
-**❌ WRONG:** Marking "Read-only and/or update operations = Yes" when server also has delete operations
-
-**✅ CORRECT:** Mark the HIGHEST level of operation capability present
-
-**Decision Tree:**
-```
-Does server have delete/terminate operations?
-    → Yes: Mark "Read-only update and/or delete operations = Yes"
-           Mark others = No
-
-Does server have only create/update (no delete)?
-    → Yes: Mark "Read-only and/or update operations = Yes"
-           Mark others = No
-
-Does server have ONLY read operations?
-    → Yes: Mark "Read-only operations = Yes"
-           Mark others = No
-```
-
-**Example:** list (read) + rent (write) + terminate (delete) → Highest = Delete → Mark "Read-only update and/or delete = Yes", others = No
-
----
-
-### Learning 6: Capabilities - Tools Categorization (Updated 2026-03-27)
-
-**CRITICAL RULE:** Apply the **standard taxonomy** below. These titles are reused consistently across ALL servers — they are not invented per server, not sourced from README, not derived from paths. Classify each tool into the best-fit standard category.
-
-**Standard Taxonomy — Capabilities - Tools:**
-
-| Title | Use for |
-|-------|---------|
-| `Search & Query Utilities` | get_, list_, search_, find_, query_, fetch_ operations |
-| `Project Management` | project-scoped CRUD operations |
-| `Issue Management` | issue/ticket/log-related operations |
-| `Team & Workspace Metadata` | user, org, team, workspace info retrieval |
-| `Admin & Miscellaneous` | admin ops, token info, access control |
-| `Other` | tools that don't fit any category above |
-
-**Standard Taxonomy — Non-Read-Only Tools:**
-
-| Title | Use for |
-|-------|---------|
-| `Import/Export Tools` | upload, download, transfer, sync operations |
-| `Content Management` | create/update/delete stored content or files |
-| `Configuration Tools` | install, setup, configure, deploy operations |
-| `Other Write Operations` | write/delete ops that don't fit above categories |
-
-**Classification Rules:**
-- Assign each tool to the BEST-FIT category from the standard taxonomy
-- A tool can only appear in ONE category
-- If a tool fits multiple → use the more specific one (e.g. "Import/Export" over "Other Write Operations")
-- `Other` / `Other Write Operations` = catch-all for unclassifiable tools
-
-**❌ WRONG:**
-```
-❌ "Media Generation" (custom title — use "Other" instead)
-❌ "Video Generation & Management" (invented — not in taxonomy)
-❌ "GPU Management" (invented — not in taxonomy)
-❌ "Task Management" (invented — not in taxonomy, use "Search & Query Utilities" for get/list, "Other Write Operations" for cancel/delete)
-```
-
-**✅ CORRECT (Runway API MCP example):**
-```
-Capabilities - Tools:
-  Search & Query Utilities → runway_getTask, runway_getOrg
-  Other → runway_generateVideo, runway_generateImage, runway_upscaleVideo, runway_editVideo, runway_cancelTask
-
-Non-Read-Only Tools:
-  Other Write Operations → runway_generateVideo, runway_generateImage, runway_upscaleVideo, runway_editVideo, runway_cancelTask
-```
-
----
-
-### Learning 7: Capabilities & Non-Read-Only Tools — All Five Rows Always Present
-
-**❌ WRONG:** Omitting any of these five rows when content is not found or not applicable
-
-**✅ CORRECT:** All five rows are MANDATORY in every CSV report — use `"None"` as the value when content is unavailable
-
-**Five mandatory rows (NEVER omit any):**
-
-| Row | Attribute | When to use "None" |
-|-----|-----------|-------------------|
-| `Capabilities - Tools` | `detailed_info` | Server exposes no tools (Capabilities,Tools = No) |
-| `Capabilities - Resources` | `detailed_info` | Server exposes no resources (Capabilities,Resources = No) |
-| `Capabilities - Prompts` | `detailed_info` | Server exposes no prompts (Capabilities,Prompts = No) |
-| `Capabilities - Sampling` | `detailed_info` | Server has no sampling capability (Capabilities,Sampling = No) |
-| `Non-Read-Only Tools` | `detailed_info` | All tools are read-only OR no write/delete tools found |
-
-**Rules:**
-- If content found → Include with exact categorized details using `detailed_info` attribute
-- If not found / not applicable → Row value = `"None"` (attribute is still `detailed_info`)
-- NEVER omit any of these five rows — all are mandatory fields in every report
-- NEVER use `No` as the Attribute value — always use `detailed_info`
-
-**Example (server with tools only, no resources/prompts/sampling, read-only):**
-```csv
-Capabilities - Tools,detailed_info,"Search & Query Utilities
-  • list_items – List all items"
-Capabilities - Resources,detailed_info,"None"
-Capabilities - Prompts,detailed_info,"None"
-Capabilities - Sampling,detailed_info,"None"
-Non-Read-Only Tools,detailed_info,"None"
-```
-
----
-
-### Learning 8: Capabilities — Source Code Verification Required (2026-03-27)
-
-**CRITICAL RULE:** README does NOT reliably document all capabilities. Always read the server's entry point source file to find what is actually registered.
-
-**Why this matters:**
-- SAP BusinessObjects BI MCP by CData: README listed 3 tools only. Source had a `resources/` directory with `TableMetadataResource.java` — a fully registered MCP resource — never mentioned in README.
-- Result: `Capabilities,Resources` was initially marked `No` (wrong). Corrected only after reading `Program.java`.
-
-**Mandatory Source Verification:**
-```
-For EVERY server — read entry point source before marking any Capability as No:
-
-Python:     main.py / server.py
-             → search: @mcp.tool, @mcp.resource, @mcp.prompt, sampling handlers
-
-TypeScript: index.ts / server.ts
-             → search: server.tool(), server.resource(), server.prompt()
-
-Java:        Program.java / Application.java
-             → search: McpSchema.ServerCapabilities.builder()
-             → look for: .tools(), .resources(), .prompts() calls
-             → look for: registerTools(), registerResources(), registerPrompts() methods
-             → check: IResource/ITool/IPrompt implementation classes in subdirs
-
-Go:          main.go / server.go
-             → search: server.AddTool(), server.AddResource()
-```
-
-**Prevention Rule:**
-```
-🔒 NEVER mark Resources/Prompts/Sampling = No based on README alone
-🔒 ALWAYS read entry point source to confirm absence
-🔒 For Java: check both the capabilities builder AND the register methods
-🔒 Check subdirectories: tools/, resources/, prompts/ may exist even if README omits them
-```
-
----
-
-### Learning 9: Tool Names — Never Use Placeholder Format (2026-03-27)
-
-**CRITICAL RULE:** Tool names in the CSV must be concrete documented names — never placeholder format.
-
-**❌ WRONG (placeholder format):**
-```
-  • {servername}_get_tables – List tables
-  • {prefix}_run_query – Execute query
-  • {name}_get_columns – List columns
-```
-
-**✅ CORRECT — Use base name only:**
-```
-  • get_tables – List all available tables
-  • get_columns – List all columns for a table
-  • run_query – Execute a SQL SELECT query
-```
-
-**Prevention Rule:**
-```
-🔒 NEVER write {servername}_, {prefix}_, {name}_ in any CSV cell
-🔒 Check Capabilities - Tools, Capabilities - Resources, Non-Read-Only Tools cells
-🔒 If no default prefix documented → use base name only
-🔒 Placeholder format is invisible/confusing in reports — always resolve to actual names
-```
-
----
+| Learning | Core Rule (Summary) | Canonical Step |
+|---------|---------------------|----------------|
+| L1 Framework Priority | FastMCP > framework > base SDK — DO NUMERIC COMPARISON, never assume | Step 1 + Step 5.3 |
+| L3 TLS vs Bearer | TLS = transport layer. STDIO = always TLS No. Bearer Token ≠ TLS (independent layers) | Step 5.7 |
+| L4 Pricing vs Service | Mark Free/Paid based on MCP server license only — not API key requirement or service cost | Step 5.4 |
+| L5 Tools Operations | Mark HIGHEST level only — mutually exclusive (Read-only / R+U / R+U+D) | Step 5.9 |
+| L6 Taxonomy Categories | NEVER invent titles — use only 6 fixed titles (Tools) / 4 fixed titles (Non-Read-Only) | Step 5.13 |
+| L7 Five Mandatory Rows | All 5 detailed_info rows always present — "None" if absent, NEVER omit any | Step 5.13 |
+| L8 Description Single-Line | Description = single unbroken line, no embedded newlines (corrupts CSV) | Step 5.1 |
+| L9 Capabilities Source | Read entry point source file — README alone is NOT sufficient for capabilities | Step 5.12 |
+| L10 No Placeholders | Never write {servername}_ / {prefix}_ in any CSV cell — resolve to actual names | Step 5.13 |
 
 ---
 
 ## Integration Rules
 
 **Session Start (MANDATORY — never skip):**
-- Read `references/learned-fixes.md` all error patterns (#1-#4, #7-#16)
+- Read `references/learned-fixes.md` all error patterns (#1-#4, #7-#17)
 - All learnings (L1–L10) are embedded in Step 5.1–5.13 — follow each section's rules directly
 - These are gates — skipping them causes the same mistakes to recur
 
@@ -1830,7 +1676,7 @@ Both are marked Yes because both are real hosting locations. SaaS Vendor takes p
 ## Learned Fixes — Error Case Studies
 
 > **All error patterns with full details are in `references/learned-fixes.md`.**
-> Learnings 1-7 above contain the authoritative rules extracted from those errors.
+> Learnings L1–L10 (embedded in Steps 5.1–5.13) contain the authoritative rules extracted from those errors.
 > Read learned-fixes.md before each research session for real-world case studies.
 
 **Error patterns documented:** #1-#4 (Buildkite/Hyperbolic), #7-#8 (Runway), #9-#11 (CSV format/capability rows)
