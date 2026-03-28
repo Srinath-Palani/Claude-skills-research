@@ -8,6 +8,10 @@ description: >
   fewer tokens, full functionality.
 ---
 
+# Unified MCP Skill New
+
+unified-mcp-skill-new is a single skill that handles the full MCP server lifecycle — research, attribute documentation, local setup, error recovery, and project audit — with 5-thread parallel search and 4 mandatory gates before generating any report. All rules, formats, and learnings live in this file as the single source of truth.
+
 <!-- SKILL_VERSION: 3.0.1 | Updated: 2026-03-28 -->
 
 ---
@@ -335,6 +339,18 @@ MULTI-SERVER / BATCH
 
 ---
 
+## Workflow
+
+1. **Classify Input** — endpoint / GitHub URL / server name / package name
+2. **Detect Mode** — single server → Steps 0–6; 2+ servers → Multi-Server mode (M1–M3)
+3. **Parallel Search** — 5 concurrent threads collect all source data (Step 0.5)
+4. **Verify Protocol** — map SDK version to protocol date (Step 1)
+5. **Fill Attributes** — one pass top-to-bottom through Steps 5.1–5.13
+6. **Pass Gates** — Gate 1 Evidence · Gate 2 Connection · Gate 3 Learnings · Gate 4 Self-Improvement
+7. **Save Report** — CSV + cost file to configured path (Step 6)
+
+---
+
 ## Unified Workflow (Steps 0-8 + Error Recovery)
 
 > Steps 0-8 run sequentially. Steps 5.1-5.4 are verification sub-steps within Step 5.
@@ -636,16 +652,16 @@ Skip local setup, proceed to attribute research.
 
 **Resolution order (always top-down — stop at first confirmed match):**
 
-1. **Check known official vendor monorepos first** (see table below) — many vendors bundle all their MCP servers inside a single repo (e.g., `awslabs/mcp` hosts `src/bedrock-kb-retrieval-mcp-server/`, `src/lambda-mcp-server/`, etc.). If the server name maps to a known vendor → go to that monorepo before any generic search.
+1. **STEP 1 (always) — Check MCP reference servers repo first** (`modelcontextprotocol/servers`): contains or links to hundreds of servers across all vendors. Always start here.
+
+2. **STEP 2 (always) — Search GitHub API** (if no match in Step 1):
+   `https://api.github.com/search/repositories?q={name}+mcp+server&sort=stars`
+   Also try patterns: `{vendor}-mcp-server`, `mcp-{vendor}`, `{vendor}-mcp`
    - When a server lives inside a monorepo subdirectory, use the Git Trees API to locate it:
      `https://api.github.com/repos/{owner}/{repo}/git/trees/{branch}?recursive=1`
      then fetch files from that subdirectory path.
 
-2. **Search GitHub API** (if no monorepo match):
-   `https://api.github.com/search/repositories?q={name}+mcp+server&sort=stars`
-   Also try patterns: `{vendor}-mcp-server`, `mcp-{vendor}`, `{vendor}-mcp`
-
-3. **Check MCP reference servers repo** (`modelcontextprotocol/servers`) for reference implementations.
+3. **STEP 3 (if vendor name matches) — Check known vendor monorepo table** (see below): go directly to the vendor's known org before any generic search.
 
 4. Search vendor documentation for a hosted remote endpoint.
 
@@ -656,28 +672,42 @@ Skip local setup, proceed to attribute research.
    [ 3 ] Help me decide
    ```
 
-**Known Official Vendor Sources (check these before generic GitHub search):**
+**Known Official Vendor Sources:**
 
-| Vendor | GitHub Org | Repo / Pattern | Notes |
-|--------|-----------|----------------|-------|
-| AWS | `awslabs` | `awslabs/mcp` (monorepo — subdirs: `src/{service}-mcp-server/`) | PyPI namespace: `awslabs.*`. All AWS MCP servers in one repo. |
-| Stripe | `stripe` | `stripe/agent-toolkit` | npm: `@stripe/agent-toolkit` |
-| Cloudflare | `cloudflare` | `cloudflare/mcp-server-cloudflare` | — |
-| Shopify | `Shopify` | `Shopify/shopify-mcp` | — |
-| GitHub | `github` | `github/github-mcp-server` | — |
-| Sentry | `getsentry` | `getsentry/sentry-mcp` | — |
-| Datadog | `DataDog` | `DataDog/datadog-mcp-server` | — |
-| MCP Reference | `modelcontextprotocol` | `modelcontextprotocol/servers` | Reference implementations by spec authors |
+**Universal — Always check (every server, every research run):**
+
+| Source | Org / URL |
+|--------|-----------|
+| MCP Reference | `modelcontextprotocol/servers` |
+| GitHub API Search | `api.github.com/search/repositories?q={name}+mcp+server&sort=stars` |
+
+**Vendor-Specific — Only check when server name matches the vendor:**
+
+| Vendor | GitHub Org | Repo Pattern |
+|--------|-----------|--------------|
+| Microsoft / Playwright | `microsoft` | `microsoft/playwright-mcp` |
+| Supabase | `supabase` | `supabase/mcp-server-supabase` |
+| Atlassian | `atlassian` | `atlassian/mcp-atlassian` |
+| Cloudflare | `cloudflare` | `cloudflare/mcp-server-cloudflare` |
+| GitHub | `github` | `github/github-mcp-server` |
+| AWS | `awslabs` | `awslabs/mcp` (monorepo: `src/{service}-mcp-server/`) |
+| Shopify | `Shopify` | `Shopify/shopify-mcp` |
+| Sentry | `getsentry` | `getsentry/sentry-mcp` |
+| Linear | `linear` | `linear/linear-mcp` |
+| Brave | `brave` | Reference in `modelcontextprotocol/servers` |
+| Stripe | `stripe` | `stripe/agent-toolkit` |
+| Datadog | `DataDog` | `DataDog/datadog-mcp-server` |
+| JetBrains | `JetBrains` | `JetBrains/mcp-jetbrains` |
 
 **If server not found (neither endpoint nor repo):**
 ```
 Could not find an MCP server matching "[server name]".
 
 Searched:
-- Known vendor monorepos (see table above)
-- GitHub: github.com/*/[name]-mcp-server, mcp-[name], [name]-mcp
-- Vendor: [name].com, api.[name].com
-- MCP reference repo: github.com/modelcontextprotocol/servers
+- STEP 1: MCP reference repo (github.com/modelcontextprotocol/servers)
+- STEP 2: GitHub API search (github.com/*/[name]-mcp-server, mcp-[name], [name]-mcp)
+- STEP 3: Known vendor orgs (awslabs, cloudflare, microsoft, supabase, linear, JetBrains, atlassian, brave)
+- Vendor docs: [name].com, api.[name].com
 
 [ 1 ] Try a different name or URL
 [ 2 ] Provide GitHub URL directly
@@ -707,7 +737,7 @@ All 5 threads must have returned results or confirmed-empty. If any thread is in
 | # | Attribute | Source | Rule |
 |---|-----------|--------|------|
 | 1 | Name | GitHub repo name or vendor docs | Exact name only |
-| 2 | Description | README first paragraph | 2–3 sentences, MUST start with "[Server Name] MCP Server…", single unbroken line — no embedded newlines (L8) |
+| 2 | Description | README first paragraph | 2–3 sentences, MUST start with "[Server Name] MCP Server…", write as a continuous paragraph for maximum 4 lines — no embedded newlines (L8) |
 | 3 | Category | mcp.md or vendor classification | Choose: File and Document Management / Developer and Coding Tools / Data and Information Retrieval / Productivity and Communication |
 | 4 | GitHub Repository | GitHub URL | Full URL or N/A |
 | 5 | Endpoint URL | README or probe result | Full URL or N/A |
