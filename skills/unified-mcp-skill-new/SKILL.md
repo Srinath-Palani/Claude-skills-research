@@ -44,7 +44,6 @@ unified-mcp-skill-new is a single skill that handles the full MCP server lifecyc
 🔒 **SYNC NOTE**
 > SKILL.md is the single source of truth for all rules, learnings, and formats.
 > `references/multi-server.md` contains ONLY multi-server orchestration logic (M1-M3, Layers 0/1).
-> `references/learned-fixes.md` contains ONLY error case studies (no rule duplication).
 > If you change workflow steps, attribute definitions, or report format here → verify multi-server.md references still point correctly.
 
 ---
@@ -139,36 +138,14 @@ MANDATORY LEARNING WALKTHROUGH — confirm each was applied (full rules in refer
 
 ---
 
-### GATE 4: POST-RESEARCH SELF-IMPROVEMENT
-
-**After EVERY research session (before presenting final report to user):**
-
-```
-□ Did any attribute require correction during this session?
-  → YES: Document the error pattern in learned-fixes.md (new entry)
-  → NO: Confirm all attributes matched first evidence found
-
-□ Did any new SDK/framework version mapping appear?
-  → YES: Verify it's in SKILL.md Step 1 mapping table, add if missing
-
-□ Did any new authentication pattern appear?
-  → YES: Verify it's in Authentication Detection Rules, add if missing
-
-□ Was any Learning insufficient or ambiguous for this server?
-  → YES: Refine the Learning with new example in SKILL.md
-```
-
-**The skill gets BETTER with every session. Never discard a learning opportunity.**
-
 ---
 
 ### RULES 1-5 (Enforcement Summary)
 
 🔒 **RULE 1: SOURCE-ONLY ATTRIBUTES** — Every value from actual documentation. Zero invented content.
 🔒 **RULE 2: NUMERIC VERIFICATION** — Protocol version, TLS, pricing, auth all verified with explicit checks.
-🔒 **RULE 3: FULL LEARNING WALKTHROUGH** — All Learnings checked. All learned-fixes.md patterns reviewed.
+🔒 **RULE 3: FULL LEARNING WALKTHROUGH** — All Learnings L1–L10 checked every session. No skipping.
 🔒 **RULE 4: NO CSV WITHOUT EVIDENCE** — Evidence Ledger must be complete. Empty evidence = blocked.
-🔒 **RULE 5: SELF-IMPROVEMENT** — New patterns documented. Learnings refined. Skill improves each session.
 
 
 
@@ -214,7 +191,6 @@ On fail → 7-phase Error Recovery (auto-triggered)
 Gate 1=Evidence Ledger (every Yes/No has source proof)
 Gate 2=Connection Verified (all 5 threads complete)
 Gate 3=Learning Walkthrough (L1-L10 checked)
-Gate 4=Self-Improvement (new patterns documented)
 
 ---
 
@@ -301,7 +277,7 @@ If URL resolves to a blocked range → REJECT immediately, do NOT probe.
 3. **Parallel Search** — 5 concurrent threads collect all source data (Step 0.5)
 4. **Verify Protocol** — map SDK version to protocol date (Step 1)
 5. **Fill Attributes** — one pass top-to-bottom through Steps 5.1–5.13
-6. **Pass Gates** — Gate 1 Evidence · Gate 2 Connection · Gate 3 Learnings · Gate 4 Self-Improvement
+6. **Pass Gates** — Gate 1 Evidence · Gate 2 Connection · Gate 3 Learnings
 7. **Save Report** — CSV + cost file to configured path (Step 6)
 
 ---
@@ -538,7 +514,7 @@ If either source is missing → continue searching until found or confirmed non-
 □ Step 2: Cross-reference version against the mapping table above (DO NOT guess/assume)
 □ Step 3: If version is between ranges, use LOWER protocol (e.g., v1.4.1 is <1.12 → use 2025-06-18)
 □ Step 4: Document the exact version + mapping source (file + line number)
-□ Step 5: Check learned-fixes.md for "Protocol Version Mapping Error" to avoid repeat mistakes
+□ Step 5: Document the exact version + mapping source (file + line number) in Evidence Ledger
 ```
 
 #### Common Mistake Patterns
@@ -793,7 +769,7 @@ Framework version determines protocol — NOT base SDK. Check in this order:
 □ 2: Cross-reference against Step 1 mapping table — DO NOT guess
 □ 3: If version is between ranges → use LOWER protocol (e.g., sdk 1.4.1 < 1.12 → 2025-06-18)
 □ 4: Document exact version + mapping source (file + line number)
-□ 5: Check learned-fixes.md for "Protocol Version Mapping Error" patterns
+□ 5: Confirm evidence for version is logged in Evidence Ledger (file + line number)
 ```
 
 **Common Mistakes:**
@@ -880,7 +856,7 @@ AUTHENTICATION VERIFICATION CHECKLIST:
 □ 3: Search .env.example for credential fields
 □ 4: Search vendor docs for API access / token setup page
 □ 5: If ANY credential found → mark ALL applicable auth types as Yes
-□ 6: Check learned-fixes.md for "Authentication Fields Marked No" pattern
+□ 6: Confirm all auth evidence is logged in Evidence Ledger (source file + exact quote)
 ```
 
 | # | Attribute | Mark Yes if… |
@@ -1094,7 +1070,7 @@ TOOLS OPERATIONS VERIFICATION CHECKLIST:
 □ 4: If read + create/update found → mark (2) Read+Update = Yes
 □ 5: If read + create/update + delete/cancel found → mark (3) Read+Update+Delete = Yes
 □ 6: Mark ONLY the HIGHEST level — all others = No
-□ 7: Check learned-fixes.md for "Tools Operations Violation" pattern
+□ 7: Confirm only ONE level is marked Yes and evidence is in Evidence Ledger
 ```
 
 | # | Attribute | Pattern |
@@ -1136,7 +1112,7 @@ DEPLOYMENT APPROACH VERIFICATION CHECKLIST:
 □ 2: Search for Dockerfile, docker.json, OCI registry refs (ghcr.io) → Container = Yes
 □ 3: Check for vendor endpoint or remote URL in README → Remote = Yes
 □   Also check server.json for "docker", "container", "run"
-□   Check learned-fixes.md for "Deployment Container Marked No" pattern
+□   Confirm all deployment evidence is in Evidence Ledger (file + line)
 ```
 
 | # | Attribute | Mark Yes if… |
@@ -1374,7 +1350,7 @@ Cost
      --server "<servername-kebab-case>"
    ```
    - `--start` = timestamp when Step 0.5 Thread 1 began
-   - `--end`   = timestamp when Gate 4 completed
+   - `--end`   = timestamp when Step 6 (report save) completed
    - Script sums `input_tokens`, `output_tokens`, `cache_read_input_tokens` from the session JSONL within that window
 
 2. **Cost calculation** — apply these rates to the token counts:
@@ -1429,23 +1405,6 @@ Show category + root cause + ordered steps + risk level. Ask: "Proceed?"
 
 ### Phase 5 — Verify Connection
 Test initialize again. Success → continue research. Fail → re-diagnose.
-
-### Phase 6 — Record Pattern (Skill 2.0)
-If fix succeeds, append to `references/learned-fixes.md`:
-```
-### Error #[N]: [Error Title]
-
-**Date:** YYYY-MM-DD | **Server:** [server-name] | **Severity:** [High/Medium/Low/CRITICAL]
-
-**Signals:** [symptoms]
-
-**Root Cause:** [root cause]
-
-**Fix (Step-by-Step):**
-[step-by-step instructions]
-
-**Result:** [outcome]
-```
 
 ---
 
@@ -1512,7 +1471,6 @@ Overall: PASS (review 1 WARN item before commit)
 ## Integration Rules
 
 **Session Start (MANDATORY — never skip):**
-- Read `references/learned-fixes.md` all error patterns (#1-#4, #7-#17)
 - All learnings (L1–L10) are embedded in Step 5.1–5.13 — follow each section's rules directly
 - These are gates — skipping them causes the same mistakes to recur
 
@@ -1533,7 +1491,6 @@ Overall: PASS (review 1 WARN item before commit)
 
 **Session End (MANDATORY — never skip):**
 - Run Gate 3 Learning Walkthrough (all Learnings checked)
-- Run Gate 4 Self-Improvement (document new patterns if any)
 - Only THEN create final CSV
 
 ---
@@ -1731,14 +1688,10 @@ Both are marked Yes because both are real hosting locations. SaaS Vendor takes p
 
 ---
 
-## Learned Fixes — Error Case Studies
+## Learned Fixes — Embedded in L1–L10
 
-> **All error patterns with full details are in `references/learned-fixes.md`.**
-> Learnings L1–L10 (embedded in Steps 5.1–5.13) contain the authoritative rules extracted from those errors.
-> Read learned-fixes.md before each research session for real-world case studies.
-
-**Error patterns documented:** #1-#4 (Buildkite/Hyperbolic), #7-#8 (Runway), #9-#11 (CSV format/capability rows)
-**Covers:** Protocol version, Authentication, Tools Operations, Deployment, TLS, Pricing, Git Version, CSV Description, Capability Rows
+> All error patterns from past research sessions have been extracted and permanently embedded into SKILL.md as Learnings L1–L10 (Steps 5.1–5.13).
+> These learnings are the authoritative rules — they run at every session via Gate 3.
 
 ---
 
