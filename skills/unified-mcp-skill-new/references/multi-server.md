@@ -114,6 +114,8 @@ Each agent runs the **existing Step 0.5 dual-source workflow** (5 concurrent thr
     "capabilities": ["Tools"]
   },
   "evidence": ["README line 12", "pyproject.toml line 5"],
+  "auth_required": true,
+  "auth_types_detected": ["API Token", "Bearer Token"],
   "errors": []
 }
 ```
@@ -121,6 +123,7 @@ Each agent runs the **existing Step 0.5 dual-source workflow** (5 concurrent thr
 **Agent rules:**
 - Output JSON only — no explanations, no markdown
 - **ZERO-ASSUMPTION:** If data missing → return `"No"` and flag — never `"UNVERIFIED"`, never `"unknown"`, never guess
+- **Auth detection:** Apply SKILL.md Step 5.6.B implicit auth scan (headers / env / args) for all 3 input types. Set `auth_required: true` and populate `auth_types_detected` if any signal found. Apply Step 5.6.B signal patterns to all JSON config fields — `headers` for remote endpoints, `env`/`args` for STDIO/GitHub repos.
 - If repo inaccessible → set `errors: ["repo not found"]`, return partial data with UNVERIFIED fields
 - Do not call other agents or tools outside README + file search + endpoint probe
 - **Evidence required:** Every attribute value MUST include source in `"evidence"` array (file + line or URL)
@@ -170,6 +173,14 @@ What next?
 [ 3 ] Re-sort by different criteria
 [ 4 ] Done
 ```
+
+**Auth prompt (post-summary):** If any server in the batch has `auth_required: true`, show before proceeding to setup:
+```
+⚠️  Authentication required for: [server names]
+    Detected: [auth_types_detected per server]
+    → Follow SKILL.md Step 5.6.A (3-option auth prompt) for each server before local setup.
+```
+Apply Step 5.6.A options (have key / create key / proceed without) per server individually.
 
 ---
 

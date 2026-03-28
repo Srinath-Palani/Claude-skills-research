@@ -441,11 +441,16 @@ Sequential research misses interdependencies. Endpoint found in Thread 3 reveals
   ```
 
 **Thread 2: Repository File Search** *(always run)*
-→ Feeds: **Step 5.6** (Authentication — server.json, .env.example, config files) · **Built-in Security Controls** (see below)
-- Files: .env.example, config.json, setup.md, docs/
+→ Feeds: **Step 5.6** (Authentication — server.json, .env.example, config files) · **Step 5.6.B** (Implicit Auth Detection — env / args / headers) · **Built-in Security Controls** (see below)
+- Files: .env.example, config.json, setup.md, mcp.json, server.json, docs/
 - Grep: "https://", "endpoint", "url", "host" patterns
 - API paths: /api/v2, /v1, /mcp
 - Comments with example URLs
+- **Auth scan (Step 5.6.B — applies to GitHub repo URL and server name input types):**
+  - Scan `env` field names for: `TOKEN`, `API_KEY`, `SECRET`, `BEARER`, `AUTH`, `CREDENTIAL`, `ACCESS_KEY`, `PASSWORD`
+  - Scan `args` flags for: `--token`, `--api-key`, `--secret`, `--auth`, `--bearer`, `--pat`, `--access-token`
+  - Scan `headers` block in any JSON config for: `Authorization: Bearer`, `Authorization: token`, `X-API-Key`, `X-Auth-Token`, `Authorization: Basic`
+  - If ANY match found → mark applicable auth attributes Yes in Step 5.6; record field + file in Evidence Ledger; trigger Step 5.6.A auth prompt
 
 **While in Thread 2 — also scan source code for Built-in Security Controls:**
 These do not change any CSV attribute values, but must be documented as risk context in the research notes.
@@ -463,7 +468,7 @@ If any controls found → note them in research summary as: "Security mitigation
 If none found → note: "No built-in write gates or response sanitization detected"
 
 **Thread 3: Remote Endpoint Probing** *(run unless short-circuited)*
-→ Feeds: **Step 5.1** (Endpoint URL) · **Step 5.7** (TLS — L3) · **Step 5.8** (Transport) · **Step 5.10** (Deployment Remote)
+→ Feeds: **Step 5.1** (Endpoint URL) · **Step 5.6.B** (Implicit Auth Detection — headers) · **Step 5.7** (TLS — L3) · **Step 5.8** (Transport) · **Step 5.10** (Deployment Remote)
 - **SHORT-CIRCUIT:** If Thread 1 confirmed STDIO-only AND zero remote/endpoint URLs found in README → skip probing, mark Endpoint URL = N/A, TLS = No. Document: "STDIO-only server, no remote endpoint references in README."
 - If only GitHub given → extract candidate endpoint URLs from README/docs first
 - **BEFORE probing:** Validate URL against SSRF blocklist (see Security Mandate)
@@ -482,6 +487,12 @@ If none found → note: "No built-in write gates or response sanitization detect
   - JSON-RPC response → Real MCP endpoint
   - Vendor API error → Placeholder endpoint
   - 404 both → Doesn't exist
+
+- **Auth scan (Step 5.6.B — applies to remote endpoint URL input type):**
+  - Check response headers for: `WWW-Authenticate`, `X-API-Key`, `Authorization`
+  - Check endpoint JSON config `headers` block for: `Authorization: Bearer`, `Authorization: token`, `X-API-Key`, `X-Auth-Token`, `Authorization: Basic`
+  - 401 / 403 response → confirms auth required; inspect `WWW-Authenticate` to identify auth type
+  - If ANY header signal found → mark applicable auth attributes Yes in Step 5.6; record header field + endpoint in Evidence Ledger; trigger Step 5.6.A auth prompt
 
 **Thread 4: Dependency Extraction**
 → Feeds: **Step 5.3** (Protocol Version — apply L1 framework priority mapping from Step 1)
@@ -937,6 +948,90 @@ Bearer Token = Yes if: "Authorization: Bearer" in source/docs
 PAT = Yes if: "personal access token" OR "PAT" explicitly in docs
 API Token = Yes if: "api key" OR "api_token" OR "api_key" in source/docs
 ```
+
+---
+
+### Step 5.6.A — Authentication Key Prompt Workflow
+
+**Trigger:** Execute whenever authentication is detected (any auth attribute = Yes from Step 5.6 checklist above, OR auth required detected during Step 2 endpoint probe / Step 3 local setup config extraction).
+
+**When auth is required, present this 3-option prompt to the user:**
+
+```
+Authentication required for this MCP server.
+Detected: [list detected types — e.g. API Token / Bearer Token / PAT / OAuth Token / JWT]
+
+How do you want to proceed?
+
+[ 1 ] I have the API key / token — proceed with authentication
+[ 2 ] I don't have one — show me how to create it
+[ 3 ] Proceed without authentication (manual verification only)
+```
+
+**Option 1 — User has key/token:**
+- **NEVER ask for the actual key, secret, or token value in chat** (Security Mandate — absolute rule, no exceptions)
+- Show the config file path and the correct `<PLACEHOLDER>` field name
+- Direct user to open and edit the file directly to paste their credential
+- After user confirms the edit is done → proceed with connection test / research
+
+**Option 2 — User needs to create the key:**
+- Retrieve the vendor authentication / API key creation URL from README or vendor source docs
+- Provide step-by-step creation instructions:
+  1. Direct URL to the vendor's token / API key creation page
+  2. Required permissions or scopes needed for this MCP server to function
+  3. Config field name and `<PLACEHOLDER>` format to use when storing the key
+- After user creates the key → redirect to Option 1 flow above
+
+**Option 3 — Proceed without authentication:**
+- Show this warning before continuing:
+  ```
+  ⚠️  API auth will fail — expect authentication errors (401 / 403).
+      Proceeding with manual verification only. Connection tests may not succeed.
+  ```
+- Continue research and attribute filling with manual verification; note auth status in Evidence Ledger
+
+---
+
+### Step 5.6.B — Implicit Auth Detection (env / args / headers)
+
+**Applies to ALL 3 input types:** Remote Endpoint URL · GitHub Repository URL · Server Name
+
+Even when the README or vendor source URL does not explicitly document authentication, scan the official source JSON config for auth signals across all three field locations:
+
+**Scan targets per input type:**
+
+| Input Type | Where to Scan |
+|------------|--------------|
+| Remote Endpoint URL | JSON config `headers` block (e.g. `mcp.json`, `settings.json`, `server.json`) |
+| GitHub Repository URL | `env` vars in `server.json` / `.env.example` / `config.json`; `args` fields in `mcp.json` |
+| Server Name | All of the above — resolve to GitHub URL first, then apply same scans |
+
+**Signal patterns by field type:**
+
+```
+headers (remote endpoint — JSON config):
+  "headers": {
+    "Authorization": "Bearer <...>"    → Bearer Token = Yes
+    "Authorization": "token <...>"     → PAT = Yes + Bearer Token = Yes
+    "X-API-Key": "<...>"               → API Token = Yes
+    "X-Auth-Token": "<...>"            → API Token = Yes
+    "Authorization": "Basic <...>"     → API Token = Yes
+  }
+
+env (STDIO / local / GitHub repo):
+  Field name contains: TOKEN, API_KEY, SECRET, BEARER, AUTH, CREDENTIAL, ACCESS_KEY, PASSWORD
+  Example: "GITHUB_TOKEN", "BUILDKITE_API_TOKEN", "OPENAI_API_KEY"
+
+args (STDIO / local / GitHub repo):
+  Arg flag contains: --token, --api-key, --secret, --auth, --bearer, --pat, --access-token
+  Example: ["--token", "${GITHUB_TOKEN}"], ["--api-key", "<KEY>"]
+```
+
+**Rule:** If ANY field matches a signal pattern above → mark ALL applicable authentication attributes as Yes.
+Do NOT require explicit README mention when official source JSON config provides evidence.
+Record evidence in Evidence Ledger: `server.json headers.Authorization: "Bearer"` or `env field: "GITHUB_TOKEN"`.
+
+This rule applies during both single-server (Step 5.6) and multi-server (Layer 1 agents) research.
 
 ---
 
