@@ -130,7 +130,7 @@ MANDATORY LEARNING WALKTHROUGH — confirm each was applied (full rules in refer
 □ L5  Tools Ops               → Step 5.9  All tool names parsed? HIGHEST level only marked?
 □ L6  Taxonomy Categories     → Step 5.13 Only standard taxonomy titles used? Zero invented categories?
 □ L7  Five Mandatory Rows     → Step 5.13 All five detailed_info rows present? "None" used if absent?
-□ L8  Description Single-Line → Step 5.1  Description is single unbroken line? No embedded newlines?
+□ L8  Description Format      → Step 5.1  Description is 2–3 line paragraph? No transport/TLS/auth/hosting details included?
 □ L9  Capabilities Source     → Step 5.12 Entry point source file read? README alone NOT used?
 □ L10 No Placeholders         → Step 5.13 Zero {servername}_ / {prefix}_ in any CSV cell?
 ```
@@ -181,6 +181,7 @@ MANDATORY LEARNING WALKTHROUGH — confirm each was applied (full rules in refer
 ---
 
 ## Quick Reference (Workflow at a Glance)
+**⛔ LOCKED — Steps 0–6 and sub-steps 5.1–5.13 are fixed. Do NOT add, remove, rename, or reorder any step without explicit user permission.**
 
 ```
 Step 0   Config & Input       → Classify input (endpoint/GitHub/name), set paths
@@ -358,6 +359,7 @@ MULTI-SERVER / BATCH
 > Multi-Server mode (M1-M3) activates when 2+ servers detected — see `references/multi-server.md`.
 
 ### Step 0 — Configuration & Input Classification
+**⛔ LOCKED — Do not modify this step without explicit user permission.**
 
 **Path configuration — always ask, never assume:**
 
@@ -376,11 +378,19 @@ ALLOW only:
 ```
 Validate BEFORE any file write, clone, or report save operation.
 
-Report save path — ask every first use:
+Report save path — ask first use; offer to reuse if path was used before:
 ```
 Where should MCP reports be saved?
 Enter full path (e.g. /Users/you/Documents/mcp-reports):
 ```
+If a path was used before, offer to reuse:
+```
+Last used report path: /Users/you/Documents/mcp-reports
+[ 1 ] Use this path
+[ 2 ] Enter a different path
+[ 3 ] Save this as my default path (skip asking next time)
+```
+Only save as default if user explicitly selects option 3. If a default is saved, use it silently — do NOT ask again.
 
 Clone path — ask every time user chooses local setup:
 ```
@@ -423,6 +433,7 @@ Run both searches in parallel via Step 0.5. Combine results using Report Generat
 Sequential research misses interdependencies. Endpoint found in Thread 3 reveals framework for Thread 4, which determines protocol for Thread 1. Parallel execution catches everything simultaneously.
 
 ### Step 0.5 — 5 Concurrent Threads
+**⛔ LOCKED — Do not modify this step without explicit user permission.**
 
 **Thread 1: GitHub Repository Research** *(always run — find repo if not given)*
 → Feeds: **Step 5.1** (Name, Description, Category, GitHub Repo) · **Step 5.2** (Official/Community) · **Step 5.12** (Capabilities source) · **Step 5.13** (tool names)
@@ -471,6 +482,7 @@ If none found → note: "No built-in write gates or response sanitization detect
 → Feeds: **Step 5.1** (Endpoint URL) · **Step 5.6.B** (Implicit Auth Detection — headers) · **Step 5.7** (TLS — L3) · **Step 5.8** (Transport) · **Step 5.10** (Deployment Remote)
 - **SHORT-CIRCUIT:** If Thread 1 confirmed STDIO-only AND zero remote/endpoint URLs found in README → skip probing, mark Endpoint URL = N/A, TLS = No. Document: "STDIO-only server, no remote endpoint references in README."
 - If only GitHub given → extract candidate endpoint URLs from README/docs first
+- **OFFICIAL ENDPOINT VERIFICATION (MANDATORY):** A URL is only a valid official endpoint if it is explicitly documented in the server's own README or official docs. URLs found in third-party blogs, test deployments, or random cloud resources (e.g., AWS API Gateway IDs like `xmfe3hc3pk.execute-api.amazonaws.com`) are NOT official endpoints. If the URL is not in official docs → mark Endpoint URL = N/A. NEVER assume a cloud resource URL is official without README/doc confirmation.
 - **BEFORE probing:** Validate URL against SSRF blocklist (see Security Mandate)
 - **All probes use:** `--connect-timeout 5 --max-time 10 --max-redirs 3`
 - **Rate limit:** Max 3 attempts per endpoint, 2-second delay between retries
@@ -532,6 +544,7 @@ If either source is missing → continue searching until found or confirmed non-
 ---
 
 ### Step 1 — Protocol Version Verification
+**⛔ LOCKED — Do not modify this step without explicit user permission.**
 
 **CRITICAL:** Run BEFORE filling attributes. Framework priority takes absolute precedence.
 
@@ -586,6 +599,7 @@ Record: Framework name, exact version, protocol version, mapping source, verific
 ---
 
 ### Step 2 — Remote Endpoint URL Path
+**⛔ LOCKED — Do not modify this step without explicit user permission.**
 
 1. Extract protocol from path: `/sse` = HTTP/SSE, `/mcp` = StreamableHttp
 2. Verify TLS: Run GET and POST tests (document results)
@@ -603,6 +617,7 @@ Record: Framework name, exact version, protocol version, mapping source, verific
 ---
 
 ### Step 3 — GitHub Repository URL (Conditional Local Setup)
+**⛔ LOCKED — Do not modify this step without explicit user permission.**
 
 **Ask deployment preference:**
 
@@ -660,6 +675,7 @@ Skip local setup, proceed to attribute research.
 ---
 
 ### Step 4 — Server Name Only
+**⛔ LOCKED — Do not modify this step without explicit user permission.**
 
 **Resolution order (always top-down — stop at first confirmed match):**
 
@@ -729,6 +745,7 @@ Do NOT fabricate a server or guess URLs. Always confirm with user before proceed
 ---
 
 ### Step 5 — Attribute Filling (Top-to-Bottom, One Pass per CSV Section)
+**⛔ LOCKED — Do not modify this step or any sub-step (5.1–5.13) without explicit user permission.**
 
 **HARD PREREQUISITE:** Step 0.5 (Parallel Search) MUST be complete before entering Step 5.
 All 5 threads must have returned results or confirmed-empty. If any thread is incomplete → go back and finish it.
@@ -748,16 +765,16 @@ All 5 threads must have returned results or confirmed-empty. If any thread is in
 | # | Attribute | Source | Rule |
 |---|-----------|--------|------|
 | 1 | Name | GitHub repo name or vendor docs | Exact name only |
-| 2 | Description | README first paragraph | 2–3 sentences, MUST start with "[Server Name] MCP Server…", write as a continuous paragraph for maximum 4 lines — no embedded newlines (L8) |
+| 2 | Description | README first paragraph | 2–3 sentences as a paragraph, MUST start with "[Server Name] MCP Server…", functional purpose and capabilities ONLY — NEVER include transport, TLS, auth, hosting, or endpoint details (those have dedicated rows) (L8) |
 | 3 | Category | mcp.md or vendor classification | Choose: File and Document Management / Developer and Coding Tools / Data and Information Retrieval / Productivity and Communication |
 | 4 | GitHub Repository | GitHub URL | Full URL or N/A |
 | 5 | Endpoint URL | README or probe result | Full URL or N/A |
 
-**🔒 L8 — Description Single-Line Rule:**
-- Description MUST be a single unbroken line — NO embedded newlines
-- All sentences joined with spaces only
-- If Protocol Version or Pricing rows appear empty/missing in final CSV → description has embedded newlines (fix first)
-- Verify in raw CSV: description must start and end on the same line
+**L8 — Description Format Rule:**
+- Description is written as a paragraph — 2 to 3 lines, sentences on separate lines within the quoted cell
+- MUST start with "[Server Name] MCP Server…"
+- **NEVER include in Description:** transport protocol, TLS version, authentication method, hosting provider, endpoint URL, or deployment details — these have dedicated attribute rows and MUST NOT be duplicated in Description
+- Description = functional purpose + capabilities ONLY (what the server does, what tools it exposes, what platform it integrates with)
 
 ---
 
@@ -1335,6 +1352,7 @@ NEVER invent category titles. ALWAYS use these fixed titles only:
 ---
 
 ### Step 6 — Save Report
+**⛔ LOCKED — Do not modify this step without explicit user permission.**
 
 **Location:** User-configured path
 **Format:** CSV (3 columns: Category, Attribute, Status)
@@ -1575,7 +1593,7 @@ If endpoint returns vendor API errors (not JSON-RPC) → Mark as: Endpoint URL =
 | L5 Tools Operations | Mark HIGHEST level only — mutually exclusive (Read-only / R+U / R+U+D) | Step 5.9 |
 | L6 Taxonomy Categories | NEVER invent titles — use only 6 fixed titles (Tools) / 4 fixed titles (Non-Read-Only) | Step 5.13 |
 | L7 Five Mandatory Rows | All 5 detailed_info rows always present — "None" if absent, NEVER omit any | Step 5.13 |
-| L8 Description Single-Line | Description = single unbroken line, no embedded newlines (corrupts CSV) | Step 5.1 |
+| L8 Description Format | Description = 2–3 line paragraph, functional purpose + capabilities ONLY — NEVER transport/TLS/auth/hosting details | Step 5.1 |
 | L9 Capabilities Source | Read entry point source file — README alone is NOT sufficient for capabilities | Step 5.12 |
 | L10 No Placeholders | Never write {servername}_ / {prefix}_ in any CSV cell — resolve to actual names | Step 5.13 |
 
@@ -1636,6 +1654,7 @@ If endpoint returns vendor API errors (not JSON-RPC) → Mark as: Endpoint URL =
 - **Output CSV ONLY — no markdown (.md) file**
 
 **Row Order (Exact Sequence):**
+**⛔ LOCKED — DO NOT add, remove, rename, or reorder any category or row without explicit user permission.**
 
 ```
 MCP Info
@@ -1665,6 +1684,7 @@ Capabilities - Prompts (detailed_info — ALWAYS present; use "None" if server h
 Capabilities - Sampling (detailed_info — ALWAYS present; use "None" if server has no sampling capability)
 Non-Read-Only Tools (detailed_info — ALWAYS present; use "None" if all tools are read-only or no write/delete tools found)
 ```
+**⛔ LOCKED — The 17 categories above and the 3-column format (Category, Attribute, Status) are fixed. No modifications without explicit user permission.**
 
 **Example Rows (minimal — see `references/csv-example.md` for full Telnyx example):**
 
@@ -1693,22 +1713,24 @@ Capabilities - Prompts,detailed_info,"None"
 6. **Descriptions** — Concise, action-oriented (start with verb: "Create", "Get", "List", "Send")
 7. **Multiline cells** — CSV escaping handles newlines, no manual escaping needed
 8. **Attributes** — Final CSV must be Yes/No only. During research, use `UNVERIFIED` for unconfirmed attributes — resolve ALL to Yes/No before generating CSV (per Gate 1)
-9. **Description field (CRITICAL — format + corruption prevention)** — The `MCP Info,Description` cell MUST:
+9. **Description field** — The `MCP Info,Description` cell MUST:
    - **Always start with `[Server Name] MCP Server`** (e.g., "Todoist MCP Server bridges AI assistants with…")
    - Sentence 1: What the server connects/bridges (AI agents ↔ what platform/service)
    - Sentence 2–3: Key features and capabilities (specific tools, workflows, or integrations)
-   - Be a **single continuous line** with NO embedded newlines (multi-sentence joined with spaces, not line breaks)
+   - Written as a paragraph — 2 to 3 lines within the quoted cell
    - Escape any double quotes inside the description as `""`
-   - If the description contains newlines or unescaped quotes, it will break the CSV row structure and overwrite subsequent Status column values.
+   - **NEVER include:** transport protocol, TLS version, authentication method, hosting provider, endpoint URL, or deployment details — these belong in dedicated attribute rows, NOT in Description. Including them overwrites the meaning of those Status column values.
 
-   ❌ WRONG (newline breaks row — corrupts subsequent Status values):
+   ❌ WRONG (technical attribute details in Description — overwrites Status column values):
    ```
-   MCP Info,Description,"First sentence.
-   Second sentence."
+   MCP Info,Description,"… supporting StreamableHttp transport with TLS 1.3 and TLS 1.2 encryption."
+   MCP Info,Description,"… deployed on AWS API Gateway with no authentication required."
    ```
-   ✅ CORRECT (single line):
+   ✅ CORRECT (2–3 line paragraph, functional purpose and capabilities only):
    ```
-   MCP Info,Description,"First sentence. Second sentence. Third sentence."
+   MCP Info,Description,"Todoist MCP Server bridges AI assistants with the Todoist task management platform.
+   It exposes tools for creating, updating, and completing tasks across projects and labels.
+   Supports full task lifecycle management including due dates, priorities, and comments."
    ```
 
 **Example Bad vs Good:**
