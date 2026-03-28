@@ -1573,6 +1573,7 @@ MCP Info
 │   Source priority: 1st → GitHub Releases  2nd → GitHub Tags
 │   Use version EXACTLY as shown in source (NO notes, NO transformation)
 │   If no version found after checking all 2 sources → use "No"
+│   Monorepo rule: If releases/tags are monorepo-wide (not server-specific) → use "No"
 ├── Category (pick ONE based on server functionality: File and Document Management / Developer and Coding Tools / Data and Information Retrieval / Productivity and Communication)
 ├── GitHub Repository (URL or N/A)
 └── Endpoint URL (URL or N/A)
