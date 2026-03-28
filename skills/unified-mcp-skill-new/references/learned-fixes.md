@@ -1,12 +1,12 @@
-# Unified MCP Skill 2.0 — Learned Fixes & Error Patterns
+# Unified MCP Skill 4.0 — Learned Fixes & Error Patterns
 
 **Self-learning database for preventing recurring research mistakes.**
 
 > These patterns were identified from real MCP research sessions and documented to prevent future errors in attribute research.
 >
-> **Error Index:** #1-#4 (Buildkite/Hyperbolic, 2026-03-26), #7-#8 (Runway, 2026-03-27), #9-#11 (CSV format/capability rows, 2026-03-27), #12-#13 (Stadia Maps — description newlines + Protocol Version/Pricing blank Status, 2026-03-27), #14 (Java SDK protocol version mapping — jira-service-management-mcp-server-by-cdata, 2026-03-27), #15-#16 (SAP BusinessObjects BI — capabilities from source + placeholder tool names, 2026-03-27)
+> **Error Index:** #1-#4 (Buildkite/Hyperbolic, 2026-03-26), #7-#8 (Runway, 2026-03-27), #9-#11 (CSV format/capability rows, 2026-03-27), #12-#13 (Stadia Maps — description newlines + Protocol Version/Pricing blank Status, 2026-03-27), #14 (Java SDK protocol version mapping — jira-service-management-mcp-server-by-cdata, 2026-03-27), #15-#16 (SAP BusinessObjects BI — capabilities from source + placeholder tool names, 2026-03-27), #17 (ThingsBoard — invented domain-specific category titles, 2026-03-28)
 > Patterns #5-#6 are documented as SKILL.md Learnings 5-6 (no separate case study needed).
-> Authoritative rules for all patterns live in SKILL.md Learnings 1-7.
+> Authoritative rules for all patterns live in SKILL.md Learnings 1-10 (L1–L10, embedded in Steps 5.1–5.13).
 
 ---
 
@@ -238,22 +238,22 @@ Deployment:
 
 **These patterns are checked automatically at:**
 
-1. **Step 1 — Protocol Version Verification** (SKILL.md section "Step 1")
+1. **Step 5.3 — MCP Protocol Version** (SKILL.md section "Step 5.3")
    - Verification checklist added
    - Go SDK mapping documented
    - Common mistakes listed
 
-2. **Step 5.1 — Authentication Verification** (SKILL.md section "Step 5.1")
+2. **Step 5.6 — Authentication** (SKILL.md section "Step 5.6")
    - Comprehensive checklist
    - Common mistake patterns
    - "Why All Three Can Be Yes" explanation
 
-3. **Step 5.2 — Tools Operations Verification** (SKILL.md section "Step 5.2")
+3. **Step 5.9 — Tools Operations** (SKILL.md section "Step 5.9")
    - Mutually exclusive rule enforcement
    - Delete pattern recognition dictionary
    - Common mistake scenarios
 
-4. **Step 5.3 — Deployment Approach Verification** (SKILL.md section "Step 5.3")
+4. **Step 5.10 — Deployment Approach** (SKILL.md section "Step 5.10")
    - Docker detection checklist
    - Multiple deployment support explanation
    - Common oversight patterns
@@ -414,14 +414,16 @@ Expected Results:
 Source Priority:
 1st → GitHub Releases (official releases page)
 2nd → GitHub Tags (git tags in repository)
-3rd → package.json (fallback only if no releases/tags)
+No further sources — if neither found → use "No"
+NEVER → package.json (removed from valid sources)
 NEVER → server initialize response
 ```
 
-**Rule from SKILL.md (lines 1000-1001):**
+**Rule from SKILL.md (Row Order section):**
 ```
-Git Repo Version (v1.2.3 format — latest only)
-Source priority: 1st → GitHub Releases  2nd → GitHub Tags  (never use server initialize response)
+Git Repo Version: fetch EXACTLY as shown in Releases or Tags — never reformat
+Source priority: 1st → GitHub Releases  2nd → GitHub Tags
+If no version found after checking all 2 sources → use "No"
 ```
 
 **What was wrong:**
@@ -431,9 +433,9 @@ Source priority: 1st → GitHub Releases  2nd → GitHub Tags  (never use server
    "v1.0.0 [ No GitHub Releases | No git tags | package.json source ]"
 
 ✅ RIGHT: Use version EXACTLY as it appears in source (NO transformation)
-   From package.json: 1.0.0 → Use "1.0.0"
    From Releases: v1.0.0 → Use "v1.0.0"
    From Tags: release-1.0 → Use "release-1.0"
+   Nothing found → Use "No"
 ```
 
 **Fix (Verification Checklist - MANDATORY):**
@@ -450,28 +452,29 @@ BEFORE marking Git Repo Version:
    Extract: latest tag — USE EXACTLY AS SHOWN
    If found → STOP, copy version exactly
 
-□ Step 3: Check package.json
-   Extract: "version" field — USE EXACTLY AS SHOWN
-   If found → STOP, copy version exactly
+□ Step 3: Nothing found after both checks → mark as "No"
+   Do NOT check package.json — it is no longer a valid source
+   Do NOT use UNVERIFIED, NA, or SNAPSHOT strings
 
 □ Step 4: Copy to CSV (NO modifications, NO documentation added)
-   Just the version string: "1.0.0" or "v2.5.1" or "release-1.0"
+   Just the version string: "v2.5.1" or "release-1.0" or "No"
 ```
 
 **Real Examples:**
 
-| Server | Releases | Tags | package.json | Correct Result |
-|--------|----------|------|--------------|----------------|
-| Runway | ❌ None | ❌ None | 1.0.0 | "1.0.0" |
-| Buildkite | ❌ None | ✅ v1.2.0 | v1.1.5 | "v1.2.0" |
-| Slack | ✅ v2.5.1 | ✅ v2.5.1 | v2.5.1 | "v2.5.1" |
-| Custom | ✅ release-3.0 | ✅ tag-3.0 | 2.5.0 | "release-3.0" |
+| Server | Releases | Tags | Correct Result |
+|--------|----------|------|----------------|
+| Runway | ❌ None | ❌ None | "No" |
+| Buildkite | ❌ None | ✅ v1.2.0 | "v1.2.0" |
+| Slack | ✅ v2.5.1 | ✅ v2.5.1 | "v2.5.1" |
+| Custom | ✅ release-3.0 | ✅ tag-3.0 | "release-3.0" |
 
 **Prevention Rule (STRICT - NO EXCEPTIONS):**
 ```
 🔒 Always check Releases FIRST
 🔒 Check Tags SECOND if no Releases
-🔒 Use package.json LAST as fallback
+🔒 If neither found → use "No" (not "NA", not "UNVERIFIED")
+🔒 Do NOT check package.json — removed from valid sources
 🔒 Copy version EXACTLY as shown (NO transformation)
 🔒 Never add documentation, brackets, pipes, or verification notes
 🔒 Just the version string, period.
@@ -479,7 +482,7 @@ BEFORE marking Git Repo Version:
 
 **Result (Runway):**
 ```
-MCP Info,Git Repo Version,"1.0.0"
+MCP Info,Git Repo Version,"No"
 ```
 
 **Session:** Runway API MCP Server (2026-03-27)
@@ -577,20 +580,20 @@ Capabilities - Sampling,No,
 
 **Root Cause:**
 Two variants:
-1. The general ZERO-ASSUMPTION policy says to use `UNVERIFIED` when a value cannot be confirmed — but Git Repo Version has a defined fallback of `NA`.
+1. The general ZERO-ASSUMPTION policy says to use `UNVERIFIED` when a value cannot be confirmed — but Git Repo Version has a defined fallback of `No` (only Releases and Tags are valid sources).
 2. SNAPSHOT versions (e.g. `1.0-SNAPSHOT`, `0.1.0-alpha`) were treated as real versions when they are Maven/dev placeholders, not released versions.
 
 **Fix:**
 ```
 □ Step 1: Check GitHub Releases → not found
 □ Step 2: Check GitHub Tags → not found
-□ Step 3: Check package.json/pom.xml → not found OR found SNAPSHOT/pre-release
-□ Step 4: Mark as "NA" (do NOT use UNVERIFIED, do NOT use SNAPSHOT string)
+□ Step 3: Mark as "No" (do NOT check package.json — not a valid source)
+          (do NOT use UNVERIFIED, do NOT use SNAPSHOT string)
 ```
 
 **SNAPSHOT/pre-release recognition:**
 ```
-These are NOT real versions → treat as not found → use "NA":
+These are NOT real versions → treat as not found → use "No":
   - 1.0-SNAPSHOT       (Maven snapshot)
   - 0.1.0-alpha        (pre-release)
   - 0.1.0-beta.1       (pre-release)
@@ -601,19 +604,20 @@ These are NOT real versions → treat as not found → use "NA":
 **CSV output:**
 ```
 ✅ CORRECT:
-MCP Info,Git Repo Version,"NA"
+MCP Info,Git Repo Version,"No"
 
 ❌ WRONG:
 MCP Info,Git Repo Version,"UNVERIFIED"
+MCP Info,Git Repo Version,"NA"
 MCP Info,Git Repo Version,"1.0-SNAPSHOT"
-MCP Info,Git Repo Version,"No"
 ```
 
 **Prevention Rule:**
 ```
-🔒 Git Repo Version fallback when nothing found = "NA"
-🔒 SNAPSHOT/alpha/beta/rc/dev version strings = NOT real versions → "NA"
-🔒 Never leave Git Repo Version as UNVERIFIED in final CSV
+🔒 Git Repo Version fallback when nothing found = "No"
+🔒 package.json is NOT a valid source — do not check it
+🔒 SNAPSHOT/alpha/beta/rc/dev version strings = NOT real versions → "No"
+🔒 Never leave Git Repo Version as UNVERIFIED or NA in final CSV
 🔒 Never copy a SNAPSHOT version string into the CSV
 ```
 
@@ -871,12 +875,13 @@ Option B — Use base name only (no prefix):
 
 | Version | Date | Changes |
 |---------|------|---------|
+| 4.0 | 2026-03-28 | Added Error Pattern #17: Invented domain-specific category titles — ThingsBoard MCP. Updated #8 + #10: Git Repo Version now 2-source only (Releases → Tags), package.json removed, fallback changed "NA" → "No". Removed duplicate #14. Updated step refs (5.1→5.6 auth, 5.2→5.9 tools ops, 5.3→5.10 deploy). |
 | 3.0 | 2026-03-27 | Added Error Patterns #15-#16: Capabilities from source (not README) + placeholder tool names — from SAP BusinessObjects BI MCP research |
 | 2.8 | 2026-03-27 | Added Error Pattern #14: Java MCP SDK mapping — CData Jira/eBay research |
 | 2.7 | 2026-03-27 | Added Error Pattern #13: Protocol Version and Pricing blank/overwritten Status values |
 | 2.6 | 2026-03-27 | Added Error Pattern #12: Description newlines cause Protocol Version + Pricing to disappear — from Stadia Maps MCP research |
 | 2.5 | 2026-03-27 | Added Error Pattern #11: Missing Capability rows — all four always mandatory with "None" fallback |
-| 2.4 | 2026-03-27 | Added Error Pattern #10: Git Repo Version "UNVERIFIED" → use "No" — from keeper/axiomhq/mcp-croit/mercadolibre research |
+| 2.4 | 2026-03-27 | Added Error Pattern #10: Git Repo Version "UNVERIFIED" → use "NA" — from keeper/axiomhq/mcp-croit/mercadolibre research |
 | 2.3 | 2026-03-27 | Added Error Pattern #9: Description field corrupts Status column — from keeper/axiomhq/mcp-croit/mercadolibre research |
 | 2.2 | 2026-03-27 | Added Error Pattern #8: Git Repo Version — Wrong Source Priority (Medium) — from Runway API MCP research |
 | 2.1 | 2026-03-27 | Added Error Pattern #7: TLS Encryption vs Bearer Token Confusion (CRITICAL) — from Runway API MCP research |
@@ -884,17 +889,17 @@ Option B — Use base name only (no prefix):
 
 ---
 
-**Last Updated:** 2026-03-27
-**Skill Version:** Unified MCP Skill 3.0.0 (Self-Learning v3.0)
+**Last Updated:** 2026-03-28
+**Skill Version:** Unified MCP Skill 3.0.1 (Self-Learning v4.0)
 **Status:** Active — Auto-referenced in research workflows
-**Critical Rules:** 13 error patterns documented in this file (Patterns #1-#4, #7-#16); authoritative rules in SKILL.md Learnings 1-9
+**Critical Rules:** 14 error patterns documented in this file (Patterns #1-#4, #7-#17); authoritative rules in SKILL.md Steps 5.1-5.13 (L1-L10)
 
 
 ---
 
-### Error #12: CRITICAL — Invented Domain-Specific Category Titles (2026-03-27)
+### Error Pattern #17: Invented Domain-Specific Category Titles (2026-03-28)
 
-**Date:** 2026-03-27 | **Server:** ThingsBoard MCP | **Severity:** 🔴 CRITICAL
+**Date:** 2026-03-28 | **Server:** ThingsBoard MCP | **Severity:** CRITICAL
 
 **Signals:**
 - CSV "Capabilities - Tools" contains custom titles like "Device Management", "Asset Management"
@@ -962,45 +967,3 @@ VIOLATIONS ARE CRITICAL — blocks report submission until corrected
 **Reference:** SKILL.md Learning 6 + Memory.md Violation Log
 
 
----
-
-### Error Pattern #14: Java SDK Protocol Version — No Mapping Table in SKILL.md
-
-**Date:** 2026-03-27 | **Server:** jira-service-management-mcp-server-by-cdata | **Severity:** Medium
-
-**Signals:**
-- pom.xml declares `io.modelcontextprotocol.sdk:mcp` as a dependency (Java SDK)
-- SKILL.md Step 1 has no Java SDK mapping table (only FastMCP, TypeScript, Python, Go)
-- Cannot determine protocol version from the standard lookup table
-
-**Root Cause:**
-The Java MCP SDK (`io.modelcontextprotocol.sdk:mcp`) is not covered by the SKILL.md protocol version mapping table. Need a different verification strategy for Java servers.
-
-**Resolution (Java SDK Protocol Version):**
-When a Java project uses `io.modelcontextprotocol.sdk:mcp`, determine protocol version by checking
-`McpSchema.LATEST_PROTOCOL_VERSION` in the SDK source for that exact version tag:
-
-```
-URL pattern:
-https://raw.githubusercontent.com/modelcontextprotocol/java-sdk/v{VERSION}/mcp/src/main/java/io/modelcontextprotocol/spec/McpSchema.java
-
-Look for: public static final String LATEST_PROTOCOL_VERSION = "...";
-```
-
-**Known Mappings (Java SDK):**
-| Java SDK Version | Release Date | Protocol Version |
-|-----------------|-------------|-----------------|
-| v0.8.1          | 2025-03-26  | 2024-11-05       |
-| v0.8.0          | 2025-03-21  | 2024-11-05 (inferred, same era) |
-| v0.9.0+         | 2025-04-10+ | UNVERIFIED — check McpSchema.java for exact version |
-
-**Prevention:**
-```
-For Java servers using io.modelcontextprotocol.sdk:mcp:
-1. Extract version from pom.xml (e.g., 0.8.1)
-2. Fetch McpSchema.java from that tagged release
-3. Read LATEST_PROTOCOL_VERSION constant directly
-4. Do NOT guess based on release date alone
-```
-
-**Result:** Protocol = 2024-11-05 confirmed for jira-service-management-mcp-server-by-cdata.
