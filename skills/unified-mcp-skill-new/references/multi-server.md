@@ -15,11 +15,10 @@ When modifying ANY part of this file (format, rule, instruction, workflow step, 
 🚫 **ZERO-ASSUMPTION POLICY applies to EVERY server in the batch.**
 
 🔒 **MANDATORY before any batch research:**
-> 1. Follow SKILL.md Gates 1-4 (Evidence Ledger, Connection Verification, Learning Gate, Self-Improvement)
+> 1. Follow SKILL.md Gates 1-3 (Evidence Ledger, Connection Verification, Learning Gate)
 > 2. All learnings (L1–L10) are embedded in SKILL.md Step 5.1–5.13 — follow each section's rules directly
-> 3. Read `learned-fixes.md` all error patterns (#1-#4, #7-#17) for real case studies
-> 4. Each Layer 1 agent MUST build its own Evidence Ledger — no attribute without source proof
-> 5. If an agent cannot verify an attribute → return `"No"` and flag, never `"UNVERIFIED"` or `"unknown"`
+> 3. Each Layer 1 agent MUST build its own Evidence Ledger — no attribute without source proof
+> 4. If an agent cannot verify an attribute → return `"No"` and flag, never `"UNVERIFIED"` or `"unknown"`
 > SKILL.md is the single source of truth — rules are not duplicated here.
 
 ## Workflow
@@ -71,11 +70,17 @@ Found [N] servers to research:
 1. GitHub MCP → github.com/github/github-mcp-server
 2. Slack MCP  → github.com/slack/slack-mcp-server
 
+Accuracy estimate:
+  ≤ 3 servers → 100% parity with single-server research (recommended)
+  4–5 servers → ⚠️  best-effort (~90–95%) — L9 source verification may compress on complex servers
+  > 5 servers → blocked (split into batches of ≤5)
+
 [ 1 ] Proceed
 [ 2 ] Adjust list
 ```
 
-Limit: 10 servers max per batch. If more → ask user to split.
+Limit: 5 servers max per batch. If more → ask user to split into batches of ≤5.
+🔒 3 servers is the recommended batch size for 100% accuracy parity with single-server research.
 
 **Step M2: Dispatch Layer 1 Agents (parallel)**
 Launch one Research Agent per server simultaneously.
@@ -87,7 +92,16 @@ Once ALL Layer 1 results received → render individual CSVs + comparison table.
 
 ---
 
-## Layer 1 — Research Agent (per server, token budget: ~1,500)
+## Layer 1 — Research Agent (per server, token budget: ~5,000)
+
+**Budget breakdown (per agent):**
+```
+Input  (README + server.py + lock file + config files)  : ~8,000–20,000 tokens
+Output (full JSON including capabilities_detail)         : ~1,000–5,000 tokens
+Total per agent                                          : ~9,000–25,000 tokens
+```
+At 3 servers: ~27,000–75,000 total — well within context limits, full accuracy guaranteed.
+At 4–5 servers: ~36,000–125,000 total — manageable, minor compression risk on complex servers.
 
 Each agent runs the **existing Step 0.5 dual-source workflow** (5 concurrent threads) for its assigned server, then returns ONLY this JSON structure (no prose):
 
@@ -96,6 +110,7 @@ Each agent runs the **existing Step 0.5 dual-source workflow** (5 concurrent thr
   "server": "GitHub MCP",
   "repo": "github.com/github/github-mcp-server",
   "attributes": {
+    "name": "GitHub MCP Server",
     "description": "...",
     "version": "v1.2.3",   // "No" if no Releases or Tags found — package.json is NOT a valid version source (Pattern #10)
     "category": "Developer Tools",
@@ -111,7 +126,14 @@ Each agent runs the **existing Step 0.5 dual-source workflow** (5 concurrent thr
     "deployment": "Local",
     "remote": "No",
     "remote_endpoint": "N/A",
-    "capabilities": ["Tools"]
+    "capabilities": ["Tools"],
+    "capabilities_detail": {
+      "tools": "Search & Query Utilities\n  • tool_name – Description of what it does",
+      "resources": "None",
+      "prompts": "None",
+      "sampling": "None",
+      "non_readonly": "None"
+    }
   },
   "evidence": ["README line 12", "pyproject.toml line 5"],
   "auth_required": true,
@@ -119,6 +141,22 @@ Each agent runs the **existing Step 0.5 dual-source workflow** (5 concurrent thr
   "errors": []
 }
 ```
+
+**CSV mapping (Layer 0 → CSV rows):**
+```
+attributes.name              → MCP Info,Name,<value>
+attributes.description       → MCP Info,Description,<value>
+attributes.version           → MCP Info,Git Repo Version,<value>
+attributes.category          → MCP Info,Category,<value>
+attributes.remote_endpoint   → MCP Info,Endpoint URL,<value>
+attributes.capabilities_detail.tools       → Capabilities - Tools,detailed_info,<value>
+attributes.capabilities_detail.resources   → Capabilities - Resources,detailed_info,<value>
+attributes.capabilities_detail.prompts     → Capabilities - Prompts,detailed_info,<value>
+attributes.capabilities_detail.sampling    → Capabilities - Sampling,detailed_info,<value>
+attributes.capabilities_detail.non_readonly → Non-Read-Only Tools,detailed_info,<value>
+```
+🔒 `attributes.name` → Status column of `MCP Info,Name` row. Never use `"server"` (top-level) for this row — `"server"` is used only for the comparison table header.
+🔒 `capabilities_detail` values follow SKILL.md Step 5.13 format exactly: standard taxonomy titles (L6), "None" fallback (L7), en-dash connector for Tools, colon connector for Non-Read-Only (see SKILL.md Report Format).
 
 **Agent rules:**
 - Output JSON only — no explanations, no markdown
@@ -187,15 +225,14 @@ Apply Step 5.6.A options (have key / create key / proceed without) per server in
 ## Error Handling
 - Server unreachable → log error, continue batch, mark as "ERROR" in summary
 - Duplicate servers in list → deduplicate silently, note once
-- New error patterns found → append to `learned-fixes.md`
+- New error patterns found → flag to user for manual review
 
 ---
 
 ## Key Learnings Reference
 
 > **All Learnings (L1–L10) are embedded in SKILL.md Step 5.1–5.13.** They are the single source of truth.
-> **All error case studies are in `learned-fixes.md` (Errors #1-#4, #7-#17).**
-> Read both before starting any multi-server batch research. Do not duplicate rules here.
+> Read SKILL.md before starting any multi-server batch research. Do not duplicate rules here.
 
 ---
 
