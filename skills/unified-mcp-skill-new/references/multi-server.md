@@ -1,4 +1,4 @@
-<!-- SKILL_VERSION: 3.0.0 — must match SKILL.md version -->
+<!-- SKILL_VERSION: 3.0.1 — must match SKILL.md version -->
 # Multi-Server Parallel Research
 
 🔒 **SKILL MODIFICATION POLICY — ABSOLUTE ENFORCEMENT**
@@ -17,7 +17,7 @@ When modifying ANY part of this file (format, rule, instruction, workflow step, 
 🔒 **MANDATORY before any batch research:**
 > 1. Follow SKILL.md Gates 1-4 (Evidence Ledger, Connection Verification, Learning Gate, Self-Improvement)
 > 2. All learnings (L1–L10) are embedded in SKILL.md Step 5.1–5.13 — follow each section's rules directly
-> 3. Read `learned-fixes.md` all error patterns (#1-#4, #7-#16) for real case studies
+> 3. Read `learned-fixes.md` all error patterns (#1-#4, #7-#17) for real case studies
 > 4. Each Layer 1 agent MUST build its own Evidence Ledger — no attribute without source proof
 > 5. If an agent cannot verify an attribute → return `"No"` and flag, never `"UNVERIFIED"` or `"unknown"`
 > SKILL.md is the single source of truth — rules are not duplicated here.
@@ -85,7 +85,7 @@ Each agent runs the **existing Step 0.5 dual-source workflow** (5 concurrent thr
   "repo": "github.com/github/github-mcp-server",
   "attributes": {
     "description": "...",
-    "version": "v1.2.3",   // "NA" if no releases/tags/package.json found, or if only SNAPSHOT/pre-release exists
+    "version": "v1.2.3",   // "No" if no Releases or Tags found — package.json is NOT a valid version source (Pattern #10)
     "category": "Developer Tools",
     "distribution": "Official",
     "protocol_version": "2025-06-18",
@@ -138,7 +138,7 @@ Reports saved: ~/Documents/mcp-reports/
 ```
 
 **All 11 comparison columns:**
-1. Version (git tag — "NA" if no releases/tags/package.json, or SNAPSHOT/pre-release only)
+1. Version (from GitHub Releases or Tags only — "No" if neither found; package.json is not a valid source per Pattern #10)
 2. Category (Developer Tools / Productivity / Data Retrieval / File Management)
 3. Protocol (MCP protocol version)
 4. Hosting (SaaS / GitHub)
@@ -171,7 +171,7 @@ What next?
 ## Key Learnings Reference
 
 > **All Learnings (L1–L10) are embedded in SKILL.md Step 5.1–5.13.** They are the single source of truth.
-> **All error case studies are in `learned-fixes.md` (Errors #1-#4, #7-#16).**
+> **All error case studies are in `learned-fixes.md` (Errors #1-#4, #7-#17).**
 > Read both before starting any multi-server batch research. Do not duplicate rules here.
 
 ---
