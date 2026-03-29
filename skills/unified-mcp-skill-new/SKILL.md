@@ -12,7 +12,7 @@ description: >
 
 unified-mcp-skill-new is a single skill that handles the full MCP server lifecycle — research, attribute documentation, local setup, error recovery, and project audit — with 5-thread parallel search and 4 mandatory gates before generating any report. All rules, formats, and learnings live in this file as the single source of truth.
 
-<!-- SKILL_VERSION: 3.0.1 | Updated: 2026-03-28 -->
+<!-- SKILL_VERSION: 3.0.2 | Updated: 2026-03-30 -->
 
 ---
 
@@ -34,8 +34,7 @@ unified-mcp-skill-new is a single skill that handles the full MCP server lifecyc
 | 12 | [Error Recovery — 7 Phases](#error-recovery) |
 | 13 | [Project Audit — Compliance Review](#project-audit) |
 | 14 | [Multi-Server Mode](#multi-server) |
-| 15 | [Key Learnings — Reference Index](#key-learnings) |
-| 16 | [Integration Rules](#integration-rules) |
+| 15 | [Integration Rules](#integration-rules) |
 | 17 | [Credential Placeholder Map](#credential-map) |
 | 18 | [Report Format — CSV Structure](#report-format) |
 
@@ -92,6 +91,8 @@ Tools Ops Delete       | Yes   | README tools section          | "cancel_build" 
 ```
 
 **If evidence column is empty → DO NOT write that row to CSV. Ask user instead.**
+
+**Output: Internal only — do NOT display the Evidence Ledger in the chat window.**
 
 ---
 
@@ -861,11 +862,13 @@ AUTHENTICATION VERIFICATION CHECKLIST:
 
 | # | Attribute | Mark Yes if… |
 |---|-----------|-------------|
-| 1 | OAuth 2.1 - Authorization Code Flow | OAuth flow with user redirect found |
-| 2 | OAuth 2.1 - Client Credentials Flow | Machine-to-machine OAuth found |
+| 1 | OAuth 2.1 - Authorization Code Flow | OAuth flow with user redirect found — **No for STDIO transport** |
+| 2 | OAuth 2.1 - Client Credentials Flow | Machine-to-machine OAuth found — **No for STDIO transport** |
 | 3 | Bearer Token | Token passed in Authorization header |
 | 4 | Personal Access Token | User-generated PAT found |
 | 5 | API Token | App-level API key found |
+
+**STDIO exception:** OAuth 2.1 (Auth Code and Client Creds) = No always for STDIO transport. OAuth 2.1 requires a network-accessible endpoint; local STDIO connections do not use OAuth 2.1.
 
 **Common Mistake Pattern (LEARNED):**
 - ❌ WRONG: "No auth in README, so Authentication = No" (incomplete search)
@@ -914,6 +917,8 @@ API Token = Yes if: "api key" OR "api_token" OR "api_key" in source/docs
 ### Step 5.6.A — Authentication Key Prompt Workflow
 
 **Trigger:** Execute whenever authentication is detected (any auth attribute = Yes from Step 5.6 checklist above, OR auth required detected during Step 2 endpoint probe / Step 3 local setup config extraction).
+
+**IMMEDIATE — no exceptions:** As soon as ANY auth signal is found (API key, Bearer token, PAT, secret key, API token, OAuth access token, JWT token) during Steps 0.5 Thread 2/3, Step 5.6, or Step 5.6.B — PAUSE research and show the 3-option prompt. Do NOT continue to the next research step without user response.
 
 **When auth is required, present this 3-option prompt to the user:**
 
@@ -1010,8 +1015,24 @@ This rule applies during both single-server (Step 5.6) and multi-server (Layer 1
 | 3 | Lower versions or no encryption | Yes if STDIO (no network layer) OR probe shows no TLS |
 
 **Probe tools:**
-- Primary: `curl -sIv https://endpoint` — check TLS version in verbose output
-- Alternative: `openssl s_client -connect host:443` — reports negotiated TLS version and certificate details
+
+Method 1 — curl (Linux/macOS):
+```bash
+curl -s -v https://<server-url> 2>&1 | grep "SSL connection using"
+```
+Method 1 — curl (Windows):
+```bash
+curl -s -v https://<server-url> 2>&1 | findstr "SSL connection using"
+```
+Method 2 — OpenSSL, check TLS 1.3:
+```bash
+openssl s_client -connect <hostname>:443 -tls1_3
+```
+Method 2 — OpenSSL, check TLS 1.2:
+```bash
+curl -v --tlsv1.2 --tls-max 1.2 https://<hostname>
+```
+**Rule:** Use Method 1 first. If it fails or returns no result → run Method 2. If one TLS version check fails → run the other version check before marking as unverifiable.
 - For STDIO-only servers: mark all TLS rows as No, note "local transport — no network layer"
 
 #### 🔒 L3 — TLS vs Bearer Independence Rule
@@ -1697,13 +1718,17 @@ Both are marked Yes because both are real hosting locations. SaaS Vendor takes p
 
 ## Final Report Output
 
-**On successful CSV generation, display:**
+**Display order (MANDATORY):**
+1. Research Summary table (all attributes — shown first)
+2. Key Findings (notable evidence notes — shown second)
+3. Success box (shown last, below the summary):
+
 ```
 ╔═══════════════════════════════════════════════════════════════════╗
 ║   REPORT SUCCESSFULLY GENERATED                                   ║
 ║   CSV  : /path/to/report/<servername>.csv                         ║
 ║   COST : /path/to/report/<servername>-cost.txt                    ║
-╚═══════════════════════════════════════════════════════════════════╝/cos
+╚═══════════════════════════════════════════════════════════════════╝
 ```
 
 Both files are always saved together. The cost file contains:
@@ -1813,20 +1838,3 @@ If endpoint returns vendor API errors (not JSON-RPC) → Mark as: Endpoint URL =
 > Step 5.6 is the single source of truth for authentication detection — rules are not duplicated here.
 
 ---
-
-## Key Learnings — Reference Index
-
-> Full rule text, checklists, and ✅/❌ examples for each learning: see the canonical step listed below.
-> Learning 2 (Endpoint Verification) is preserved in full above — it has unique three-step verification logic not covered in Step 2.
-
-| Learning | Core Rule (Summary) | Canonical Step |
-|---------|---------------------|----------------|
-| L1 Framework Priority | FastMCP > framework > base SDK — DO NUMERIC COMPARISON, never assume | Step 1 + Step 5.3 |
-| L3 TLS vs Bearer | TLS = transport layer. STDIO = always TLS No. Bearer Token ≠ TLS (independent layers) | Step 5.7 |
-| L4 Pricing vs Service | Mark Free/Paid based on MCP server license only — not API key requirement or service cost | Step 5.4 |
-| L5 Tools Operations | Mark HIGHEST level only — mutually exclusive (Read-only / R+U / R+U+D) | Step 5.9 |
-| L6 Taxonomy Categories | NEVER invent titles — use only 6 fixed titles (Tools) / 4 fixed titles (Non-Read-Only) | Step 5.13 |
-| L7 Five Mandatory Rows | All 5 detailed_info rows always present — "None" if absent, NEVER omit any | Step 5.13 |
-| L8 Description Format | Description = 2–3 line paragraph, functional purpose + capabilities ONLY — NEVER transport/TLS/auth/hosting details | Step 5.1 |
-| L9 Capabilities Source | Read entry point source file — README alone is NOT sufficient for capabilities | Step 5.12 |
-| L10 No Placeholders | Never write {servername}_ / {prefix}_ in any CSV cell — resolve to actual names | Step 5.13 |
