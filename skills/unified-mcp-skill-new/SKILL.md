@@ -130,7 +130,7 @@ MANDATORY LEARNING WALKTHROUGH — confirm each was applied (full rules in refer
 □ L5  Tools Ops               → Step 5.9  All tool names parsed? HIGHEST level only marked?
 □ L6  Taxonomy Categories     → Step 5.13 Only standard taxonomy titles used? Zero invented categories?
 □ L7  Five Mandatory Rows     → Step 5.13 All five detailed_info rows present? "None" used if absent?
-□ L8  Description Format      → Step 5.1  Description is 2–3 line paragraph? No transport/TLS/auth/hosting details included?
+□ L8  Description Format      → Step 5.1  Description is 3–4 sentence single-line paragraph? No embedded newlines? No transport/TLS/auth/hosting details included?
 □ L9  Capabilities Source     → Step 5.12 Entry point source file read? README alone NOT used?
 □ L10 No Placeholders         → Step 5.13 Zero {servername}_ / {prefix}_ in any CSV cell?
 ```
@@ -697,13 +697,13 @@ All 5 threads must have returned results or confirmed-empty. If any thread is in
 | # | Attribute | Source | Rule |
 |---|-----------|--------|------|
 | 1 | Name | GitHub repo name or vendor docs | Exact name only |
-| 2 | Description | README first paragraph | 2–3 sentences as a paragraph, MUST start with "[Server Name] MCP Server…", functional purpose and capabilities ONLY — NEVER include transport, TLS, auth, hosting, or endpoint details (those have dedicated rows) (L8) |
+| 2 | Description | README first paragraph | 3–4 sentences as a single continuous line (NO embedded newlines), MUST start with "[Server Name] MCP Server…", functional purpose and capabilities ONLY — NEVER include transport, TLS, auth, hosting, or endpoint details (those have dedicated rows) (L8) |
 | 3 | Category | mcp.md or vendor classification | Choose: File and Document Management / Developer and Coding Tools / Data and Information Retrieval / Productivity and Communication |
 | 4 | GitHub Repository | GitHub URL | Full URL or N/A |
 | 5 | Endpoint URL | README or probe result | Full URL or N/A |
 
 **L8 — Description Format Rule:**
-- Description is written as a paragraph — 2 to 3 lines, sentences on separate lines within the quoted cell
+- Description is written as a single continuous line — 3 to 4 sentences, NO embedded newlines
 - MUST start with "[Server Name] MCP Server…"
 - **NEVER include in Description:** transport protocol, TLS version, authentication method, hosting provider, endpoint URL, or deployment details — these have dedicated attribute rows and MUST NOT be duplicated in Description
 - Description = functional purpose + capabilities ONLY (what the server does, what tools it exposes, what platform it integrates with)
@@ -1606,7 +1606,7 @@ Capabilities - Prompts,detailed_info,"None"
    - **Always start with `[Server Name] MCP Server`** (e.g., "Todoist MCP Server bridges AI assistants with…")
    - Sentence 1: What the server connects/bridges (AI agents ↔ what platform/service)
    - Sentence 2–3: Key features and capabilities (specific tools, workflows, or integrations)
-   - Written as a paragraph — 2 to 3 lines within the quoted cell
+   - Written as a single continuous line — NO embedded newlines (3–4 sentences joined with spaces)
    - Escape any double quotes inside the description as `""`
    - **NEVER include:** transport protocol, TLS version, authentication method, hosting provider, endpoint URL, or deployment details — these belong in dedicated attribute rows, NOT in Description. Including them overwrites the meaning of those Status column values.
 
@@ -1615,11 +1615,9 @@ Capabilities - Prompts,detailed_info,"None"
    MCP Info,Description,"… supporting StreamableHttp transport with TLS 1.3 and TLS 1.2 encryption."
    MCP Info,Description,"… deployed on AWS API Gateway with no authentication required."
    ```
-   ✅ CORRECT (2–3 line paragraph, functional purpose and capabilities only):
+   ✅ CORRECT (3–4 sentences, single continuous line, functional purpose and capabilities only):
    ```
-   MCP Info,Description,"Todoist MCP Server bridges AI assistants with the Todoist task management platform.
-   It exposes tools for creating, updating, and completing tasks across projects and labels.
-   Supports full task lifecycle management including due dates, priorities, and comments."
+   MCP Info,Description,"Todoist MCP Server bridges AI assistants with the Todoist task management platform. It exposes tools for creating, updating, and completing tasks across projects and labels. Supports full task lifecycle management including due dates, priorities, and comments."
    ```
 
 **Example Bad vs Good:**
