@@ -511,15 +511,15 @@ MCP Info,Git Repo Version,"v1.0.0"   ← this gets absorbed into description cel
 
 **Fix:**
 ```
-✅ CORRECT (single continuous line, spaces instead of newlines):
+✅ CORRECT (3–4 sentences, single continuous line, spaces instead of newlines):
 MCP Info,Description,"First sentence. Second sentence covering capabilities."
 MCP Info,Git Repo Version,"v1.0.0"   ← now correctly its own row
 ```
 
 **Prevention Rule (STRICT):**
 ```
-🔒 Description MUST be a single line — NO embedded newlines
-🔒 Join sentences with spaces, not line breaks
+🔒 Description MUST be a single continuous line — 3–4 sentences, NO embedded newlines
+🔒 Join all sentences with spaces, not line breaks
 🔒 Any double quotes inside description text must be escaped as ""
 🔒 Verify the Description row is ONE CSV row before saving
 ```
@@ -654,7 +654,7 @@ It supports map tiles, routing, geocoding, and place search."
 
 **Correct Fix:**
 ```
-✅ CORRECT (single continuous line):
+✅ CORRECT (3–4 sentences, single continuous line):
 MCP Info,Description,"Stadia Maps MCP Server (TypeScript) provides AI assistants with access to Stadia Maps API. It supports map tiles, routing, geocoding, and place search."
 
 ← Parser sees ONE row — all subsequent rows land in correct columns
@@ -662,7 +662,7 @@ MCP Info,Description,"Stadia Maps MCP Server (TypeScript) provides AI assistants
 
 **Prevention Rule (STRICT):**
 ```
-🔒 Description = single line ALWAYS — NO embedded newlines
+🔒 Description = single continuous line ALWAYS — 3–4 sentences, NO embedded newlines
 🔒 Join all sentences with a space, not a line break
 🔒 VERIFY: after writing Description row, check that MCP Protocol Version
    rows appear immediately after Distribution Type with Yes/No values
@@ -671,10 +671,10 @@ MCP Info,Description,"Stadia Maps MCP Server (TypeScript) provides AI assistants
 
 **Gate 3 Check (L8 — added):**
 ```
-□ L8 Description Single-Line: Is MCP Info,Description a single unbroken line?
+□ L8 Description Format: Is MCP Info,Description a single continuous line with 3–4 sentences?
   → Open raw CSV in text editor — description must end on same line it starts
   → If MCP Protocol Version or Pricing rows appear empty → fix description first
-  → NO embedded newlines — sentences joined with spaces only
+  → NO embedded newlines — 3–4 sentences joined with spaces only
 ```
 
 **Reference:** Error Pattern #9 (root cause), SKILL.md Formatting Rule #9, Gate 3 L8
