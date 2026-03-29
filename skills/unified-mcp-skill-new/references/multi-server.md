@@ -111,7 +111,7 @@ Each agent runs the **existing Step 0.5 dual-source workflow** (5 concurrent thr
   "repo": "github.com/github/github-mcp-server",
   "attributes": {
     "name": "GitHub MCP Server",
-    "description": "...",
+    "description": "...",   // 3–4 sentences, single continuous line — NO embedded newlines (Pattern #9/#12)
     "version": "v1.2.3",   // "No" if no Releases or Tags found — package.json is NOT a valid version source (Pattern #10)
     "category": "Developer Tools",
     "distribution": "Official",
@@ -145,7 +145,7 @@ Each agent runs the **existing Step 0.5 dual-source workflow** (5 concurrent thr
 **CSV mapping (Layer 0 → CSV rows):**
 ```
 attributes.name              → MCP Info,Name,<value>
-attributes.description       → MCP Info,Description,<value>
+attributes.description       → MCP Info,Description,<value>   // must be 3–4 sentences, single continuous line, NO embedded newlines
 attributes.version           → MCP Info,Git Repo Version,<value>
 attributes.category          → MCP Info,Category,<value>
 attributes.remote_endpoint   → MCP Info,Endpoint URL,<value>
