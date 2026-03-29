@@ -1,4 +1,4 @@
-<!-- SKILL_VERSION: 3.0.1 — must match SKILL.md version -->
+<!-- SKILL_VERSION: 3.0.2 — must match SKILL.md version -->
 # Multi-Server Parallel Research
 
 🔒 **SKILL MODIFICATION POLICY — ABSOLUTE ENFORCEMENT**
@@ -17,7 +17,7 @@ When modifying ANY part of this file (format, rule, instruction, workflow step, 
 🔒 **MANDATORY before any batch research:**
 > 1. Follow SKILL.md Gates 1-3 (Evidence Ledger, Connection Verification, Learning Gate)
 > 2. All learnings (L1–L10) are embedded in SKILL.md Step 5.1–5.13 — follow each section's rules directly
-> 3. Each Layer 1 agent MUST build its own Evidence Ledger — no attribute without source proof
+> 3. Each Layer 1 agent MUST build its own Evidence Ledger (internal only — do NOT output in agent response) — no attribute without source proof
 > 4. If an agent cannot verify an attribute → return `"No"` and flag, never `"UNVERIFIED"` or `"unknown"`
 > SKILL.md is the single source of truth — rules are not duplicated here.
 
@@ -161,7 +161,7 @@ attributes.capabilities_detail.non_readonly → Non-Read-Only Tools,detailed_inf
 **Agent rules:**
 - Output JSON only — no explanations, no markdown
 - **ZERO-ASSUMPTION:** If data missing → return `"No"` and flag — never `"UNVERIFIED"`, never `"unknown"`, never guess
-- **Auth detection:** Apply SKILL.md Step 5.6.B implicit auth scan (headers / env / args) for all 3 input types. Set `auth_required: true` and populate `auth_types_detected` if any signal found. Apply Step 5.6.B signal patterns to all JSON config fields — `headers` for remote endpoints, `env`/`args` for STDIO/GitHub repos.
+- **Auth detection:** Apply SKILL.md Step 5.6.B implicit auth scan (headers / env / args) for all 3 input types. Set `auth_required: true` and populate `auth_types_detected` if any signal found. Apply Step 5.6.B signal patterns to all JSON config fields — `headers` for remote endpoints, `env`/`args` for STDIO/GitHub repos. OAuth 2.1 (Auth Code / Client Creds) = No for STDIO transport (see SKILL.md Step 5.6 STDIO exception).
 - If repo inaccessible → set `errors: ["repo not found"]`, return partial data with UNVERIFIED fields
 - Do not call other agents or tools outside README + file search + endpoint probe
 - **Evidence required:** Every attribute value MUST include source in `"evidence"` array (file + line or URL)
@@ -239,3 +239,4 @@ Apply Step 5.6.A options (have key / create key / proceed without) per server in
 ## Final Report Format
 
 > Use the Final Report Format box defined in SKILL.md for all batch research reports.
+> Display order: Comparison table → individual Key Findings → REPORT SUCCESSFULLY GENERATED box (see SKILL.md Final Report Output).
