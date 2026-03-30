@@ -33,7 +33,6 @@ Did not cross-reference SDK version against protocol version mapping table. Work
    - Go SDK ≥1.12 → 2025-11-25
 3. NEVER assume latest protocol
 4. Document source file + line number where version found
-5. Before finalizing, check learned-fixes.md for this pattern
 ```
 
 **Prevention Rule:**
@@ -68,7 +67,7 @@ Incomplete source investigation. Focused on README only, missed server.json whic
 **Fix (Verification Checklist):**
 ```
 1. Search server.json for "TOKEN", "API_KEY", "SECRET", "BEARER"
-2. Search README for "authentication", "credentials", "token"
+2. Search README using Detection Patterns: API Token ("api key", "api_token", "api_key"); PAT ("personal access", "pat", "personal token", "personal access token", "personal_access_token"); Bearer ("Authorization: Bearer"); also scan for "authentication", "credentials", "token required", "requires auth"
 3. Search .env.example for credential field definitions
 4. Search vendor documentation for API access / token page
 5. If ANY credential requirement found → mark ALL applicable auth types = Yes
@@ -76,10 +75,11 @@ Incomplete source investigation. Focused on README only, missed server.json whic
 ```
 
 **Prevention Rule:**
+- MUST apply Detection Patterns against README text (API Token + PAT + Bearer signals) — README is a PRIMARY auth source for STDIO/GitHub repo servers
 - MUST check server.json BEFORE marking authentication fields
 - MUST search .env.example for credential patterns
 - MUST verify vendor documentation for API token requirements
-- Authentication = No only if thoroughly searched all sources
+- Authentication = No only if thoroughly searched all sources (README + server.json + .env.example + vendor docs)
 
 **Why All Three Can Be "Yes":**
 - Bearer Token = delivery method (how it's sent via HTTP header)
@@ -122,7 +122,6 @@ Marked both read+update and read+update+delete as Yes, violating the mutual excl
    - If read + create/update: mark "Read+Update" = Yes
    - If read + delete/cancel: mark "Read+Update+Delete" = Yes
 5. Verify only ONE level is marked Yes
-6. Check learned-fixes.md for this pattern
 ```
 
 **Prevention Rule:**
@@ -193,93 +192,6 @@ Incomplete source investigation. Focused on README deployment section, missed se
 - Always mark ALL supported approaches
 
 **Date Added:** 2026-03-26 | **Category:** Deployment Detection | **Confidence:** HIGH
-
----
-
-## Verification Workflow (Before Submitting Reports)
-
-**Apply these checks to catch all 4 error patterns:**
-
-### Pre-Submission Checklist
-```
-BEFORE finalizing any MCP research report:
-
-Protocol Version:
-□ Extract exact SDK version from dependency file
-□ Cross-reference against version mapping table
-□ Look up Go SDK mapping if applicable
-□ Compare against learned-fixes.md Error #1
-
-Authentication:
-□ Search server.json for TOKEN/API_KEY/SECRET
-□ Search README for "authentication" and "credentials"
-□ Search .env.example for credential fields
-□ Check vendor docs for API access token page
-□ Compare against learned-fixes.md Error #2
-
-Tools Operations:
-□ Parse all tool names from documentation
-□ Search for cancel_*, delete_*, remove_* patterns
-□ Choose HIGHEST operation level found
-□ Verify only ONE level marked Yes
-□ Compare against learned-fixes.md Error #3
-
-Deployment:
-□ Search for Dockerfile, Dockerfile.local, docker.json
-□ Check server.json for docker/container references
-□ Search for OCI registry (ghcr.io, docker.io, etc.)
-□ Mark ALL applicable deployment approaches
-□ Compare against learned-fixes.md Error #4
-```
-
----
-
-## Self-Learning Integration Points
-
-**These patterns are checked automatically at:**
-
-1. **Step 5.3 — MCP Protocol Version** (SKILL.md section "Step 5.3")
-   - Verification checklist added
-   - Go SDK mapping documented
-   - Common mistakes listed
-
-2. **Step 5.6 — Authentication** (SKILL.md section "Step 5.6")
-   - Comprehensive checklist
-   - Common mistake patterns
-   - "Why All Three Can Be Yes" explanation
-
-3. **Step 5.9 — Tools Operations** (SKILL.md section "Step 5.9")
-   - Mutually exclusive rule enforcement
-   - Delete pattern recognition dictionary
-   - Common mistake scenarios
-
-4. **Step 5.10 — Deployment Approach** (SKILL.md section "Step 5.10")
-   - Docker detection checklist
-   - Multiple deployment support explanation
-   - Common oversight patterns
-
----
-
-## How to Use This File
-
-**When starting MCP research:**
-1. Read the error patterns in this file
-2. Use the verification checklists BEFORE marking attribute values
-3. Reference the "Prevention Rules" for each attribute type
-4. Check the "Common Mistake Patterns" section before finalizing
-
-**When discovering a new pattern:**
-1. Document the pattern with exact scenario
-2. Add root cause analysis
-3. Create a verification checklist
-4. Link to SKILL.md steps that need updating
-5. Update the Pre-Submission Checklist above
-
-**When fixing related code:**
-- Update corresponding SKILL.md section
-- Add prevention rules
-- Test against real MCP servers
-- Document test results
 
 ---
 
@@ -528,54 +440,12 @@ MCP Info,Git Repo Version,"v1.0.0"   ← now correctly its own row
 
 ---
 
-## Error Pattern #11: Missing Capability Rows (Capabilities-Tools / Resources / Prompts / Non-Read-Only)
-
-**Date:** 2026-03-27 | **Servers:** trackmage-mcp-server, odos-mcp, mercadolibre-mcp-server | **Severity:** HIGH
-
-**Signals (What Went Wrong)**
-- `Capabilities - Resources,detailed_info` row missing when server had no resources
-- `Capabilities - Prompts,detailed_info` row missing when server had no prompts
-- `Non-Read-Only Tools,detailed_info` row missing when all tools were read-only
-
-**Root Cause:**
-Learning 7 originally only protected Non-Read-Only Tools. The three Capabilities rows lacked the same "always present" mandate, so when content was absent they were silently omitted.
-
-**Fix:**
-All five rows are MANDATORY in every CSV report regardless of content. Attribute is always `detailed_info` — never `No` or blank:
-
-```
-✅ ALWAYS include all five (attribute = detailed_info):
-Capabilities - Tools,detailed_info,"<tools OR None>"
-Capabilities - Resources,detailed_info,"<resources OR None>"
-Capabilities - Prompts,detailed_info,"<prompts OR None>"
-Capabilities - Sampling,detailed_info,"<sampling OR None>"
-Non-Read-Only Tools,detailed_info,"<write tools OR None>"
-
-❌ WRONG:
-Capabilities - Sampling,No
-Capabilities - Sampling,No,
-```
-
-**Prevention Rule:**
-```
-🔒 Capabilities - Tools     → always present, "None" if Capabilities,Tools = No
-🔒 Capabilities - Resources  → always present, "None" if Capabilities,Resources = No
-🔒 Capabilities - Prompts    → always present, "None" if Capabilities,Prompts = No
-🔒 Capabilities - Sampling   → always present, "None" if Capabilities,Sampling = No
-🔒 Non-Read-Only Tools       → always present, "None" if all read-only
-🔒 Attribute for ALL five    → always "detailed_info", never "No"
-```
-
-**Reference:** SKILL.md Learning 7, Gate 3 L7
-
----
-
 ## Error Pattern #10: Git Repo Version — Wrong Fallback Value
 
 **Date:** 2026-03-27 (updated 2026-03-27) | **Servers:** keeper-mcp-golang-docker, axiomhq-mcp, mcp-croit-ceph, mercadolibre-mcp-server, jira-service-management-mcp-server-by-cdata | **Severity:** Low
 
 **Signals (What Went Wrong)**
-- After checking all 3 sources (Releases → Tags → package.json), no real version was found
+- After checking all 2 sources (Releases → Tags), no real version was found
 - Field was left as `UNVERIFIED` or filled with a SNAPSHOT/dev version string
 
 **Root Cause:**
@@ -622,6 +492,48 @@ MCP Info,Git Repo Version,"1.0-SNAPSHOT"
 ```
 
 **Reference:** SKILL.md Row Order — Git Repo Version
+
+---
+
+## Error Pattern #11: Missing Capability Rows (Capabilities-Tools / Resources / Prompts / Non-Read-Only)
+
+**Date:** 2026-03-27 | **Servers:** trackmage-mcp-server, odos-mcp, mercadolibre-mcp-server | **Severity:** HIGH
+
+**Signals (What Went Wrong)**
+- `Capabilities - Resources,detailed_info` row missing when server had no resources
+- `Capabilities - Prompts,detailed_info` row missing when server had no prompts
+- `Non-Read-Only Tools,detailed_info` row missing when all tools were read-only
+
+**Root Cause:**
+Learning 7 originally only protected Non-Read-Only Tools. The three Capabilities rows lacked the same "always present" mandate, so when content was absent they were silently omitted.
+
+**Fix:**
+All five rows are MANDATORY in every CSV report regardless of content. Attribute is always `detailed_info` — never `No` or blank:
+
+```
+✅ ALWAYS include all five (attribute = detailed_info):
+Capabilities - Tools,detailed_info,"<tools OR None>"
+Capabilities - Resources,detailed_info,"<resources OR None>"
+Capabilities - Prompts,detailed_info,"<prompts OR None>"
+Capabilities - Sampling,detailed_info,"<sampling OR None>"
+Non-Read-Only Tools,detailed_info,"<write tools OR None>"
+
+❌ WRONG:
+Capabilities - Sampling,No
+Capabilities - Sampling,No,
+```
+
+**Prevention Rule:**
+```
+🔒 Capabilities - Tools     → always present, "None" if Capabilities,Tools = No
+🔒 Capabilities - Resources  → always present, "None" if Capabilities,Resources = No
+🔒 Capabilities - Prompts    → always present, "None" if Capabilities,Prompts = No
+🔒 Capabilities - Sampling   → always present, "None" if Capabilities,Sampling = No
+🔒 Non-Read-Only Tools       → always present, "None" if all read-only
+🔒 Attribute for ALL five    → always "detailed_info", never "No"
+```
+
+**Reference:** SKILL.md Learning 7, Gate 3 L7
 
 ---
 
@@ -760,7 +672,7 @@ io.modelcontextprotocol.sdk:mcp (Java SDK):
 ```
 
 **Applied to:**
-- CData Jira SM MCP: pom.xml `io.modelcontextprotocol.sdk:mcp:0.8.1` → 0.8.1 < 0.13.0 → Protocol 2024-11-05 = Yes
+- CData Jira SM MCP: pom.xml `io.modelcontextprotocol.sd < 0.13.0 → Protocol 2024-11-05 = Yes
 
 **Detection:**
 - Maven pom.xml → look for `<groupId>io.modelcontextprotocol.sdk</groupId>` + `<artifactId>mcp</artifactId>`
@@ -881,7 +793,7 @@ Option B — Use base name only (no prefix):
 | 2.7 | 2026-03-27 | Added Error Pattern #13: Protocol Version and Pricing blank/overwritten Status values |
 | 2.6 | 2026-03-27 | Added Error Pattern #12: Description newlines cause Protocol Version + Pricing to disappear — from Stadia Maps MCP research |
 | 2.5 | 2026-03-27 | Added Error Pattern #11: Missing Capability rows — all four always mandatory with "None" fallback |
-| 2.4 | 2026-03-27 | Added Error Pattern #10: Git Repo Version "UNVERIFIED" → use "NA" — from keeper/axiomhq/mcp-croit/mercadolibre research |
+| 2.4 | 2026-03-27 | Added Error Pattern #10: Git Repo Version "UNVERIFIED" → use "No" — from keeper/axiomhq/mcp-croit/mercadolibre research |
 | 2.3 | 2026-03-27 | Added Error Pattern #9: Description field corrupts Status column — from keeper/axiomhq/mcp-croit/mercadolibre research |
 | 2.2 | 2026-03-27 | Added Error Pattern #8: Git Repo Version — Wrong Source Priority (Medium) — from Runway API MCP research |
 | 2.1 | 2026-03-27 | Added Error Pattern #7: TLS Encryption vs Bearer Token Confusion (CRITICAL) — from Runway API MCP research |
@@ -890,9 +802,9 @@ Option B — Use base name only (no prefix):
 ---
 
 **Last Updated:** 2026-03-28
-**Skill Version:** Unified MCP Skill 3.0.1 (Self-Learning v4.0)
+**Skill Version:** Unified MCP Skill 3.0.2 (Self-Learning v4.0)
 **Status:** Active — Auto-referenced in research workflows
-**Critical Rules:** 14 error patterns documented in this file (Patterns #1-#4, #7-#17); authoritative rules in SKILL.md Steps 5.1-5.13 (L1-L10)
+**Critical Rules:** 15 error patterns documented in this file (Patterns #1-#4, #7-#17); authoritative rules in SKILL.md Steps 5.1-5.13 (L1-L10)
 
 
 ---
