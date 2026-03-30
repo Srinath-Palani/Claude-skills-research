@@ -26,7 +26,8 @@ When modifying ANY part of this file (format, rule, instruction, workflow step, 
 1. **Detect** — Step 0-M identifies 2+ servers in input
 2. **Parse & Classify** — Step M1: resolve all server names to GitHub URLs
 3. **Confirm** — show list to user, allow adjustment before proceeding
-4. **Dispatch** — Step M2: launch one Layer 1 Research Agent per server in parallel
+3.5. **Auth Pre-Scan** — quick-scan ALL servers for auth signals (README text via Detection Patterns, API Token, PAT, Bearer, env TOKEN/KEY/SECRET); README is a PRIMARY scan source for STDIO/GitHub repo servers; show summary table (AUTH REQUIRED / No auth needed per server); collect 3-option decisions before any dispatch; proceed immediately with no-auth servers
+4. **Dispatch** — Step M2: launch one Layer 1 Research Agent per server in parallel (only after all auth decisions collected from step 3.5)
 5. **Collect** — wait for all agents to return JSON results
 6. **Finalize** — Step M3: render individual CSVs + comparison table
 7. **Prompt** — offer: set up locally / view full report / re-sort / done
@@ -161,7 +162,7 @@ attributes.capabilities_detail.non_readonly → Non-Read-Only Tools,detailed_inf
 **Agent rules:**
 - Output JSON only — no explanations, no markdown
 - **ZERO-ASSUMPTION:** If data missing → return `"No"` and flag — never `"UNVERIFIED"`, never `"unknown"`, never guess
-- **Auth detection:** Apply SKILL.md Step 5.6.B implicit auth scan (headers / env / args) for all 3 input types. Set `auth_required: true` and populate `auth_types_detected` if any signal found. Apply Step 5.6.B signal patterns to all JSON config fields — `headers` for remote endpoints, `env`/`args` for STDIO/GitHub repos. OAuth 2.1 (Auth Code / Client Creds) = No for STDIO transport (see SKILL.md Step 5.6 STDIO exception).
+- **Auth detection:** Apply SKILL.md Step 5.6.B implicit auth scan (README text / headers / env / args) for all 3 input types. **README is a PRIMARY scan source** — apply Detection Patterns against full README text: API Token (`"api key"`, `"api_token"`, `"api_key"`); PAT (`"personal access"`, `"pat"`, `"personal token"`, `"personal access token"`, `"personal_access_token"`); Bearer (`"Authorization: Bearer"`); also scan for `"authentication"`, `"credentials"`, `"token required"`, `"requires auth"`. Additionally scan env/args/headers from config files. Set `auth_required: true` and populate `auth_types_detected` for every matched type — do NOT omit any. If user chose Option 3 (proceed without auth), apply the fallback rule: mark ALL pattern-matched auth types as Yes (evidence = detection pattern match). OAuth 2.1 (Auth Code / Client Creds) = No for STDIO transport (see SKILL.md Step 5.6 STDIO exception).
 - If repo inaccessible → set `errors: ["repo not found"]`, return partial data with UNVERIFIED fields
 - Do not call other agents or tools outside README + file search + endpoint probe
 - **Evidence required:** Every attribute value MUST include source in `"evidence"` array (file + line or URL)
@@ -212,13 +213,7 @@ What next?
 [ 4 ] Done
 ```
 
-**Auth prompt (post-summary):** If any server in the batch has `auth_required: true`, show before proceeding to setup:
-```
-⚠️  Authentication required for: [server names]
-    Detected: [auth_types_detected per server]
-    → Follow SKILL.md Step 5.6.A (3-option auth prompt) for each server before local setup.
-```
-Apply Step 5.6.A options (have key / create key / proceed without) per server individually.
+**Auth handling:** Auth decisions are collected during Step 3.5 (Auth Pre-Scan) BEFORE dispatch — not post-summary. See SKILL.md MULTI-SERVER AUTH PRE-SCAN block for the full workflow. If a server's `auth_required: true` and user chose Option 3, the Option 3 fallback rule applies (mark all pattern-matched auth types as Yes).
 
 ---
 
@@ -239,4 +234,4 @@ Apply Step 5.6.A options (have key / create key / proceed without) per server in
 ## Final Report Format
 
 > Use the Final Report Format box defined in SKILL.md for all batch research reports.
-> Display order: Comparison table → individual Key Findings → REPORT SUCCESSFULLY GENERATED box (see SKILL.md Final Report Output).
+> Display order: Comparison table → individual Attributes Information or Detected Information → REPORT SUCCESSFULLY GENERATED box (see SKILL.md Final Report Output).
