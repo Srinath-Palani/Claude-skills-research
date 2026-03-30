@@ -12,7 +12,7 @@ description: >
 
 unified-mcp-skill-new is a single skill that handles the full MCP server lifecycle — research, attribute documentation, local setup, error recovery, and project audit — with 5-thread parallel search and 4 mandatory gates before generating any report. All rules, formats, and learnings live in this file as the single source of truth.
 
-<!-- SKILL_VERSION: 3.0.2 | Updated: 2026-03-30 -->
+<!-- SKILL_VERSION: 3.0.3 | Updated: 2026-03-30 -->
 
 ---
 
@@ -210,21 +210,13 @@ NEVER:
 ALWAYS:
 □ Use <PLACEHOLDER> in all config examples
 □ Direct user to edit files directly for credentials
+□ Follow immutable pattern: show file path → user opens → user pastes → user restarts
 □ Validate paths before file write (no .., symlinks, system dirs)
 □ Apply curl timeouts: --connect-timeout 5 --max-time 10 --max-redirs 3
 □ Revoke + regenerate if credential accidentally appears in chat
 ```
 
 → Full rules, alert templates, blocklists, and path validation: detailed below.
-
----
-
-**CRITICAL RULES (No exceptions):**
-
-1. **Never ask for credentials in chat** — Absolute rule, all authentication via file editing only
-2. **Always use `<PLACEHOLDER>` values** in all config examples (never pre-fill credentials)
-3. **Direct user to edit files directly** — Credentials routed to filesystem only, never transmitted via chat
-4. **Immutable pattern:** Show file path → User opens → User pastes credentials → User restarts
 
 **If user accidentally pastes credential in chat:**
 ```
@@ -618,20 +610,31 @@ Skip local setup, proceed to attribute research.
 
 #### Resolution Order (always top-down — stop at first confirmed match)
 
-1. **STEP 1 (always) — Check MCP reference servers repo first** (`modelcontextprotocol/servers`): contains or links to hundreds of servers across all vendors. Always start here.
+1. **STEP 1 — The "Source of Truth" (Reference Repo)**
+   Target: `https://github.com/modelcontextprotocol/servers`
+   - Search the `src/` directory of the official MCP reference repository.
+   - **Why:** This is the curated registry of vetted MCP servers that conform to official protocol standards.
+   - Logic: Look for subdirectories matching `{name}` or `{vendor}`.
 
-2. **STEP 2 (always) — Search GitHub API** (if no match in Step 1):
-   `https://api.github.com/search/repositories?q={name}+mcp+server&sort=stars`
-   Also try patterns: `{vendor}-mcp-server`, `mcp-{vendor}`, `{vendor}-mcp`
-   - When a server lives inside a monorepo subdirectory, use the Git Trees API to locate it:
-     `https://api.github.com/repos/{owner}/{repo}/git/trees/{branch}?recursive=1`
-     then fetch files from that subdirectory path.
+2. **STEP 2 — The "Wide Net" (GitHub Topic Search)**
+   Target: GitHub API Repository Search via Topics.
+   - Primary query: `https://api.github.com/search/repositories?q=topic:mcp-server+{name}&sort=stars`
+   - Secondary query (if no results): broaden to `topic:mcp-server+{vendor}`
+   - **Why:** The `topic:mcp-server` filter excludes "Minecraft" and other non-AI "MCP" results — identifies repos explicitly built for this protocol.
 
-3. **STEP 3 (if vendor name matches) — Check known vendor monorepo table** (see below): go directly to the vendor's known org before any generic search.
+3. **STEP 3 — The "Deep Dive" (Monorepo Extraction)**
+   Target: Git Trees API for subdirectory discovery.
+   - If a repo found in Step 2 is a large vendor monorepo (e.g., `awslabs/mcp`), do NOT assume the root is the server.
+   - Request: `https://api.github.com/repos/{owner}/{repo}/git/trees/{branch}?recursive=1`
+   - Logic: Scan the file list for paths containing `package.json` or `pyproject.toml` AND the string `mcp` (e.g., `src/google-maps-mcp-server/`).
+   - Validation: Fetch `README.md` from that subdirectory to confirm it matches the target server.
 
-4. Search vendor documentation for a hosted remote endpoint.
+4. **STEP 4 — The "Last Resort" (Keyword Pattern Matching)**
+   Target: Standard GitHub Search with naming conventions.
+   - Query: `https://api.github.com/search/repositories?q={vendor}-mcp-server+OR+mcp-{vendor}`
+   - **Why:** Use only if Step 2 fails — some developers omit the `topic` tag but follow standard naming conventions.
 
-5. If both GitHub repo and remote endpoint found, ask:
+5. If both GitHub repo and remote endpoint found, ask: g
    ```
    [ 1 ] Use remote endpoint
    [ 2 ] Use GitHub repository
@@ -649,21 +652,28 @@ Skip local setup, proceed to attribute research.
 
 **Vendor-Specific — Only check when server name matches the vendor:**
 
-| Vendor | GitHub Org | Repo Pattern |
-|--------|-----------|--------------|
+| Vendor | GitHub Org | Official Repo / Remote URL |
+|--------|-----------|---------------------------|
+| Salesforce | `advancedcommunities` | `advancedcommunities/salesforce-mcp-server` (or `mcp.salesforce.com`) |
+| Google AI (Gemini) | `googleapis` | `googleapis/genai-toolbox` |
+| Hugging Face | `mcp` (Organization) | `huggingface.co/mcp` (or `mcp/huggingface/hf-mcp-server`) |
+| Zapier | `zapier` | `mcp.zapier.com` (6,000+ app integrations via one remote endpoint) |
+| Notion | `makenotion` | `makenotion/notion-mcp-server` (or `mcp.notion.com`) |
+| Box | `box` | `box/mcp-server-box-remote` (or `mcp.box.com`) |
+| Vercel | `vercel-labs` | `vercel-labs/mcp-for-next.js` (or `mcp.vercel.com`) |
 | Microsoft / Playwright | `microsoft` | `microsoft/playwright-mcp` |
 | Supabase | `supabase` | `supabase/mcp-server-supabase` |
-| Atlassian | `atlassian` | `atlassian/mcp-atlassian` |
+| Atlassian (Jira/Confluence) | `atlassian` | `atlassian/mcp-atlassian` |
 | Cloudflare | `cloudflare` | `cloudflare/mcp-server-cloudflare` |
 | GitHub | `github` | `github/github-mcp-server` |
 | AWS | `awslabs` | `awslabs/mcp` (monorepo: `src/{service}-mcp-server/`) |
 | Shopify | `Shopify` | `Shopify/shopify-mcp` |
 | Sentry | `getsentry` | `getsentry/sentry-mcp` |
 | Linear | `linear` | `linear/linear-mcp` |
-| Brave | `brave` | Reference in `modelcontextprotocol/servers` |
 | Stripe | `stripe` | `stripe/agent-toolkit` |
 | Datadog | `DataDog` | `DataDog/datadog-mcp-server` |
 | JetBrains | `JetBrains` | `JetBrains/mcp-jetbrains` |
+| Brave | `brave` | Referenced in `modelcontextprotocol/servers` |
 
 #### If Server Not Found
 ```
@@ -671,8 +681,9 @@ Could not find an MCP server matching "[server name]".
 
 Searched:
 - STEP 1: MCP reference repo (github.com/modelcontextprotocol/servers)
-- STEP 2: GitHub API search (github.com/*/[name]-mcp-server, mcp-[name], [name]-mcp)
-- STEP 3: Known vendor orgs (awslabs, cloudflare, microsoft, supabase, linear, JetBrains, atlassian, brave)
+- STEP 2: GitHub topic search (topic:mcp-server+[name], topic:mcp-server+[vendor])
+- STEP 3: Monorepo deep dive via Git Trees API (subdirectory discovery)
+- STEP 4: Keyword pattern search ([vendor]-mcp-server, mcp-[vendor])
 - Vendor docs: [name].com, api.[name].com
 
 [ 1 ] Try a different name or URL
