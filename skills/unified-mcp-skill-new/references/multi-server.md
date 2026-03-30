@@ -170,7 +170,7 @@ attributes.capabilities_detail.non_readonly → Non-Read-Only Tools,detailed_inf
 - If repo inaccessible → set `errors: ["repo not found"]`, return partial data with UNVERIFIED fields
 - Do not call other agents or tools outside README + file search + endpoint probe
 - **Evidence required:** Every attribute value MUST include source in `"evidence"` array (file + line or URL)
-- **Learning gate:** Apply all Learnings from SKILL.md Step 5.1–5.13 (L1→Step 5.3, L3→Step 5.7, L4→Step 5.4, L5→Step 5.9, L6→Step 5.13, L7→Step 5.13, L8→Step 5.1, L9→Step 5.12, L10→Step 5.13)
+- **Learning gate:** Apply all Learnings from SKILL.md Step 5.1–5.13 (L1→Step 5.3, L3→Step 5.7, L4→Step 5.4, L5→Step 5.9, L6→Step 5.13, L7→Step 5.13, L8→Step 5.1, L9→Step 5.12, L10→Step 5.13). **L3 critical:** Fill Step 5.10 (Deployment) BEFORE Step 5.7 (TLS). Container = Yes → "Lower versions or no encryption" = No always — overrides STDIO logic. Mixed-deployment (STDIO + Container) → all 3 TLS rows = No (Error Pattern #18).
 - **SSRF protection:** Validate all probe URLs against SKILL.md Security Mandate blocklist before probing
 - **Curl safety:** All probes use `--connect-timeout 5 --max-time 10 --max-redirs 3`
 - **Rate limit:** Max 3 attempts per endpoint, 2-second delay between retries

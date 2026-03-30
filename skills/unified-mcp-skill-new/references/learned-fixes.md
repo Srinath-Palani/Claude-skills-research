@@ -4,7 +4,7 @@
 
 > These patterns were identified from real MCP research sessions and documented to prevent future errors in attribute research.
 >
-> **Error Index:** #1-#4 (Buildkite/Hyperbolic, 2026-03-26), #7-#8 (Runway, 2026-03-27), #9-#11 (CSV format/capability rows, 2026-03-27), #12-#13 (Stadia Maps — description newlines + Protocol Version/Pricing blank Status, 2026-03-27), #14 (Java SDK protocol version mapping — jira-service-management-mcp-server-by-cdata, 2026-03-27), #15-#16 (SAP BusinessObjects BI — capabilities from source + placeholder tool names, 2026-03-27), #17 (ThingsBoard — invented domain-specific category titles, 2026-03-28)
+> **Error Index:** #1-#4 (Buildkite/Hyperbolic, 2026-03-26), #7-#8 (Runway, 2026-03-27), #9-#11 (CSV format/capability rows, 2026-03-27), #12-#13 (Stadia Maps — description newlines + Protocol Version/Pricing blank Status, 2026-03-27), #14 (Java SDK protocol version mapping — jira-service-management-mcp-server-by-cdata, 2026-03-27), #15-#16 (SAP BusinessObjects BI — capabilities from source + placeholder tool names, 2026-03-27), #17 (ThingsBoard — invented domain-specific category titles, 2026-03-28), #18 (AWS API MCP Server — mixed-deployment TLS rule not applied: STDIO + Container = Lower/None = No, 2026-03-30)
 > Patterns #5-#6 are documented as SKILL.md Learnings 5-6 (no separate case study needed).
 > Authoritative rules for all patterns live in SKILL.md Learnings 1-10 (L1–L10, embedded in Steps 5.1–5.13).
 
@@ -784,10 +784,78 @@ Option B — Use base name only (no prefix):
 
 ---
 
+## Error Pattern #18: Mixed-Deployment TLS Rule Not Applied (STDIO Primary + Container)
+
+**Date:** 2026-03-30 | **Server:** AWS API MCP Server | **Severity:** HIGH
+
+**Signals (What Went Wrong)**
+- Server has STDIO as primary transport (default) AND Container deployment (Dockerfile + AWS Marketplace)
+- `Data Protection,Lower versions or no encryption` marked `Yes` — WRONG
+- TLS 1.3 = No, TLS 1.2 = No were correctly marked No
+- But "Lower versions or no encryption" = Yes was filled based on STDIO logic ("no native TLS on local 127.0.0.1")
+- Container = Yes was correctly identified in the Deployment Approach section but its TLS implication was never applied
+
+**Root Cause:**
+The Step 5.7 (Data Protection) section was filled before propagating the Container = Yes result from Step 5.10. The STDIO logic ("no TLS on local 127.0.0.1") was used to set Lower/None = Yes. But SKILL.md Step 5.7 L3 rule is explicit: **Container = Yes → "Lower versions or no encryption" = No always (no exceptions)**.
+
+**What the rules say (SKILL.md Step 5.7 L3, line 1112 + 1144–1148):**
+```
+| Container deployment = Yes | Lower/None = No always | Containers use proper TLS termination |
+Container deployment = Yes → "Lower versions or no encryption" = No (no exceptions)
+```
+
+**The Correct Logic for Mixed-Deployment Servers:**
+```
+Server has: STDIO (default) + StreamableHttp + Container (Dockerfile + AWS Marketplace)
+
+TLS 1.3              = No  (no endpoint probe confirmed TLS 1.3)
+TLS 1.2              = No  (no endpoint probe confirmed TLS 1.2)
+Lower/no encryption  = No  ← Container = Yes OVERRIDES the STDIO logic
+
+❌ WRONG LOGIC: "STDIO default + local 127.0.0.1 → no native TLS → Lower/None = Yes"
+✅ CORRECT LOGIC: Check Deployment FIRST. Container = Yes → Lower/None = No regardless of primary transport.
+```
+
+**Fix (Verification Checklist — Step 5.7 MUST include):**
+```
+BEFORE marking "Lower versions or no encryption":
+
+□ Step 1: Check Deployment Approach result (Step 5.10)
+   - Container = Yes? → Lower/None = No — STOP, do not apply STDIO logic to this field
+   - STDIO only (no Container)? → Lower/None = No (STDIO = no network layer)
+   - Remote only (HTTP/SSE or StreamableHttp, no Container)? → probe endpoint, mark per probe result
+
+□ Step 2: Apply Container rule FIRST — it overrides transport-based logic
+□ Step 3: All three TLS rows = No is a VALID state for STDIO + Container servers
+```
+
+**Applied Fix:**
+```
+❌ WRONG (original CSV):
+Data Protection,Lower versions or no encryption,Yes
+
+✅ CORRECT (fixed CSV):
+Data Protection,Lower versions or no encryption,No
+Evidence: Container = Yes (Dockerfile + docker-healthcheck.sh + AWS Marketplace container) → Lower/None = No always per Step 5.7 L3
+```
+
+**Prevention Rule:**
+```
+🔒 Fill Step 5.10 (Deployment Approach) BEFORE filling Step 5.7 (Data Protection)
+🔒 Container = Yes → Lower/None = No — this overrides all transport-based TLS logic
+🔒 "All three TLS rows = No" is valid for STDIO + Container mixed-deployment servers
+🔒 STDIO primary transport does NOT make Lower/None = Yes when Container is also Yes
+```
+
+**Reference:** SKILL.md Step 5.7 L3, Step 5.10 TLS implication note
+
+---
+
 ## Version History
 
 | Version | Date | Changes |
 |---------|------|---------|
+| 4.4 | 2026-03-30 | Added Error Pattern #18: Mixed-Deployment TLS rule not applied (STDIO + Container) — AWS API MCP Server. Added mixed-deployment clarification to SKILL.md Step 5.7. SKILL.md v3.0.5. |
 | 4.3 | 2026-03-30 | Added RULE 5 (Default Model Required): skill must run on Default model (Sonnet 4.6). Added model enforcement block at top of Step 0 with STOP + user instruction if non-default model detected. SKILL.md v3.0.5. |
 | 4.2 | 2026-03-30 | Added Container deployment TLS rule: Container = Yes → "Lower versions or no encryption" = No always. Updated Step 5.7 table, L3 Independence Rule table + rules, Step 5.10 TLS implication note, L3 checklist item, memory/rules-reference.md TLS checklist. SKILL.md v3.0.4. |
 | 4.1 | 2026-03-30 | Updated SKILL.md Step 4 Resolution Order: 4-step named system (Source of Truth → Wide Net → Deep Dive → Last Resort). Security Mandate deduplicated (CRITICAL RULES block removed, immutable pattern folded into checklist). Known Vendor Sources expanded with 7 new vendors (Salesforce, Google AI, Hugging Face, Zapier, Notion, Box, Vercel). multi-server.md Step M1 updated to reference new 4-step resolution order. |
@@ -808,7 +876,7 @@ Option B — Use base name only (no prefix):
 **Last Updated:** 2026-03-30
 **Skill Version:** Unified MCP Skill 3.0.5 (Self-Learning v4.3)
 **Status:** Active — Auto-referenced in research workflows
-**Critical Rules:** 15 error patterns documented in this file (Patterns #1-#4, #7-#17); authoritative rules in SKILL.md Steps 5.1-5.13 (L1-L10)
+**Critical Rules:** 16 error patterns documented in this file (Patterns #1-#4, #7-#18); authoritative rules in SKILL.md Steps 5.1-5.13 (L1-L10)
 
 
 ---

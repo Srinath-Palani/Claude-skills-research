@@ -125,7 +125,7 @@ MANDATORY LEARNING WALKTHROUGH — confirm each was applied (full rules in refer
 
 □ L1  Framework Priority      → Step 5.3  Was framework/SDK version extracted? Numeric comparison done?
 □ L2  Endpoint Verification   → Step 2    GET + POST tests run? Response format recorded?
-□ L3  TLS vs Bearer           → Step 5.7  Transport identified FIRST? STDIO → all TLS = No confirmed? Container = Yes → Lower/None = No confirmed?
+□ L3  TLS vs Bearer           → Step 5.7  Transport identified FIRST? STDIO → all TLS = No confirmed? Container = Yes → Lower/None = No confirmed? Mixed-deployment (STDIO + Container) → all 3 TLS rows = No confirmed (Lower/None must NOT be Yes)?
 □ L4  Pricing                 → Step 5.4  LICENSE file checked? API key NOT confused with pricing?
 □ L5  Tools Ops               → Step 5.9  All tool names parsed? HIGHEST level only marked?
 □ L6  Taxonomy Categories     → Step 5.13 Only standard taxonomy titles used? Zero invented categories?
@@ -1131,6 +1131,7 @@ curl -v --tlsv1.2 --tls-max 1.2 https://<hostname>
 ```
 **Rule:** Use Method 1 first. If it fails or returns no result → run Method 2. If one TLS version check fails → run the other version check before marking as unverifiable.
 - For STDIO-only servers: mark all TLS rows as No, note "local transport — no network layer"
+- For mixed-deployment servers (STDIO + Container, e.g. STDIO default + Docker/AgentCore): STDIO → TLS 1.3 = No, TLS 1.2 = No; Container = Yes → "Lower versions or no encryption" = No. All three TLS rows = No. Do NOT mark "Lower versions or no encryption" = Yes just because STDIO is the primary transport — the Container rule overrides.
 
 #### 🔒 L3 — TLS vs Bearer Independence Rule
 
@@ -1142,10 +1143,12 @@ Bearer Token = authentication delivery method. TLS = transport encryption. These
 | HTTP/SSE (remote) | Yes | Network transmission requires TLS |
 | StreamableHttp (remote) | Yes | Network transmission requires TLS |
 | Container deployment = Yes | Lower/None = No always | Containers are deployed with proper TLS termination (TLS 1.2 or 1.3); lower/no encryption is not applicable |
+| Mixed: STDIO + Container | TLS 1.3 = No, TLS 1.2 = No, Lower/None = No | STDIO → rows 1 & 2 = No; Container = Yes → row 3 = No; all three TLS rows = No is valid |
 
 **Rules:**
 - STDIO transport → ALL TLS fields = No (no exceptions)
 - Container deployment = Yes → "Lower versions or no encryption" = No (no exceptions)
+- **Mixed-deployment (STDIO + Container):** Fill Step 5.10 (Deployment) BEFORE Step 5.7 (TLS). Container = Yes overrides STDIO-based logic for the Lower/None field. All three TLS rows = No is a valid and correct state.
 - Bearer Token present does NOT imply TLS present
 - TLS decision is based ONLY on transport protocol / deployment approach, never on authentication
 - Check transport AND deployment FIRST, then determine TLS independently
@@ -1155,6 +1158,7 @@ Bearer Token = authentication delivery method. TLS = transport encryption. These
 - HTTP endpoint with no auth → TLS = Yes (network needs encryption regardless)
 - HTTP endpoint with Bearer Token → TLS = Yes AND Bearer = Yes (both, independently)
 - Container deployment → "Lower versions or no encryption" = No (proper TLS termination assumed)
+- STDIO (default) + Container (Dockerfile/Marketplace) → TLS 1.3 = No, TLS 1.2 = No, Lower/None = No (all three No — do NOT set Lower/None = Yes because STDIO is primary)
 
 ---
 
