@@ -367,7 +367,7 @@ Sequential research misses interdependencies. Endpoint found in Thread 3 reveals
 **⛔ LOCKED — Do not modify this step without explicit user permission.**
 
 #### Thread 1: GitHub Repository Research *(always run — find repo if not given)*
-→ Feeds: **Step 5.1** (Name, Description, Category, GitHub Repo) · **Step 5.2** (Official/Community) · **Step 5.12** (Capabilities source) · **Step 5.13** (tool names)
+→ Feeds: **Step 5.1** (Name, Description, Category, GitHub Repo) · **Step 5.2** (Official/Community) · **Step 5.6** (Authentication — README Detection Patterns) · **Step 5.12** (Capabilities source) · **Step 5.13** (tool names)
 - If only endpoint given → search for GitHub repo first, then read it
 - Read ENTIRE README (all sections)
 - Search: endpoint, https://, remote, hosted, cloud
@@ -381,6 +381,13 @@ Sequential research misses interdependencies. Endpoint found in Thread 3 reveals
   [ 1 ] Continue anyway (results marked as potentially stale)
   [ 2 ] Cancel research
   ```
+- **Auth scan (README — applies to ALL input types including GitHub repo / STDIO):**
+  - Apply Detection Patterns against full README text:
+    - API Token: `"api key"`, `"api_token"`, `"api_key"` in README text
+    - PAT: `"personal access"`, `"pat"`, `"personal token"`, `"personal access token"`, `"personal_access_token"` in README text
+    - Bearer Token: `"Authorization: Bearer"` in README text
+  - Also scan README sections for: `"authentication"`, `"credentials"`, `"token required"`, `"requires auth"`
+  - If ANY pattern matched → feed Step 5.6; record README section/line in Evidence Ledger; trigger Step 5.6.A **HARD BLOCK** prompt (MUST NOT continue without user response)
 
 #### Thread 2: Repository File Search *(always run)*
 → Feeds: **Step 5.6** (Authentication — server.json, .env.example, config files) · **Step 5.6.B** (Implicit Auth Detection — env / args / headers) · **Built-in Security Controls** (see below)
@@ -392,7 +399,8 @@ Sequential research misses interdependencies. Endpoint found in Thread 3 reveals
   - Scan `env` field names for: `TOKEN`, `API_KEY`, `SECRET`, `BEARER`, `AUTH`, `CREDENTIAL`, `ACCESS_KEY`, `PASSWORD`
   - Scan `args` flags for: `--token`, `--api-key`, `--secret`, `--auth`, `--bearer`, `--pat`, `--access-token`
   - Scan `headers` block in any JSON config for: `Authorization: Bearer`, `Authorization: token`, `X-API-Key`, `X-Auth-Token`, `Authorization: Basic`
-  - If ANY match found → mark applicable auth attributes Yes in Step 5.6; record field + file in Evidence Ledger; trigger Step 5.6.A auth prompt
+  - Apply Detection Patterns: API Token (`"api key"`, `"api_token"`, `"api_key"` in combined source text); PAT (`"personal access"`, `"pat"`, `"personal token"` in doc_methods or `"personal access token"`, `"personal_access_token"` in combined text) — mark all matched types Yes
+  - If ANY env/args/headers/pattern match found → mark applicable auth attributes Yes in Step 5.6; record field + file in Evidence Ledger; trigger Step 5.6.A **HARD BLOCK** prompt (MUST NOT continue without user response)
 
 #### Built-in Security Controls (Thread 2 — Secondary Scan)
 These do not change any CSV attribute values, but must be documented as risk context in the research notes.
@@ -435,7 +443,8 @@ If none found → note: "No built-in write gates or response sanitization detect
   - Check response headers for: `WWW-Authenticate`, `X-API-Key`, `Authorization`
   - Check endpoint JSON config `headers` block for: `Authorization: Bearer`, `Authorization: token`, `X-API-Key`, `X-Auth-Token`, `Authorization: Basic`
   - 401 / 403 response → confirms auth required; inspect `WWW-Authenticate` to identify auth type
-  - If ANY header signal found → mark applicable auth attributes Yes in Step 5.6; record header field + endpoint in Evidence Ledger; trigger Step 5.6.A auth prompt
+  - Apply Detection Patterns: API Token (`"api key"`, `"api_token"`, `"api_key"` in combined source text); PAT (`"personal access"`, `"pat"`, `"personal token"` in doc_methods or `"personal access token"`, `"personal_access_token"` in combined text) — mark all matched types Yes
+  - If ANY header/pattern signal found → mark applicable auth attributes Yes in Step 5.6; record header field + endpoint in Evidence Ledger; trigger Step 5.6.A **HARD BLOCK** prompt (MUST NOT continue without user response)
 
 #### Thread 4: Dependency Extraction
 → Feeds: **Step 5.3** (Protocol Version — apply L1 framework priority mapping from Step 1)
@@ -857,6 +866,7 @@ AUTHENTICATION VERIFICATION CHECKLIST:
 □ 3: Search .env.example for credential fields
 □ 4: Search vendor docs for API access / token setup page
 □ 5: If ANY credential found → mark ALL applicable auth types as Yes
+□ 5a: Apply Detection Patterns — API Token: `"api key"`, `"api_token"`, `"api_key"` in combined text; PAT: `"personal access"`, `"pat"`, `"personal token"` in doc_methods or `"personal access token"`, `"personal_access_token"` in combined text — mark every matched type Yes
 □ 6: Confirm all auth evidence is logged in Evidence Ledger (source file + exact quote)
 ```
 
@@ -877,6 +887,24 @@ AUTHENTICATION VERIFICATION CHECKLIST:
 #### 🔒 Authentication Detection Rules
 
 **Core Principle:** Bearer Token is a DELIVERY METHOD, not a credential type. Multiple auth fields can be Yes simultaneously.
+
+**API Token — Detection Signal Patterns:**
+```
+API Token = Yes if ANY of the following match in combined source text:
+  "api key" in combined_text or
+  "api_token" in combined_text or
+  "api_key" in combined_text
+```
+
+**Personal Access Token (PAT) — Detection Signal Patterns:**
+```
+PAT = Yes if ANY of the following match:
+  "personal access" in doc_methods_lower or
+  "pat" in doc_methods_lower or
+  "personal token" in doc_methods_lower or
+  "personal access token" in combined_text or
+  "personal_access_token" in combined_text
+```
 
 ```
 Visual Relationship:
@@ -905,10 +933,23 @@ API Key (credential type — app identification, NOT user-specific)
 
 #### Detection Patterns (from source code)
 ```
-Bearer Token = Yes if: "Authorization: Bearer" in source/docs
-PAT = Yes if: "personal access token" OR "PAT" explicitly in docs
-API Token = Yes if: "api key" OR "api_token" OR "api_key" in source/docs
+Bearer Token = Yes if:
+  "Authorization: Bearer" in source/docs
+
+API Token = Yes if:
+  "api key" in combined_text or
+  "api_token" in combined_text or
+  "api_key" in combined_text
+
+Personal Access Token (PAT) = Yes if:
+  "personal access" in doc_methods_lower or
+  "pat" in doc_methods_lower or
+  "personal token" in doc_methods_lower or
+  "personal access token" in combined_text or
+  "personal_access_token" in combined_text
 ```
+
+**This rule applies during both single-server (Step 5.6) and multi-server (Layer 1 agents) research.**
 
 ---
 
@@ -920,11 +961,14 @@ API Token = Yes if: "api key" OR "api_token" OR "api_key" in source/docs
 
 **IMMEDIATE — no exceptions:** As soon as ANY auth signal is found (API key, Bearer token, PAT, secret key, API token, OAuth access token, JWT token) during Steps 0.5 Thread 2/3, Step 5.6, or Step 5.6.B — PAUSE research and show the 3-option prompt. Do NOT continue to the next research step without user response.
 
+**🔴 HARD BLOCK:** When a detection pattern match triggers (API Token pattern, PAT pattern, Bearer Token signal, or any env/args/headers signal from Step 5.6.B), the skill MUST present the 3-option prompt and MUST NOT proceed with any further research steps until the user selects an option. This applies in both single-server and multi-server (parallel) research modes.
+
 **When auth is required, present this 3-option prompt to the user:**
 
 ```
 Authentication required for this MCP server.
-Detected: [list detected types — e.g. API Token / Bearer Token / PAT / OAuth Token / JWT]
+Detected: [list ALL detected types — e.g. API Token / Bearer Token / PAT / OAuth Token / JWT]
+         (List every type that matched a detection pattern — do NOT omit any)
 
 How do you want to proceed?
 
@@ -932,6 +976,12 @@ How do you want to proceed?
 [ 2 ] I don't have one — show me how to create it
 [ 3 ] Proceed without authentication (manual verification only)
 ```
+
+**Multiple auth types detected — marking rules:**
+- If BOTH API Token and PAT (and/or other types) are detected → list ALL of them in the Detected line above.
+- If user selects **Option 1** and provides/confirms credentials: mark only the auth types the user has confirmed as `Yes`. Mark unconfirmed types based on source evidence only.
+- If user selects **Option 3** (proceed without): apply the Detection Patterns fallback — mark ALL types that matched a signal pattern as `Yes` (evidence = detection pattern match). Do NOT mark only a subset just because the user has no key.
+- **Never invent auth types** — only list and mark what detection patterns confirmed from source.
 
 #### Option 1 — User Has Key/Token
 - **NEVER ask for the actual key, secret, or token value in chat** (Security Mandate — absolute rule, no exceptions)
@@ -954,6 +1004,7 @@ How do you want to proceed?
       Proceeding with manual verification only. Connection tests may not succeed.
   ```
 - Continue research and attribute filling with manual verification; note auth status in Evidence Ledger
+- **Fallback Rule:** Apply the implicit auth detection rule — if ANY field matches a signal pattern (Detection Patterns above + Step 5.6.B signal patterns) → mark ALL applicable authentication attributes as `Yes`. Evidence = detection pattern match from source. Do NOT leave auth attributes as `No` just because the user has no key.
 
 ---
 
@@ -963,14 +1014,14 @@ How do you want to proceed?
 
 **Applies to ALL 3 input types:** Remote Endpoint URL · GitHub Repository URL · Server Name
 
-Even when the README or vendor source URL does not explicitly document authentication, scan the official source JSON config for auth signals across all three field locations:
+Scan ALL available sources for auth signals — README, JSON config files, env vars, args, and response headers. **README is a PRIMARY scan target:** auth requirements are frequently documented in README even for STDIO/GitHub repo servers. Scan across all three field locations:
 
 **Scan targets per input type:**
 
 | Input Type | Where to Scan |
 |------------|--------------|
 | Remote Endpoint URL | JSON config `headers` block (e.g. `mcp.json`, `settings.json`, `server.json`) |
-| GitHub Repository URL | `env` vars in `server.json` / `.env.example` / `config.json`; `args` fields in `mcp.json` |
+| GitHub Repository URL | README (Detection Patterns — API Token, PAT, Bearer); `env` vars in `server.json` / `.env.example` / `config.json`; `args` fields in `mcp.json` |
 | Server Name | All of the above — resolve to GitHub URL first, then apply same scans |
 
 #### Signal Patterns by Field Type
@@ -1487,6 +1538,41 @@ Overall: PASS (review 1 WARN item before commit)
 **If 1 server detected** → skip this section, continue with standard workflow from Step 0.
 **If 2+ servers detected** → load and follow `references/multi-server.md`.
 
+**🔴 MULTI-SERVER AUTH PRE-SCAN (MANDATORY before dispatching any Layer 1 agents):**
+
+Before starting parallel research for batch/multi-server mode, run a quick pre-scan across ALL servers to detect auth requirements:
+
+```
+For each server in the batch:
+  1. Quick-scan README / GitHub repo / server.json for auth signal patterns
+     (API Token patterns, PAT patterns, Bearer Token, env TOKEN/KEY/SECRET fields)
+  2. Classify as:
+     - AUTH REQUIRED   → at least one signal pattern matched
+     - NO AUTH NEEDED  → no signal patterns found
+```
+
+Display this summary to the user BEFORE research starts:
+
+```
+Multi-Server Auth Pre-Scan Results:
+┌─────────────────────────┬──────────────────────────────────────┐
+│ Server                  │ Auth Status                          │
+├─────────────────────────┼──────────────────────────────────────┤
+│ <server-name>           │ 🔑 AUTH REQUIRED (API Token / PAT)  │
+│ <server-name>           │ ✅ No auth needed                    │
+│ ...                     │ ...                                  │
+└─────────────────────────┴──────────────────────────────────────┘
+
+Servers requiring auth — how do you want to proceed for each?
+  [ 1 ] I have the key/token   [ 2 ] Help me create one   [ 3 ] Proceed without auth
+```
+
+**Batch execution rules:**
+- **Do NOT wait** for API key input before starting research on servers marked "No auth needed" — begin those immediately in parallel.
+- For servers marked "AUTH REQUIRED": show the 3-option prompt PER SERVER and collect responses.
+- If user selects Option 3 for an auth-required server → apply the Detection Patterns fallback (mark all detected auth attributes Yes, proceed with manual verification).
+- After collecting all auth decisions → dispatch all Layer 1 agents in parallel (auth-handled and no-auth servers together).
+
 ---
 
 ## Integration Rules
@@ -1718,7 +1804,7 @@ Both are marked Yes because both are real hosting locations. SaaS Vendor takes p
 
 **Display order (MANDATORY):**
 1. Research Summary table (all attributes — shown first)
-2. Key Findings (notable evidence notes — shown second)
+2. Attributes Information or Detected Information (notable evidence notes — shown second)
 3. Success box (shown last, below the summary):
 
 ```
@@ -1832,7 +1918,7 @@ If endpoint returns vendor API errors (not JSON-RPC) → Mark as: Endpoint URL =
 ## Authentication Detection Rules
 
 > Canonical rules, co-occurrence table, and detection patterns are defined in **Step 5.6**.
-> (Authentication Verification Checklist, visual relationship diagram, detection table, Key Rules 1–5, and Detection Patterns from source code.)
+> (Authentication Verification Checklist, visual relationship diagram, detection table, Key Rules 1–4, Detection Patterns — API Token + PAT signal patterns, and 3-option prompt workflow with HARD BLOCK enforcement.)
 > Step 5.6 is the single source of truth for authentication detection — rules are not duplicated here.
 
 ---
