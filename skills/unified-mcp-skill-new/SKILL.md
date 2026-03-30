@@ -12,7 +12,7 @@ description: >
 
 unified-mcp-skill-new is a single skill that handles the full MCP server lifecycle — research, attribute documentation, local setup, error recovery, and project audit — with 5-thread parallel search and 4 mandatory gates before generating any report. All rules, formats, and learnings live in this file as the single source of truth.
 
-<!-- SKILL_VERSION: 3.0.3 | Updated: 2026-03-30 -->
+<!-- SKILL_VERSION: 3.0.4 | Updated: 2026-03-30 -->
 
 ---
 
@@ -125,7 +125,7 @@ MANDATORY LEARNING WALKTHROUGH — confirm each was applied (full rules in refer
 
 □ L1  Framework Priority      → Step 5.3  Was framework/SDK version extracted? Numeric comparison done?
 □ L2  Endpoint Verification   → Step 2    GET + POST tests run? Response format recorded?
-□ L3  TLS vs Bearer           → Step 5.7  Transport identified FIRST? STDIO → all TLS = No confirmed?
+□ L3  TLS vs Bearer           → Step 5.7  Transport identified FIRST? STDIO → all TLS = No confirmed? Container = Yes → Lower/None = No confirmed?
 □ L4  Pricing                 → Step 5.4  LICENSE file checked? API key NOT confused with pricing?
 □ L5  Tools Ops               → Step 5.9  All tool names parsed? HIGHEST level only marked?
 □ L6  Taxonomy Categories     → Step 5.13 Only standard taxonomy titles used? Zero invented categories?
@@ -175,7 +175,7 @@ Step 5   Attribute Filling    → Fill CSV top-to-bottom, one pass per section (
   5.4    Pricing              → (1) Free / (2) Paid — mutually exclusive, L4 check
   5.5    Hosting Provider     → (1) SaaS Vendor  (2) 3rd Party SaaS  (3) GitHub  (4) GitLab  (5) Bitbucket  (6) SourceHut/Gitea/Gogs
   5.6    Authentication       → (1) OAuth 2.1 Auth Code  (2) OAuth 2.1 Client Creds  (3) Bearer Token  (4) PAT  (5) API Token
-  5.7    Data Protection      → (1) TLS 1.3  (2) TLS 1.2  (3) Lower/None — STDIO → all No; remote → probe result
+  5.7    Data Protection      → (1) TLS 1.3  (2) TLS 1.2  (3) Lower/None — STDIO → all No; Container = Yes → Lower/None = No; remote → probe result
   5.8    Transport Protocol   → (1) STDIO  (2) HTTP/SSE  (3) StreamableHttp  (4) FastAPI — mark all that apply
   5.9    Tools Operations     → (1) Read-only  (2) Read+Update  (3) Read+Update+Delete — HIGHEST level only
   5.10   Deployment Approach  → (1) Local  (2) Container  (3) Remote — mark all that apply
@@ -1084,7 +1084,7 @@ This rule applies during both single-server (Step 5.6) and multi-server (Layer 1
 |---|-----------|------|
 | 1 | TLS 1.3 | Yes only if remote endpoint confirmed TLS 1.3 via probe |
 | 2 | TLS 1.2 | Yes only if remote endpoint confirmed TLS 1.2 via probe |
-| 3 | Lower versions or no encryption | Yes if STDIO (no network layer) OR probe shows no TLS |
+| 3 | Lower versions or no encryption | No if Container deployment = Yes (containers use proper TLS termination); No if STDIO (no network layer); Yes only if probe confirms no TLS on a remote endpoint |
 
 **Probe tools:**
 
@@ -1111,22 +1111,25 @@ curl -v --tlsv1.2 --tls-max 1.2 https://<hostname>
 
 Bearer Token = authentication delivery method. TLS = transport encryption. These are completely independent layers.
 
-| Transport | TLS Apply? | Reason |
-|-----------|-----------|--------|
+| Transport / Deployment | TLS Apply? | Reason |
+|------------------------|-----------|--------|
 | STDIO (local) | Always No | stdin/stdout on local machine, no network |
 | HTTP/SSE (remote) | Yes | Network transmission requires TLS |
 | StreamableHttp (remote) | Yes | Network transmission requires TLS |
+| Container deployment = Yes | Lower/None = No always | Containers are deployed with proper TLS termination (TLS 1.2 or 1.3); lower/no encryption is not applicable |
 
 **Rules:**
 - STDIO transport → ALL TLS fields = No (no exceptions)
+- Container deployment = Yes → "Lower versions or no encryption" = No (no exceptions)
 - Bearer Token present does NOT imply TLS present
-- TLS decision is based ONLY on transport protocol, never on authentication
-- Check transport FIRST, then determine TLS independently
+- TLS decision is based ONLY on transport protocol / deployment approach, never on authentication
+- Check transport AND deployment FIRST, then determine TLS independently
 
 **Examples:**
 - STDIO server with Bearer Token → TLS = No (auth is local process, no network)
 - HTTP endpoint with no auth → TLS = Yes (network needs encryption regardless)
 - HTTP endpoint with Bearer Token → TLS = Yes AND Bearer = Yes (both, independently)
+- Container deployment → "Lower versions or no encryption" = No (proper TLS termination assumed)
 
 ---
 
@@ -1214,9 +1217,14 @@ DEPLOYMENT APPROACH VERIFICATION CHECKLIST:
 | 2 | Container | Dockerfile, docker-compose, or OCI image reference found |
 | 3 | Remote | Vendor endpoint or hosted URL available |
 
+**TLS implication — Container = Yes:**
+When Container = Yes, set "Lower versions or no encryption" = **No** in Step 5.7 (no probing needed — containers use proper TLS termination at the network edge).
+
 **Common Mistake Pattern (LEARNED):**
 - ❌ WRONG: "Go binary exists, so (2) Container = No" (missed Docker config)
 - ✅ RIGHT: "Found Dockerfile + STDIO" → (1) Local = Yes AND (2) Container = Yes
+- ❌ WRONG: "Container found, so Lower versions or no encryption = Yes" (containers use proper TLS)
+- ✅ RIGHT: "Container = Yes" → "Lower versions or no encryption" = No (always)
 
 ---
 
