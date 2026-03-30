@@ -436,7 +436,94 @@ If none found → note: "No built-in write gates or response sanitization detect
 
 #### Thread 3: Remote Endpoint Probing *(run unless short-circuited)*
 → Feeds: **Step 5.1** (Endpoint URL) · **Step 5.6.B** (Implicit Auth Detection — headers) · **Step 5.7** (TLS — L3) · **Step 5.8** (Transport) · **Step 5.10** (Deployment Remote)
-- **SHORT-CIRCUIT:** If Thread 1 confirmed STDIO-only AND zero remote/endpoint URLs found in README → skip probing, mark Endpoint URL = N/A, TLS = No. Document: "STDIO-only server, no remote endpoint references in README."
+- **SHORT-CIRCUIT (with mandatory managed version check):**
+  If Thread 1 confirmed STDIO-only AND zero remote/endpoint URLs found in README:
+  → **BEFORE marking N/A, run Managed/Hosted Version Discovery (Steps A-E below)**
+  → Only after Steps A-E return no results → mark Endpoint URL = N/A, TLS = No.
+  → Document: "STDIO-only server, no remote endpoint references in README. Managed version check completed: [results]."
+
+  <!-- Added 2026-03-30: Prevents missing managed/hosted endpoints for STDIO-only servers (e.g., ECS managed MCP server discovery) -->
+  **Managed/Hosted Version Discovery (MANDATORY before marking Endpoint URL = N/A):**
+
+  Even if the source code is STDIO-only, the vendor may offer a separate managed/hosted
+  version with its own endpoint URL. This is common for cloud providers offering both
+  open-source and managed editions, enterprise vendors with cloud-hosted MCP offerings,
+  and servers with cloud marketplace listings.
+
+  **Step A — Vendor Documentation Search**
+  Search queries to run (replace [server-name] and [vendor-name] with actuals):
+  1. `"[server-name]" managed MCP server` (web search)
+  2. `"[server-name]" hosted endpoint URL` (web search)
+  3. `"[vendor-name]" MCP server managed OR hosted OR cloud` (web search)
+  4. Check the vendor's official documentation site (not just the GitHub README)
+  5. Search for `[vendor] MCP server preview` or `[vendor] MCP server GA`
+  6. Check vendor's cloud marketplace (if applicable) for hosted deployments
+  Examples:
+  - AWS: `site:docs.aws.amazon.com "[service-name]" MCP` → discovered managed ECS MCP server
+  - AWS unified endpoint: `https://aws-mcp.us-east-1.api.aws/mcp` (preview)
+  - AWS Knowledge: `https://knowledge-mcp.global.api.aws` (fully managed, no local install)
+  - Stripe: check `site:docs.stripe.com MCP` for hosted vs local options
+  - GitHub: check `site:docs.github.com MCP server` for Copilot-hosted endpoints
+
+  **Step B — Monorepo / Multi-Package Cross-Reference**
+  For servers in a monorepo or multi-package ecosystem:
+  1. Check the monorepo root README for a list of managed vs local servers
+  2. Look for proxy, gateway, or handler modules that suggest remote deployment
+     paths for otherwise STDIO-only servers
+  3. Check if sibling servers in the same repo have managed versions — if some
+     do, verify whether this server also has one
+  Examples:
+  - awslabs/mcp monorepo: contains mcp-proxy-for-aws (SigV4 proxy for managed
+    endpoints), mcp-lambda-handler (serverless deployment), and individual servers
+    where some have managed versions (ecs-mcp-server) and others don't (aws-location)
+  - Monorepo root README often lists which servers have managed alternatives
+
+  **Step C — README "Legacy" / "Deprecated" Signals**
+  Scan the server README for phrases indicating the local version is superseded:
+  - "Legacy", "Option 2", "no longer receive updates", "deprecated"
+  - "Recommended: managed version", "fully managed", "cloud-hosted"
+  - "Enterprise", "production deployment", "hosted service"
+  If found → the managed version's endpoint URL is the PRIMARY endpoint.
+  Examples:
+  - Amazon ECS MCP Server README labels local install as "Option 2: Local MCP
+    Server (Legacy)" and recommends the AWS-managed version as Option 1
+  - A vendor README stating "For production use, connect to https://api.vendor.com/mcp"
+
+  **Step D — Self-Hosted HTTP Endpoint Detection**
+  If the server supports HTTP transport (StreamableHttp, HTTP/SSE) but has no
+  official vendor-hosted endpoint:
+  - Document the default self-hosted endpoint pattern (e.g., http://localhost:PORT/mcp)
+  - Check if configurable host/port environment variables exist
+  - Note any reverse proxy or deployment documentation
+  Examples:
+  - aws-api-mcp-server: supports StreamableHttp with configurable HOST and PORT
+    (default http://127.0.0.1:8000/mcp)
+  - Can also be deployed to Amazon Bedrock AgentCore Runtime via AWS Marketplace,
+    which provides a remote endpoint with SigV4/JWT auth
+
+  **Step E — Cloud Deployment Platform Check**
+  Check if the server can be deployed to managed cloud platforms that provide an endpoint:
+  - Serverless: AWS Lambda, Google Cloud Functions, Azure Functions
+  - Container platforms: AWS ECS/Fargate, Google Cloud Run, Azure Container Apps
+  - Agent platforms: Amazon Bedrock AgentCore, Google Vertex AI, Azure AI Foundry
+  - Look for deployment guides, Terraform/CDK templates, or marketplace listings
+  Examples:
+  - aws-api-mcp-server has an AWS Marketplace listing for AgentCore deployment
+  - mcp-lambda-handler module enables any STDIO server to run on AWS Lambda
+    behind API Gateway with DynamoDB session management
+
+  **Decision Logic:**
+  IF managed/hosted version found:
+    Endpoint URL = managed endpoint URL
+    Evidence: "Managed version: [URL]; Local version also available via STDIO"
+    Update related attributes: Remote=Yes, SaaS Vendor=Yes, Transport, TLS, Auth
+  IF managed version NOT found after Steps A-E:
+    Endpoint URL = N/A
+    Evidence: "No managed/hosted version found. Verified: [list search queries run]"
+  IF server supports HTTP but no official hosted endpoint:
+    Endpoint URL = N/A
+    Evidence: "Self-hosted HTTP mode available ([host:port] configurable) but no
+    vendor-hosted endpoint found"
 - If only GitHub given → extract candidate endpoint URLs from README/docs first
 - **OFFICIAL ENDPOINT VERIFICATION (MANDATORY):** A URL is only a valid official endpoint if it is explicitly documented in the server's own README or official docs. URLs found in third-party blogs, test deployments, or random cloud resources (e.g., AWS API Gateway IDs like `xmfe3hc3pk.execute-api.amazonaws.com`) are NOT official endpoints. If the URL is not in official docs → mark Endpoint URL = N/A. NEVER assume a cloud resource URL is official without README/doc confirmation.
 - **BEFORE probing:** Validate URL against SSRF blocklist (see Security Mandate)
