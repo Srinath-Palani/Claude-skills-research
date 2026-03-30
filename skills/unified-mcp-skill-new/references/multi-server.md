@@ -1,4 +1,4 @@
-<!-- SKILL_VERSION: 3.0.2 — must match SKILL.md version -->
+<!-- SKILL_VERSION: 3.0.3 — must match SKILL.md version -->
 # Multi-Server Parallel Research
 
 🔒 **SKILL MODIFICATION POLICY — ABSOLUTE ENFORCEMENT**
@@ -63,7 +63,11 @@ Before any research begins, check if input contains multiple servers.
 
 **Step M1: Parse & Classify**
 Extract all server identifiers. Classify each (name / GitHub URL / endpoint).
-Resolve names to GitHub URLs before dispatching.
+Resolve names to GitHub URLs before dispatching using SKILL.md Step 4 Resolution Order (STEP 1–4):
+- STEP 1: Check `modelcontextprotocol/servers` reference repo (Source of Truth)
+- STEP 2: GitHub topic search — `topic:mcp-server+{name}` (Wide Net)
+- STEP 3: Git Trees API — monorepo subdirectory discovery (Deep Dive)
+- STEP 4: Keyword pattern fallback — `{vendor}-mcp-server OR mcp-{vendor}` (Last Resort)
 
 Confirm list before proceeding:
 ```
@@ -104,7 +108,7 @@ Total per agent                                          : ~9,000–25,000 token
 At 3 servers: ~27,000–75,000 total — well within context limits, full accuracy guaranteed.
 At 4–5 servers: ~36,000–125,000 total — manageable, minor compression risk on complex servers.
 
-Each agent runs the **existing Step 0.5 dual-source workflow** (5 concurrent threads) for its assigned server, then returns ONLY this JSON structure (no prose):
+Each agent runs the **Step 0.5 parallel search workflow** (5 concurrent threads) for its assigned server. Thread 1 uses SKILL.md Step 4 Resolution Order (STEP 1–4) when resolving a server name to a GitHub URL. Then returns ONLY this JSON structure (no prose):
 
 ```json
 {
