@@ -610,17 +610,26 @@ Skip local setup, proceed to attribute research.
 
 #### Resolution Order (always top-down — stop at first confirmed match)
 
+0. **STEP 0 — The "Fast Lane" (Known Official Vendor Sources)**
+   Check the Known Official Vendor Sources table below **before** running any GitHub search.
+   - If the vendor/server name matches a row → go directly to that GitHub org/repo (skip STEP 1–2).
+   - Example: `aws` → `awslabs/mcp` → proceed straight to STEP 3 (monorepo extraction).
+   - Example: `github` → `github/github-mcp-server` → fetch README directly.
+   - **Why:** Avoids topic-filter misses for official repos that don't self-tag (e.g., `awslabs/mcp`).
+
 1. **STEP 1 — The "Source of Truth" (Reference Repo)**
    Target: `https://github.com/modelcontextprotocol/servers`
    - Search the `src/` directory of the official MCP reference repository.
    - **Why:** This is the curated registry of vetted MCP servers that conform to official protocol standards.
    - Logic: Look for subdirectories matching `{name}` or `{vendor}`.
 
-2. **STEP 2 — The "Wide Net" (GitHub Topic Search)**
-   Target: GitHub API Repository Search via Topics.
+2. **STEP 2 — The "Wide Net" (GitHub Topic + Text Search)**
+   Target: GitHub API Repository Search.
    - Primary query: `https://api.github.com/search/repositories?q=topic:mcp-server+{name}&sort=stars`
    - Secondary query (if no results): broaden to `topic:mcp-server+{vendor}`
-   - **Why:** The `topic:mcp-server` filter excludes "Minecraft" and other non-AI "MCP" results — identifies repos explicitly built for this protocol.
+   - Tertiary query (if still no results): broader text search: `https://api.github.com/search/repositories?q={name}+mcp+server&sort=stars`
+   - Also try name patterns: `{vendor}-mcp-server`, `mcp-{vendor}`, `{vendor}-mcp`
+   - **Why:** The `topic:mcp-server` filter excludes "Minecraft" but some repos (e.g., `awslabs/mcp`) do not use that topic tag — the text fallback catches these.
 
 3. **STEP 3 — The "Deep Dive" (Monorepo Extraction)**
    Target: Git Trees API for subdirectory discovery.
@@ -634,7 +643,7 @@ Skip local setup, proceed to attribute research.
    - Query: `https://api.github.com/search/repositories?q={vendor}-mcp-server+OR+mcp-{vendor}`
    - **Why:** Use only if Step 2 fails — some developers omit the `topic` tag but follow standard naming conventions.
 
-5. If both GitHub repo and remote endpoint found, ask: g
+5. If both GitHub repo and remote endpoint found, ask:
    ```
    [ 1 ] Use remote endpoint
    [ 2 ] Use GitHub repository
@@ -680,10 +689,11 @@ Skip local setup, proceed to attribute research.
 Could not find an MCP server matching "[server name]".
 
 Searched:
+- STEP 0: Known Official Vendor Sources table (vendor name match)
 - STEP 1: MCP reference repo (github.com/modelcontextprotocol/servers)
-- STEP 2: GitHub topic search (topic:mcp-server+[name], topic:mcp-server+[vendor])
+- STEP 2: GitHub topic search (topic:mcp-server+[name], topic:mcp-server+[vendor]) + text fallback (q=[name]+mcp+server)
 - STEP 3: Monorepo deep dive via Git Trees API (subdirectory discovery)
-- STEP 4: Keyword pattern search ([vendor]-mcp-server, mcp-[vendor])
+- STEP 4: Keyword pattern search ([vendor]-mcp-server, mcp-[vendor], [vendor]-mcp)
 - Vendor docs: [name].com, api.[name].com
 
 [ 1 ] Try a different name or URL
@@ -1337,10 +1347,10 @@ Model Capabilities
 **Format for (5) Non-Read-Only Tools (CSV cell) — standard taxonomy only (L6):**
 ```
 Category Name
-  • tool_name: Description of the write/delete operation
+  • tool_name – Description of the write/delete operation
 
 Another Category
-  • tool_name: Description
+  • tool_name – Description
 ```
 
 #### 🔒 L6 — Standard Taxonomy Rule (applies to (1) and (5) above)
@@ -1693,7 +1703,7 @@ Capabilities - Prompts,detailed_info,"None"
 1. **Category headers** — Plain text, no brackets, no special formatting
 2. **Bullets** — Exactly 2 spaces before `•`, exactly 1 space after `•` (i.e. `  • tool_name`)
 3. **Connector (Capabilities - Tools)** — Use `–` (en-dash, NOT hyphen, NOT colon) between tool name and description
-3b. **Connector (Non-Read-Only Tools)** — Use `:` (colon, NOT en-dash) between tool name and description
+3b. **Connector (Non-Read-Only Tools)** — Use `–` (en-dash, NOT hyphen, NOT colon) between tool name and description
 4. **Blank lines** — Always separate category blocks with blank line
 5. **Tool names** — Use actual registered function names (not generic labels)
 6. **Descriptions** — Concise, action-oriented (start with verb: "Create", "Get", "List", "Send")
@@ -1734,8 +1744,8 @@ Capabilities - Tools,detailed_info,"AI Assistants
 ✅ RIGHT (Non-Read-Only Tools):
 ```
 Non-Read-Only Tools,detailed_info,"Write Operations
-  • create_assistant: Create a new AI assistant
-  • delete_assistant: Delete an existing AI assistant"
+  • create_assistant – Create a new AI assistant
+  • delete_assistant – Delete an existing AI assistant"
 ```
 
 > **Full CSV example:** See `references/csv-example.md` for complete Telnyx MCP Server report with all rows.
