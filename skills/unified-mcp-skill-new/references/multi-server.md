@@ -1,4 +1,4 @@
-<!-- SKILL_VERSION: 3.0.3 — must match SKILL.md version -->
+<!-- SKILL_VERSION: 3.0.4 — must match SKILL.md version -->
 # Multi-Server Parallel Research
 
 🔒 **SKILL MODIFICATION POLICY — ABSOLUTE ENFORCEMENT**
