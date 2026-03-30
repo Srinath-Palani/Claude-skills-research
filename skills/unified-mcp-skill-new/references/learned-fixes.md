@@ -787,6 +787,7 @@ Option B — Use base name only (no prefix):
 
 | Version | Date | Changes |
 |---------|------|---------|
+| 4.1 | 2026-03-30 | Updated SKILL.md Step 4 Resolution Order: 4-step named system (Source of Truth → Wide Net → Deep Dive → Last Resort). Security Mandate deduplicated (CRITICAL RULES block removed, immutable pattern folded into checklist). Known Vendor Sources expanded with 7 new vendors (Salesforce, Google AI, Hugging Face, Zapier, Notion, Box, Vercel). multi-server.md Step M1 updated to reference new 4-step resolution order. |
 | 4.0 | 2026-03-28 | Added Error Pattern #17: Invented domain-specific category titles — ThingsBoard MCP. Updated #8 + #10: Git Repo Version now 2-source only (Releases → Tags), package.json removed, fallback changed "NA" → "No". Removed duplicate #14. Updated step refs (5.1→5.6 auth, 5.2→5.9 tools ops, 5.3→5.10 deploy). |
 | 3.0 | 2026-03-27 | Added Error Patterns #15-#16: Capabilities from source (not README) + placeholder tool names — from SAP BusinessObjects BI MCP research |
 | 2.8 | 2026-03-27 | Added Error Pattern #14: Java MCP SDK mapping — CData Jira/eBay research |
@@ -801,8 +802,8 @@ Option B — Use base name only (no prefix):
 
 ---
 
-**Last Updated:** 2026-03-28
-**Skill Version:** Unified MCP Skill 3.0.2 (Self-Learning v4.0)
+**Last Updated:** 2026-03-30
+**Skill Version:** Unified MCP Skill 3.0.3 (Self-Learning v4.1)
 **Status:** Active — Auto-referenced in research workflows
 **Critical Rules:** 15 error patterns documented in this file (Patterns #1-#4, #7-#17); authoritative rules in SKILL.md Steps 5.1-5.13 (L1-L10)
 
