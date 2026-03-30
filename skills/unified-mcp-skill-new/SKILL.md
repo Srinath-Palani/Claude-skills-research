@@ -12,7 +12,7 @@ description: >
 
 unified-mcp-skill-new is a single skill that handles the full MCP server lifecycle — research, attribute documentation, local setup, error recovery, and project audit — with 5-thread parallel search and 4 mandatory gates before generating any report. All rules, formats, and learnings live in this file as the single source of truth.
 
-<!-- SKILL_VERSION: 3.0.4 | Updated: 2026-03-30 -->
+<!-- SKILL_VERSION: 3.0.5 | Updated: 2026-03-30 -->
 
 ---
 
@@ -147,6 +147,7 @@ MANDATORY LEARNING WALKTHROUGH — confirm each was applied (full rules in refer
 🔒 **RULE 2: NUMERIC VERIFICATION** — Protocol version, TLS, pricing, auth all verified with explicit checks.
 🔒 **RULE 3: FULL LEARNING WALKTHROUGH** — All Learnings L1–L10 checked every session. No skipping.
 🔒 **RULE 4: NO CSV WITHOUT EVIDENCE** — Evidence Ledger must be complete. Empty evidence = blocked.
+🔒 **RULE 5: DEFAULT MODEL REQUIRED** — This skill MUST run on the Default model (currently Sonnet 4.6). If a non-default model is active, STOP and instruct the user to switch before proceeding.
 
 
 
@@ -283,6 +284,30 @@ If URL resolves to a blocked range → REJECT immediately, do NOT probe.
 
 ### Step 0 — Configuration & Input Classification
 **⛔ LOCKED — Do not modify this step without explicit user permission.**
+
+#### 🔒 Model Enforcement (MANDATORY — check before anything else)
+
+Before any research, setup, or audit begins, verify the active model:
+
+```
+REQUIRED MODEL: Default (recommended) ✔ — currently Sonnet 4.6
+
+If the active model is NOT the Default model:
+  → STOP immediately
+  → Display:
+
+  ⚠️  MODEL ENFORCEMENT: This skill requires the Default model (Sonnet 4.6).
+      You are currently using a non-default model.
+
+      To switch:
+        /model  → select "Default (recommended) ✔"
+
+      Re-invoke the skill after switching.
+
+  → Do NOT proceed until the user confirms they have switched to Default.
+```
+
+If the active model IS the Default model → proceed to path configuration below.
 
 **Path configuration — always ask, never assume:**
 
