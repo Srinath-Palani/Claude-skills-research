@@ -273,6 +273,7 @@ BEFORE marking ANY TLS field:
 🔒 CRITICAL: TLS encryption applies ONLY to remote transports
 🔒 Bearer Token authentication is INDEPENDENT of TLS
 🔒 STDIO = always TLS No (no exceptions)
+🔒 Container deployment = Yes → "Lower versions or no encryption" = No always (containers use proper TLS termination)
 🔒 Never mark TLS Yes without endpoint verification
 🔒 Authentication layer ≠ Encryption layer
 ```
@@ -787,6 +788,7 @@ Option B — Use base name only (no prefix):
 
 | Version | Date | Changes |
 |---------|------|---------|
+| 4.2 | 2026-03-30 | Added Container deployment TLS rule: Container = Yes → "Lower versions or no encryption" = No always. Updated Step 5.7 table, L3 Independence Rule table + rules, Step 5.10 TLS implication note, L3 checklist item, memory/rules-reference.md TLS checklist. SKILL.md v3.0.4. |
 | 4.1 | 2026-03-30 | Updated SKILL.md Step 4 Resolution Order: 4-step named system (Source of Truth → Wide Net → Deep Dive → Last Resort). Security Mandate deduplicated (CRITICAL RULES block removed, immutable pattern folded into checklist). Known Vendor Sources expanded with 7 new vendors (Salesforce, Google AI, Hugging Face, Zapier, Notion, Box, Vercel). multi-server.md Step M1 updated to reference new 4-step resolution order. |
 | 4.0 | 2026-03-28 | Added Error Pattern #17: Invented domain-specific category titles — ThingsBoard MCP. Updated #8 + #10: Git Repo Version now 2-source only (Releases → Tags), package.json removed, fallback changed "NA" → "No". Removed duplicate #14. Updated step refs (5.1→5.6 auth, 5.2→5.9 tools ops, 5.3→5.10 deploy). |
 | 3.0 | 2026-03-27 | Added Error Patterns #15-#16: Capabilities from source (not README) + placeholder tool names — from SAP BusinessObjects BI MCP research |
@@ -803,7 +805,7 @@ Option B — Use base name only (no prefix):
 ---
 
 **Last Updated:** 2026-03-30
-**Skill Version:** Unified MCP Skill 3.0.3 (Self-Learning v4.1)
+**Skill Version:** Unified MCP Skill 3.0.4 (Self-Learning v4.2)
 **Status:** Active — Auto-referenced in research workflows
 **Critical Rules:** 15 error patterns documented in this file (Patterns #1-#4, #7-#17); authoritative rules in SKILL.md Steps 5.1-5.13 (L1-L10)
 
