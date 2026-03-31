@@ -4,7 +4,7 @@
 
 > These patterns were identified from real MCP research sessions and documented to prevent future errors in attribute research.
 >
-> **Error Index:** #1-#4 (Buildkite/Hyperbolic, 2026-03-26), #7-#8 (Runway, 2026-03-27), #9-#11 (CSV format/capability rows, 2026-03-27), #12-#13 (Stadia Maps — description newlines + Protocol Version/Pricing blank Status, 2026-03-27), #14 (Java SDK protocol version mapping — jira-service-management-mcp-server-by-cdata, 2026-03-27), #15-#16 (SAP BusinessObjects BI — capabilities from source + placeholder tool names, 2026-03-27), #17 (ThingsBoard — invented domain-specific category titles, 2026-03-28), #18 (AWS API MCP Server — mixed-deployment TLS rule not applied: STDIO + Container = Lower/None = No, 2026-03-30)
+> **Error Index:** #1-#4 (Buildkite/Hyperbolic, 2026-03-26), #7-#8 (Runway, 2026-03-27), #9-#11 (CSV format/capability rows, 2026-03-27), #12-#13 (Stadia Maps — description newlines + Protocol Version/Pricing blank Status, 2026-03-27), #14 (Java SDK protocol version mapping — jira-service-management-mcp-server-by-cdata, 2026-03-27), #15-#16 (SAP BusinessObjects BI — capabilities from source + placeholder tool names, 2026-03-27), #17 (ThingsBoard — invented domain-specific category titles, 2026-03-28), #18 (AWS API MCP Server — mixed-deployment TLS rule not applied: STDIO + Container = Lower/None = No, 2026-03-30), #19 (Microsoft Dataverse — GitHub skills repo mistaken for MCP server repo, 2026-03-31)
 > Patterns #5-#6 are documented as SKILL.md Learnings 5-6 (no separate case study needed).
 > Authoritative rules for all patterns live in SKILL.md Learnings 1-10 (L1–L10, embedded in Steps 5.1–5.13).
 
@@ -861,10 +861,64 @@ Evidence: Container = Yes (Dockerfile + docker-healthcheck.sh + AWS Marketplace 
 
 ---
 
+## Error Pattern #19: Incorrect GitHub URL — Skills Repo Mistaken for MCP Server Repo
+
+**Date:** 2026-03-31 | **Server:** Microsoft Dataverse MCP Server | **Severity:** HIGH
+
+**Signals:**
+- GitHub URL `https://github.com/microsoft/Dataverse-skills` used as the MCP server repository
+- URL returned from GitHub search for "Dataverse MCP" or "microsoft dataverse mcp"
+- Repo contains no MCP server code — it is a Power Platform / Copilot Studio skill templates repository
+
+**Root Cause:**
+GitHub search returned `microsoft/Dataverse-skills` because the repo contains Power Platform skill templates with Dataverse references. The URL was accepted without verifying that the repo contains actual MCP SDK code.
+
+**What the repo actually is:**
+- `microsoft/Dataverse-skills` → Power Platform / Copilot Studio skill templates (`.yml` skill definition files)
+- NO `package.json`, `pyproject.toml`, or MCP SDK dependencies
+- NOT an MCP server — ALWAYS EXCLUDE from MCP research
+
+**Correct Dataverse MCP Server:**
+- Remote endpoint: `https://<orgname>.crm.dynamics.com/api/mcp`
+- Local proxy: `@microsoft/dataverse` npm package
+- No separate public GitHub source repo is documented
+
+**Fix (Verification Checklist — MANDATORY before accepting any GitHub URL):**
+```
+Before accepting any GitHub URL as the MCP server repo:
+
+□ Step 1: Open the repo and verify it contains MCP server code:
+   - Look for: package.json / pyproject.toml / go.mod with @modelcontextprotocol/sdk, mcp, or go-sdk dependency
+   - Look for: MCP server entry point (index.ts, server.py, main.go)
+   - Look for: MCP SDK import in source files
+
+□ Step 2: If NONE of the above are found → this is NOT an MCP server repo
+   - Do NOT use this URL as the Git Repo field
+   - Continue resolution using SKILL.md Step 4 Resolution Order
+
+□ Step 3: For Microsoft servers — verify against npm registry or official Microsoft Learn docs
+   - microsoft/Dataverse-skills → ALWAYS EXCLUDE (skills repo, not MCP server)
+   - Check both microsoft/ and OfficeDev/ GitHub orgs
+```
+
+**Prevention Rule:**
+```
+🔒 NEVER accept a GitHub URL without verifying it contains MCP SDK dependencies
+🔒 A "skills" repo (Copilot Studio, Power Platform) is NOT an MCP server repo
+🔒 microsoft/Dataverse-skills → ALWAYS SKIP — not an MCP server
+🔒 Confirm: MCP SDK dependency in package.json / pyproject.toml / go.mod MUST be present
+🔒 Resolution fallback: use npm registry or official vendor docs to find correct repo
+```
+
+**Reference:** SKILL.md Step 4 Resolution Order, Step 5.1 (Git Repo URL)
+
+---
+
 ## Version History
 
 | Version | Date | Changes |
 |---------|------|---------|
+| 4.6 | 2026-03-31 | Added Error Pattern #19: GitHub skills repo mistaken for MCP server (microsoft/Dataverse-skills). Added cost file generation to multi-server.md Step M3 (was missing — always mandatory). Added Protocol Version MANDATORY rule to multi-server.md Layer 1 agent rules (never "No" or blank). |
 | 4.5 | 2026-03-31 | TypeScript SDK mapping corrected: ≥1.24 → 2025-11-25 (was ≥1.12 — wrong). sdk 1.8–1.23 now maps to 2025-06-18. Git Repo Version source order restored to 3-source (Releases → Tags → package.json); package.json re-added as 3rd priority with monorepo exception. Evidence Ledger unlocked: display all attribute evidence in chat window. Patterns #8 and #10 updated. multi-server.md version comment + column 1 note updated. |
 | 4.4 | 2026-03-30 | Added Error Pattern #18: Mixed-Deployment TLS rule not applied (STDIO + Container) — AWS API MCP Server. Added mixed-deployment clarification to SKILL.md Step 5.7. SKILL.md v3.0.5. |
 | 4.3 | 2026-03-30 | Added RULE 5 (Default Model Required): skill must run on Default model (Sonnet 4.6). Added model enforcement block at top of Step 0 with STOP + user instruction if non-default model detected. SKILL.md v3.0.5. |
@@ -884,10 +938,10 @@ Evidence: Container = Yes (Dockerfile + docker-healthcheck.sh + AWS Marketplace 
 
 ---
 
-**Last Updated:** 2026-03-30
-**Skill Version:** Unified MCP Skill 3.0.5 (Self-Learning v4.3)
+**Last Updated:** 2026-03-31
+**Skill Version:** Unified MCP Skill 3.0.5 (Self-Learning v4.6)
 **Status:** Active — Auto-referenced in research workflows
-**Critical Rules:** 16 error patterns documented in this file (Patterns #1-#4, #7-#18); authoritative rules in SKILL.md Steps 5.1-5.13 (L1-L10)
+**Critical Rules:** 17 error patterns documented in this file (Patterns #1-#4, #7-#19); authoritative rules in SKILL.md Steps 5.1-5.13 (L1-L10)
 
 
 ---
