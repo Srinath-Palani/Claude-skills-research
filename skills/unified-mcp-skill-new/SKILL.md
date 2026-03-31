@@ -1794,7 +1794,7 @@ MCP Info
 │   Source priority: 1st → GitHub Releases  2nd → GitHub Tags  3rd → package.json (or pyproject.toml / Cargo.toml / setup.py)
 │   Use version EXACTLY as shown in source (NO notes, NO transformation)
 │   If no version found after checking all 3 sources → use "No"
-│   Monorepo rule: If releases/tags are monorepo-wide (not server-specific) → fall through to package.json; if package.json is also monorepo-wide → use "No"
+│   Monorepo rule: If releases/tags are monorepo-wide (not server-specific) → use the monorepo release tag as-is (e.g., 2026.03.20260327170559); do NOT fall through to package.json
 ├── Category (pick ONE based on server functionality: File and Document Management / Developer and Coding Tools / Data and Information Retrieval / Productivity and Communication)
 ├── GitHub Repository (URL or N/A)
 └── Endpoint URL (URL or N/A)
