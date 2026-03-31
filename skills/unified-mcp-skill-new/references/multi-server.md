@@ -94,7 +94,24 @@ Do NOT wait for one to finish before starting others.
 **Model:** Each Agent tool call MUST use `model: claude-sonnet-4-6` (Default — Sonnet 4.6) ONLY. No other model is permitted. Omitting the model parameter causes fallback to an unavailable model ID and fails every dispatch.
 
 **Step M3: Finalize**
-Once ALL Layer 1 results received → render individual CSVs + comparison table.
+Once ALL Layer 1 results received:
+1. Render comparison table (see Layer 0 — Comparison Summary Output below)
+2. Save individual CSVs for each server (following SKILL.md Step 6 format)
+3. **Save individual cost files** — immediately after each CSV (following SKILL.md Step 6.1 format):
+   - Filename: `<servername>-cost.txt` at the same path as the CSV
+   - `--start` = timestamp when Step M2 dispatch began for that server's Layer 1 agent
+   - `--end`   = timestamp when that server's CSV was saved
+   - One cost file per server — covers that server's Layer 1 agent token usage
+4. Display success box per server:
+   ```
+   ╔═══════════════════════════════════════════════════════════════════╗
+   ║   REPORT SUCCESSFULLY GENERATED                                   ║
+   ║   CSV  : /path/to/report/<servername>.csv                         ║
+   ║   COST : /path/to/report/<servername>-cost.txt                    ║
+   ╚═══════════════════════════════════════════════════════════════════╝
+   ```
+
+🔒 Cost file generation is MANDATORY — same as single-server mode. Never skip.
 
 ---
 
@@ -167,6 +184,7 @@ attributes.capabilities_detail.non_readonly → Non-Read-Only Tools,detailed_inf
 **Agent rules:**
 - Output JSON only — no explanations, no markdown
 - **ZERO-ASSUMPTION:** If data missing → return `"No"` and flag — never `"UNVERIFIED"`, never `"unknown"`, never guess
+- **Protocol Version MANDATORY:** `protocol_version` MUST be one of: `"2025-11-25"`, `"2025-06-18"`, `"2025-03-26"`, `"2024-11-05"` — NEVER `"No"` or blank. Apply SKILL.md Step 1 Framework Priority Rule (FastMCP → TypeScript SDK → Python mcp → Go SDK). Read dependency files (package.json / pyproject.toml / go.mod / pom.xml) and cross-reference against Step 1 mapping table. If no dependency file found → set `errors: ["no dependency file — protocol version unresolvable"]` and flag to Layer 0 for manual escalation. Do NOT fall back to `"No"`.
 - **Auth detection:** Apply SKILL.md Step 5.6.B implicit auth scan (README text / headers / env / args) for all 3 input types. **README is a PRIMARY scan source** — apply Detection Patterns against full README text: API Token (`"api key"`, `"api_token"`, `"api_key"`); PAT (`"personal access"`, `"pat"`, `"personal token"`, `"personal access token"`, `"personal_access_token"`); Bearer (`"Authorization: Bearer"`); also scan for `"authentication"`, `"credentials"`, `"token required"`, `"requires auth"`. Additionally scan env/args/headers from config files. Set `auth_required: true` and populate `auth_types_detected` for every matched type — do NOT omit any. If user chose Option 3 (proceed without auth), apply the fallback rule: mark ALL pattern-matched auth types as Yes (evidence = detection pattern match). OAuth 2.1 (Auth Code / Client Creds) = No for STDIO transport (see SKILL.md Step 5.6 STDIO exception).
 - If repo inaccessible → set `errors: ["repo not found"]`, return partial data with UNVERIFIED fields
 - Do not call other agents or tools outside README + file search + endpoint probe
