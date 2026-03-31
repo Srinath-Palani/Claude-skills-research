@@ -118,7 +118,7 @@ Each agent runs the **Step 0.5 parallel search workflow** (5 concurrent threads)
   "attributes": {
     "name": "GitHub MCP Server",
     "description": "...",   // 3–4 sentences, single continuous line — NO embedded newlines (Pattern #9/#12)
-    "version": "v1.2.3",   // "No" if no Releases or Tags found — package.json is NOT a valid version source (Pattern #10)
+    "version": "v1.2.3",   // Source priority: Releases → Tags → package.json; "No" if all 3 return nothing (Pattern #10)
     "category": "Developer Tools",
     "distribution": "Official",
     "protocol_version": "2025-06-18",
@@ -197,7 +197,7 @@ Reports saved: ~/Documents/mcp-reports/
 ```
 
 **All 11 comparison columns:**
-1. Version (from GitHub Releases or Tags only — "No" if neither found; package.json is not a valid source per Pattern #10)
+1. Version (from GitHub Releases → Tags → package.json in that priority order — "No" if all 3 sources return nothing per Pattern #10)
 2. Category (Developer Tools / Productivity / Data Retrieval / File Management)
 3. Protocol (MCP protocol version)
 4. Hosting (SaaS / GitHub)
