@@ -92,7 +92,7 @@ Tools Ops Delete       | Yes   | README tools section          | "cancel_build" 
 
 **If evidence column is empty → DO NOT write that row to CSV. Ask user instead.**
 
-**Output: Internal only — do NOT display the Evidence Ledger in the chat window.**
+**Output: Display the evidence for ALL attributes in the chat window as part of the Final Report Output (see Evidence Table format in Final Report Output section). Do NOT embed raw evidence in the CSV Status column.**
 
 ---
 
@@ -610,8 +610,8 @@ If either source is missing → continue searching until found or confirmed non-
 - `mcp <1.5` → Protocol `2024-11-05`
 
 #### SDK Mapping — TypeScript (@modelcontextprotocol/sdk)
-- `sdk ≥1.12` → Protocol `2025-11-25`
-- `sdk 1.8–1.11` → Protocol `2025-06-18`
+- `sdk ≥1.24` → Protocol `2025-11-25`  <!-- Verified: v1.24.0 first introduced 2025-11-25 (Dec 2025); confirmed against SDK 1.20.2 (Clarity) and 1.27.1 (M365 Agents Toolkit) -->
+- `sdk 1.8–1.23` → Protocol `2025-06-18`
 - `sdk 1.5–1.7` → Protocol `2025-03-26`
 - `sdk <1.5` → Protocol `2024-11-05`
 
@@ -626,7 +626,7 @@ If either source is missing → continue searching until found or confirmed non-
 ```
 □ Step 1: Extract exact version from dependency file (go.mod, requirements.txt, package.json)
 □ Step 2: Cross-reference version against the mapping table above (DO NOT guess/assume)
-□ Step 3: If version is between ranges, use LOWER protocol (e.g., v1.4.1 is <1.12 → use 2025-06-18)
+□ Step 3: If version is between ranges, use LOWER protocol (e.g., TypeScript sdk 1.20 is <1.24 → use 2025-06-18; Go sdk 1.4.1 is <1.12 → use 2025-06-18)
 □ Step 4: Document the exact version + mapping source (file + line number)
 □ Step 5: Document the exact version + mapping source (file + line number) in Evidence Ledger
 ```
@@ -1194,9 +1194,16 @@ This rule applies during both single-server (Step 5.6) and multi-server (Layer 1
 
 | # | Attribute | Rule |
 |---|-----------|------|
-| 1 | TLS 1.3 | Yes only if remote endpoint confirmed TLS 1.3 via probe |
-| 2 | TLS 1.2 | Yes only if remote endpoint confirmed TLS 1.2 via probe |
+| 1 | TLS 1.3 | Yes only if remote endpoint confirmed TLS 1.3 via probe **OR** official vendor documentation explicitly states TLS 1.3 is supported (cite doc URL) |
+| 2 | TLS 1.2 | Yes only if remote endpoint confirmed TLS 1.2 via probe **OR** official vendor documentation explicitly states TLS 1.2 is supported (cite doc URL) |
 | 3 | Lower versions or no encryption | No if Container deployment = Yes (containers use proper TLS termination); No if STDIO (no network layer); Yes only if probe confirms no TLS on a remote endpoint |
+
+**Org-scoped HTTPS endpoints (e.g. `https://<org>.service.com/api/mcp`):**
+A URL pattern containing a placeholder like `<org>`, `<orgname>`, `<tenant>`, or `<subdomain>` is a **remote managed endpoint** — it is vendor-hosted, just with an org-specific subdomain. For such endpoints:
+- Deployment Remote = Yes
+- TLS: check vendor's official TLS documentation (probe is not possible without a real org credential). Official docs stating "TLS 1.2/1.3 required" count as valid evidence.
+- Transport: determine StreamableHttp vs HTTP/SSE from the protocol version (2025-03-26+ → StreamableHttp; pre-2025-03-26 → HTTP/SSE). Confirm against README/docs if available.
+- Do NOT set Endpoint URL = N/A — use the placeholder pattern as the documented value (e.g. `https://<orgname>.crm.dynamics.com/api/mcp`).
 
 **Probe tools:**
 
@@ -1331,7 +1338,12 @@ DEPLOYMENT APPROACH VERIFICATION CHECKLIST:
 |---|-----------|-------------|
 | 1 | Local | STDIO transport or published package (pip/npx) found |
 | 2 | Container | Dockerfile, docker-compose, or OCI image reference found |
-| 3 | Remote | Vendor endpoint or hosted URL available |
+| 3 | Remote | Vendor endpoint or hosted URL available — including org-scoped URL patterns (e.g. `https://<org>.service.com/api/mcp`) which are vendor-managed remote endpoints |
+
+**Remote = No when:**
+- Server only runs via localhost (e.g. `http://127.0.0.1:<port>`) — localhost addresses are runtime artefacts, NOT remote endpoints
+- README roadmap lists remote deployment as a future/planned item but it is not yet available
+- Docker/Container deployment is local only (no hosted cloud endpoint documented)
 
 **TLS implication — Container = Yes:**
 When Container = Yes, set "Lower versions or no encryption" = **No** in Step 5.7 (no probing needed — containers use proper TLS termination at the network edge).
@@ -1778,11 +1790,11 @@ Servers requiring auth — how do you want to proceed for each?
 ```
 MCP Info
 ├── Description (2–3 sentences, MUST start with "[Server Name] MCP Server…")
-├── Git Repo Version (fetch EXACTLY as shown in Releases or Tags — never reformat)
-│   Source priority: 1st → GitHub Releases  2nd → GitHub Tags
+├── Git Repo Version (fetch EXACTLY as shown in source — never reformat)
+│   Source priority: 1st → GitHub Releases  2nd → GitHub Tags  3rd → package.json (or pyproject.toml / Cargo.toml / setup.py)
 │   Use version EXACTLY as shown in source (NO notes, NO transformation)
-│   If no version found after checking all 2 sources → use "No"
-│   Monorepo rule: If releases/tags are monorepo-wide (not server-specific) → use "No"
+│   If no version found after checking all 3 sources → use "No"
+│   Monorepo rule: If releases/tags are monorepo-wide (not server-specific) → fall through to package.json; if package.json is also monorepo-wide → use "No"
 ├── Category (pick ONE based on server functionality: File and Document Management / Developer and Coding Tools / Data and Information Retrieval / Productivity and Communication)
 ├── GitHub Repository (URL or N/A)
 └── Endpoint URL (URL or N/A)
@@ -1949,8 +1961,25 @@ Both are marked Yes because both are real hosting locations. SaaS Vendor takes p
 
 **Display order (MANDATORY):**
 1. Research Summary table (all attributes — shown first)
-2. Attributes Information or Detected Information (notable evidence notes — shown second)
-3. Success box (shown last, below the summary):
+2. Evidence Table (every attribute with its source and evidence quote — shown second)
+3. Attributes Information or Detected Information (notable findings — shown third)
+4. Success box (shown last, below the summary):
+
+**Evidence Table format (MANDATORY — display in chat window for every report):**
+```
+EVIDENCE TABLE
+────────────────────────────────────────────────────────────────────────────────
+Attribute                  | Value | Source                     | Evidence
+──────────────────────────────────────────────────────────────────────────────
+Protocol Version           | 2025-11-25 | package.json ln 5     | "@modelcontextprotocol/sdk": "^1.27.1"
+TLS 1.2                    | Yes   | Microsoft Learn docs       | "Dataverse is using TLS 1.3 & 1.2 cipher suites"
+TLS 1.3                    | Yes   | Microsoft Learn docs       | "Dataverse is using TLS 1.3 & 1.2 cipher suites"
+Transport / StreamableHttp | Yes   | Protocol 2025-11-25        | StreamableHttp is the primary transport for ≥2025-03-26
+Git Repo Version           | 0.2.1 | packages/mcp-server/package.json ln 3 | "version": "0.2.1"
+...
+────────────────────────────────────────────────────────────────────────────────
+```
+One row per attribute that has a Yes value (or notable No with evidence). Source = file/URL. Evidence = exact quote or probe result.
 
 ```
 ╔═══════════════════════════════════════════════════════════════════╗
