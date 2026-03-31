@@ -155,5 +155,43 @@ For feedback on Claude Code, visit: https://github.com/anthropics/claude-code/is
 
 ---
 
-## Last Updated: 2026-03-27
+## Session Learnings & Discovered Endpoints
+
+### Known Remote MCP Endpoints (Confirmed via Probe)
+
+| MCP Server | Endpoint URL | Auth | Notes |
+|---|---|---|---|
+| Amazon ECS MCP Server | `https://ecs-mcp.{region}.api.aws/mcp` | SigV4 (AWS IAM) | Multi-region. Requires `mcp-proxy-for-aws`. HTTP 403 on probe. |
+| AWS Knowledge MCP Server | `https://knowledge-mcp.global.api.aws` | None | Global. No AWS account needed. POST → HTTP 200. |
+| AWS MCP Server | `https://aws-mcp.us-east-1.api.aws/mcp` | SigV4 (AWS IAM) | Preview. `us-east-1` only — other regions return HTTP 000. Requires `mcp-proxy-for-aws`. |
+| Microsoft Dataverse MCP Server | `https://<orgname>.crm.dynamics.com/api/mcp` | Entra app + `mcp.tools` | Org-specific URL. Also supports local proxy via `@microsoft/dataverse` npm. |
+
+### STDIO-Only Servers (No Remote Endpoint — Confirmed)
+
+All remaining AWS servers in the `awslabs/mcp` monorepo are STDIO-only (no managed endpoint):
+Aurora DSQL, Aurora PostgreSQL, Bedrock AgentCore, Bedrock KB, CloudWatch App Signals,
+Q Business (Anon), Q Index, Redshift, SNS/SQS, Timestream, Bedrock Data Automation,
+Billing & Cost, CDK, Cloud Control API (deprecated), CloudFormation (deprecated).
+
+Microsoft STDIO-only servers (no remote endpoint):
+- **Microsoft 365 Agents Toolkit**: `npx @microsoft/m365agentstoolkit-mcp@latest server start`
+- **Microsoft Clarity**: `npx @microsoft/clarity-mcp-server`
+- **Microsoft Dev Box**: `npx -y @microsoft/devbox-mcp@latest`
+
+### Server Location Learnings
+
+**Microsoft 365 Agents Toolkit** — NOT under `microsoft/TeamsFx` or `microsoft/teams-toolkit`.
+Correct location: `OfficeDev/microsoft-365-agents-toolkit` monorepo → `packages/mcp-server/`.
+npm package: `@microsoft/m365agentstoolkit-mcp`. Search by npm package when GitHub search returns 0.
+
+**AWS managed MCP pattern** — Pattern for AWS-hosted endpoints: `https://{service}-mcp.{region}.api.aws/mcp`.
+Not all AWS services have managed versions — check the ECS developer guide style docs per service.
+AWS MCP Server unified endpoint: `https://aws-mcp.us-east-1.api.aws/mcp` (listed at `awslabs.github.io/mcp/`).
+
+**Microsoft MCP servers span two orgs** — `microsoft/` (Clarity, Dev Box, Dataverse, Playwright) and
+`OfficeDev/` (365 Agents Toolkit). Always check both orgs when searching for Microsoft MCP servers.
+
+---
+
+## Last Updated: 2026-03-30
 **Status:** Production Ready | **Version:** 3.0.0 | **SSOT Architecture**
