@@ -8,6 +8,12 @@
       "path": "skills/unified-mcp-skill-new/SKILL.md",
       "user-invocable": true,
       "command": "/unified-mcp-skill-new"
+    },
+    {
+      "name": "mcp-attribute-validator",
+      "path": "skills/mcp-attribute-validator/SKILL.md",
+      "user-invocable": true,
+      "command": "/mcp-attribute-validator"
     }
   ]
 }
