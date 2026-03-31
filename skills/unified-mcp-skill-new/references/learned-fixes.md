@@ -327,16 +327,17 @@ Expected Results:
 Source Priority:
 1st → GitHub Releases (official releases page)
 2nd → GitHub Tags (git tags in repository)
-No further sources — if neither found → use "No"
-NEVER → package.json (removed from valid sources)
+3rd → package.json (or pyproject.toml / Cargo.toml / setup.py)
+If none of the 3 sources yield a version → use "No"
 NEVER → server initialize response
 ```
 
 **Rule from SKILL.md (Row Order section):**
 ```
-Git Repo Version: fetch EXACTLY as shown in Releases or Tags — never reformat
-Source priority: 1st → GitHub Releases  2nd → GitHub Tags
-If no version found after checking all 2 sources → use "No"
+Git Repo Version: fetch EXACTLY as shown in source — never reformat
+Source priority: 1st → GitHub Releases  2nd → GitHub Tags  3rd → package.json
+If no version found after checking all 3 sources → use "No"
+Monorepo rule: If releases/tags are monorepo-wide → fall through to package.json; if package.json is also monorepo-wide → use "No"
 ```
 
 **What was wrong:**
@@ -365,8 +366,12 @@ BEFORE marking Git Repo Version:
    Extract: latest tag — USE EXACTLY AS SHOWN
    If found → STOP, copy version exactly
 
-□ Step 3: Nothing found after both checks → mark as "No"
-   Do NOT check package.json — it is no longer a valid source
+□ Step 3: Check package.json (or pyproject.toml / Cargo.toml / setup.py)
+   Extract version string EXACTLY as written — USE EXACTLY AS SHOWN
+   If found → STOP, copy version exactly
+   Monorepo rule: if package.json is repo-wide (not server-specific) → skip
+
+□ Step 4: Nothing found after all 3 checks → mark as "No"
    Do NOT use UNVERIFIED, NA, or SNAPSHOT strings
 
 □ Step 4: Copy to CSV (NO modifications, NO documentation added)
@@ -375,19 +380,21 @@ BEFORE marking Git Repo Version:
 
 **Real Examples:**
 
-| Server | Releases | Tags | Correct Result |
-|--------|----------|------|----------------|
-| Runway | ❌ None | ❌ None | "No" |
-| Buildkite | ❌ None | ✅ v1.2.0 | "v1.2.0" |
-| Slack | ✅ v2.5.1 | ✅ v2.5.1 | "v2.5.1" |
-| Custom | ✅ release-3.0 | ✅ tag-3.0 | "release-3.0" |
+| Server | Releases | Tags | package.json | Correct Result |
+|--------|----------|------|--------------|----------------|
+| Runway | ❌ None | ❌ None | ❌ None | "No" |
+| Buildkite | ❌ None | ✅ v1.2.0 | — | "v1.2.0" |
+| Slack | ✅ v2.5.1 | ✅ v2.5.1 | — | "v2.5.1" |
+| 365 Agents Toolkit | ❌ None (monorepo-wide) | ❌ None (monorepo-wide) | ✅ 0.2.1 | "0.2.1" |
+| Clarity | ❌ None | ❌ None | ✅ 2.0.2 | "2.0.2" |
 
 **Prevention Rule (STRICT - NO EXCEPTIONS):**
 ```
 🔒 Always check Releases FIRST
 🔒 Check Tags SECOND if no Releases
-🔒 If neither found → use "No" (not "NA", not "UNVERIFIED")
-🔒 Do NOT check package.json — removed from valid sources
+🔒 Check package.json THIRD if no Releases or Tags (pyproject.toml / Cargo.toml / setup.py also valid)
+🔒 Monorepo: skip package.json if it is repo-wide, not server-specific
+🔒 If all 3 sources return nothing → use "No" (not "NA", not "UNVERIFIED")
 🔒 Copy version EXACTLY as shown (NO transformation)
 🔒 Never add documentation, brackets, pipes, or verification notes
 🔒 Just the version string, period.
@@ -446,19 +453,21 @@ MCP Info,Git Repo Version,"v1.0.0"   ← now correctly its own row
 **Date:** 2026-03-27 (updated 2026-03-27) | **Servers:** keeper-mcp-golang-docker, axiomhq-mcp, mcp-croit-ceph, mercadolibre-mcp-server, jira-service-management-mcp-server-by-cdata | **Severity:** Low
 
 **Signals (What Went Wrong)**
-- After checking all 2 sources (Releases → Tags), no real version was found
+- After checking all 3 sources (Releases → Tags → package.json), no real version was found
 - Field was left as `UNVERIFIED` or filled with a SNAPSHOT/dev version string
 
 **Root Cause:**
 Two variants:
-1. The general ZERO-ASSUMPTION policy says to use `UNVERIFIED` when a value cannot be confirmed — but Git Repo Version has a defined fallback of `No` (only Releases and Tags are valid sources).
+1. The general ZERO-ASSUMPTION policy says to use `UNVERIFIED` when a value cannot be confirmed — but Git Repo Version has a defined fallback of `No` (Releases, Tags, and package.json are the valid sources in that order).
 2. SNAPSHOT versions (e.g. `1.0-SNAPSHOT`, `0.1.0-alpha`) were treated as real versions when they are Maven/dev placeholders, not released versions.
 
 **Fix:**
 ```
 □ Step 1: Check GitHub Releases → not found
 □ Step 2: Check GitHub Tags → not found
-□ Step 3: Mark as "No" (do NOT check package.json — not a valid source)
+□ Step 3: Check package.json (or pyproject.toml / Cargo.toml / setup.py) → if found, copy EXACTLY
+          Monorepo rule: skip if package.json is repo-wide, not server-specific
+□ Step 4: All 3 sources exhausted → mark as "No"
           (do NOT use UNVERIFIED, do NOT use SNAPSHOT string)
 ```
 
@@ -485,8 +494,9 @@ MCP Info,Git Repo Version,"1.0-SNAPSHOT"
 
 **Prevention Rule:**
 ```
-🔒 Git Repo Version fallback when nothing found = "No"
-🔒 package.json is NOT a valid source — do not check it
+🔒 Git Repo Version source order: Releases → Tags → package.json (all 3 must be checked)
+🔒 Git Repo Version fallback when all 3 sources yield nothing = "No"
+🔒 Monorepo: skip package.json if it is repo-wide (not server-specific)
 🔒 SNAPSHOT/alpha/beta/rc/dev version strings = NOT real versions → "No"
 🔒 Never leave Git Repo Version as UNVERIFIED or NA in final CSV
 🔒 Never copy a SNAPSHOT version string into the CSV
@@ -855,6 +865,7 @@ Evidence: Container = Yes (Dockerfile + docker-healthcheck.sh + AWS Marketplace 
 
 | Version | Date | Changes |
 |---------|------|---------|
+| 4.5 | 2026-03-31 | TypeScript SDK mapping corrected: ≥1.24 → 2025-11-25 (was ≥1.12 — wrong). sdk 1.8–1.23 now maps to 2025-06-18. Git Repo Version source order restored to 3-source (Releases → Tags → package.json); package.json re-added as 3rd priority with monorepo exception. Evidence Ledger unlocked: display all attribute evidence in chat window. Patterns #8 and #10 updated. multi-server.md version comment + column 1 note updated. |
 | 4.4 | 2026-03-30 | Added Error Pattern #18: Mixed-Deployment TLS rule not applied (STDIO + Container) — AWS API MCP Server. Added mixed-deployment clarification to SKILL.md Step 5.7. SKILL.md v3.0.5. |
 | 4.3 | 2026-03-30 | Added RULE 5 (Default Model Required): skill must run on Default model (Sonnet 4.6). Added model enforcement block at top of Step 0 with STOP + user instruction if non-default model detected. SKILL.md v3.0.5. |
 | 4.2 | 2026-03-30 | Added Container deployment TLS rule: Container = Yes → "Lower versions or no encryption" = No always. Updated Step 5.7 table, L3 Independence Rule table + rules, Step 5.10 TLS implication note, L3 checklist item, memory/rules-reference.md TLS checklist. SKILL.md v3.0.4. |
