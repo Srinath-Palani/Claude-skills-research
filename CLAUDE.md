@@ -173,6 +173,14 @@ Aurora DSQL, Aurora PostgreSQL, Bedrock AgentCore, Bedrock KB, CloudWatch App Si
 Q Business (Anon), Q Index, Redshift, SNS/SQS, Timestream, Bedrock Data Automation,
 Billing & Cost, CDK, Cloud Control API (deprecated), CloudFormation (deprecated).
 
+**Bedrock AgentCore — Gateway false positive (verified 2026-03-31, Steps A–E):**
+AgentCore **Gateway** is an AWS service that converts users' own APIs/Lambda functions into
+MCP-compatible tools with managed endpoints. It does NOT provide a managed remote endpoint
+for `awslabs.amazon-bedrock-agentcore-mcp-server` itself. The MCP server is local STDIO-only.
+The `manage_agentcore_gateway` tool inside the server is documentation guidance only.
+Rule: "Service X creates MCP endpoints" ≠ "MCP server for Service X has a managed endpoint".
+See Error Pattern #19 in learned-fixes.md.
+
 Microsoft STDIO-only servers (no remote endpoint):
 - **Microsoft 365 Agents Toolkit**: `npx @microsoft/m365agentstoolkit-mcp@latest server start`
 - **Microsoft Clarity**: `npx @microsoft/clarity-mcp-server`
