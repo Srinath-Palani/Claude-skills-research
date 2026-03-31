@@ -191,7 +191,14 @@ AWS MCP Server unified endpoint: `https://aws-mcp.us-east-1.api.aws/mcp` (listed
 **Microsoft MCP servers span two orgs** — `microsoft/` (Clarity, Dev Box, Dataverse, Playwright) and
 `OfficeDev/` (365 Agents Toolkit). Always check both orgs when searching for Microsoft MCP servers.
 
+**Microsoft Dataverse MCP Server — false positive GitHub URL** — `https://github.com/microsoft/Dataverse-skills`
+is NOT the Dataverse MCP server repo. It is a Power Platform / Copilot Studio skill templates repository
+(contains `.yml` skill definition files, no MCP SDK). The Dataverse MCP Server has no separate public GitHub
+source repo — it is accessed via `https://<orgname>.crm.dynamics.com/api/mcp` (remote endpoint) or
+`@microsoft/dataverse` npm package (local proxy). Always verify a GitHub URL contains MCP SDK dependencies
+before accepting it as the server repo. See Error Pattern #19 in learned-fixes.md.
+
 ---
 
-## Last Updated: 2026-03-30
+## Last Updated: 2026-03-31
 **Status:** Production Ready | **Version:** 3.0.0 | **SSOT Architecture**
