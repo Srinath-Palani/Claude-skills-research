@@ -15,6 +15,16 @@
         "triggers": ["research an MCP server", "clone and setup locally", "document capabilities", "generate report", "fix MCP error", "review the project", "compare MCP servers"],
         "invocable": true,
         "features": ["8-step research workflow", "Conditional local setup (Option 1/2/3)", "7-phase inline error recovery", "Multi-server parallel batch research", "Project compliance audit (45+ checks)", "Skill 2.0 self-learning (learned-fixes.md)"]
+      },
+      {
+        "id": "mcp-attribute-validator",
+        "name": "MCP Attribute Validator",
+        "description": "Validates that all required MCP server attributes are present, correctly formatted, and evidence-backed in a research report or attribute document.",
+        "tier": "TIER 2 - Utility",
+        "command": "/mcp-attribute-validator",
+        "triggers": ["validate MCP attributes", "check if an MCP report is complete", "verify attribute coverage", "audit attribute quality"],
+        "invocable": true,
+        "features": ["Attribute schema validation", "Evidence citation check", "Format type verification", "Pass/Fail verdict with fix prompts"]
       }
     ],
     "security": {
