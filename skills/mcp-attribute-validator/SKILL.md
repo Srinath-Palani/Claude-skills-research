@@ -11,7 +11,7 @@ description: >
   Outputs a structured Security Validation Report with false-positive filtering.
 ---
 
-<!-- SKILL_VERSION: 1.2.2 | Updated: 2026-03-30 -->
+<!-- SKILL_VERSION: 1.3.0 | Updated: 2026-03-31 -->
 
 # MCP Attribute Validator
 
@@ -45,6 +45,7 @@ Phase 1  Load & Parse       -> Read CSV, detect format (single vs multi), extrac
 Phase 2  Schema Check       -> Row completeness, duplicates, column count, mandatory rows
 Phase 3  Rule Engine        -> 9 rule categories applied per server (see Rule Categories)
 Phase 4  Cross-Correlation  -> Inter-attribute logic checks, false-positive filtering
+Phase 4b Endpoint Verify    -> Fetch source from GitHub repo, verify Endpoint URL + transport
 Phase 5  Evidence Scan      -> Vague/placeholder/unverified content detection
 Phase 6  Report Generation  -> Structured output with findings, exclusions, recommendations
 ```
@@ -620,6 +621,197 @@ IF Non-Read-Only Tools != "None":
 
 ---
 
+## Phase 4b -- Endpoint URL Source Verification (MANDATORY)
+
+**Purpose:** Verify the Endpoint URL value in the CSV by checking the actual source code
+for transport configuration. This catches cases where:
+- A remote endpoint exists but was missed (Endpoint URL wrongly set to "N/A")
+- A remote endpoint was assumed but doesn't exist (Endpoint URL wrongly set to a URL)
+- Transport protocol fields don't match the actual server implementation
+
+**This phase makes network calls to the GitHub repository listed in the CSV.**
+
+### Step 1: Extract GitHub Repository URL
+
+```
+github_url = CSV row "MCP Info","GitHub Repository"
+
+IF github_url is blank OR does not match https://github.com/*:
+  -> SKIP Phase 4b (no repo to verify against)
+  -> Add INFO note: "Endpoint verification skipped -- no valid GitHub Repository URL"
+
+Parse org/repo from github_url:
+  - Standard repo: https://github.com/ORG/REPO -> org=ORG, repo=REPO
+  - Monorepo subdir: https://github.com/ORG/REPO/tree/BRANCH/path/to/server
+    -> org=ORG, repo=REPO, subdir=path/to/server
+```
+
+### Step 2: Fetch Entry Point Source
+
+Determine the server's entry point file based on language conventions.
+For monorepos, prepend the subdir path.
+
+```
+FETCH ORDER (try each, stop at first success):
+
+TypeScript/JavaScript:
+  1. curl -sL https://raw.githubusercontent.com/ORG/REPO/main/{subdir}/src/index.ts
+  2. curl -sL https://raw.githubusercontent.com/ORG/REPO/main/{subdir}/index.ts
+  3. curl -sL https://raw.githubusercontent.com/ORG/REPO/main/{subdir}/src/server.ts
+  4. curl -sL https://raw.githubusercontent.com/ORG/REPO/main/{subdir}/src/index.js
+
+Python:
+  5. curl -sL https://raw.githubusercontent.com/ORG/REPO/main/{subdir}/src/main.py
+  6. curl -sL https://raw.githubusercontent.com/ORG/REPO/main/{subdir}/main.py
+  7. curl -sL https://raw.githubusercontent.com/ORG/REPO/main/{subdir}/server.py
+
+Go:
+  8. curl -sL https://raw.githubusercontent.com/ORG/REPO/main/{subdir}/main.go
+  9. curl -sL https://raw.githubusercontent.com/ORG/REPO/main/{subdir}/cmd/server/main.go
+
+Java:
+  10. Find via: curl -sL https://raw.githubusercontent.com/ORG/REPO/main/{subdir}/pom.xml
+      then locate src/main/java/**/Application.java or Program.java
+
+Also try "master" branch if "main" returns 404.
+
+IF no entry point found:
+  -> Add INFO note: "Endpoint verification: could not locate entry point source"
+  -> Continue to Phase 5 (do not block)
+```
+
+### Step 3: Detect Transport from Source
+
+Scan the fetched source file for transport-related imports and configuration:
+
+```
+TRANSPORT DETECTION PATTERNS:
+
+TypeScript (@modelcontextprotocol/sdk):
+  STDIO:          "StdioServerTransport" OR "stdio" in import path
+  HTTP/SSE:       "SSEServerTransport" in import path
+  StreamableHttp: "StreamableHTTPServerTransport" in import path
+
+Python (mcp / fastmcp):
+  STDIO:          "stdio_server" OR "StdioServerTransport" OR "mcp.server.stdio"
+  HTTP/SSE:       "sse_server" OR "SseServerTransport" OR "mcp.server.sse"
+  StreamableHttp: "StreamableHTTPServerTransport" OR "streamable"
+  FastAPI:        "FastMCP" with "host=" or "port=" (indicates HTTP serving)
+
+Go (mcp-go):
+  STDIO:          "stdio.NewStdioServer" OR "server.ServeStdio"
+  HTTP/SSE:       "sse.NewSSEServer" OR "server.ServeSSE"
+  StreamableHttp: "server.ServeHTTP" OR "StreamableHTTP"
+
+Java (io.modelcontextprotocol.sdk):
+  STDIO:          "StdioServerTransportProvider" OR "StdioServerTransport"
+  HTTP/SSE:       "WebMvcSseServerTransportProvider" OR "SseServerTransport"
+  StreamableHttp: "StreamableHttpServerTransportProvider"
+
+Record:
+  source_has_stdio = true/false
+  source_has_sse = true/false
+  source_has_streamable = true/false
+  source_has_any_remote = source_has_sse OR source_has_streamable
+```
+
+### Step 4: Fetch README for Endpoint Evidence
+
+```
+readme = curl -sL https://raw.githubusercontent.com/ORG/REPO/main/{subdir}/README.md
+         (fall back to repo root README if subdir README not found)
+
+Scan README for:
+  - URL patterns matching endpoint format (https://*.*/mcp, http://localhost:PORT)
+  - "endpoint", "remote", "hosted", "cloud", "url" keywords near URL patterns
+  - Configuration examples with "url" field (not "command" field)
+
+Record:
+  readme_has_endpoint_url = true/false
+  readme_endpoint_value = extracted URL or null
+```
+
+### Step 5: Cross-Validate Against CSV
+
+```
+csv_endpoint = Endpoint URL from CSV ("N/A" or a URL)
+csv_stdio = Transport STDIO from CSV
+csv_sse = Transport HTTP/SSE from CSV
+csv_streamable = Transport StreamableHttp from CSV
+csv_remote = Deployment Remote from CSV
+
+# --- Endpoint URL Verification ---
+
+IF csv_endpoint == "N/A":
+  IF source_has_any_remote:
+    -> FINDING EP-01 (HIGH) "Endpoint URL is N/A but source code imports remote transport
+       ([SSEServerTransport|StreamableHTTPServerTransport]). Server likely has a remote
+       endpoint that was not documented."
+
+  IF readme_has_endpoint_url:
+    -> FINDING EP-02 (MED) "Endpoint URL is N/A but README documents an endpoint URL:
+       [readme_endpoint_value]. Verify and update CSV."
+
+IF csv_endpoint != "N/A":
+  IF NOT source_has_any_remote AND source_has_stdio:
+    -> FINDING EP-03 (HIGH) "Endpoint URL is set to [csv_endpoint] but source code only
+       imports StdioServerTransport. Server has no remote transport -- Endpoint URL
+       should be N/A."
+
+# --- Transport Field Verification ---
+
+IF source_has_sse AND csv_sse != "Yes":
+  -> FINDING EP-04 (HIGH) "Source imports SSE transport but CSV Transport HTTP/SSE = No"
+
+IF source_has_streamable AND csv_streamable != "Yes":
+  -> FINDING EP-05 (HIGH) "Source imports StreamableHttp transport but CSV StreamableHttp = No"
+
+IF source_has_stdio AND csv_stdio != "Yes":
+  -> FINDING EP-06 (MED) "Source imports STDIO transport but CSV STDIO = No"
+
+IF NOT source_has_stdio AND csv_stdio == "Yes":
+  -> FINDING EP-07 (MED) "CSV STDIO = Yes but source does not import STDIO transport"
+```
+
+### Step 6: Bonus -- Git Repo Version Verification
+
+While connected to GitHub, also verify Git Repo Version:
+
+```
+releases = curl -sL https://api.github.com/repos/ORG/REPO/releases
+tags = curl -sL https://api.github.com/repos/ORG/REPO/tags
+
+csv_version = Git Repo Version from CSV
+
+IF releases has entries:
+  latest_release = releases[0].tag_name
+  IF csv_version == "No" OR csv_version == "NA":
+    -> FINDING EP-08 (MED) "Git Repo Version is [csv_version] but GitHub Releases exist.
+       Latest release: [latest_release]"
+ELSE IF tags has entries:
+  latest_tag = tags[0].name
+  IF csv_version == "No" OR csv_version == "NA":
+    -> FINDING EP-09 (MED) "Git Repo Version is [csv_version] but GitHub Tags exist.
+       Latest tag: [latest_tag]"
+```
+
+### Timeout & Error Handling
+
+```
+All curl calls use: --connect-timeout 5 --max-time 10
+IF any curl call fails or times out:
+  -> Add INFO note: "Endpoint verification: network request failed for [URL]"
+  -> Continue with remaining checks (do not abort Phase 4b)
+  -> Do not count network failures as findings
+
+IF GitHub API rate-limited (HTTP 403):
+  -> Add INFO note: "Endpoint verification: GitHub API rate limit reached -- skipping
+     release/tag checks"
+  -> Source file checks (raw.githubusercontent.com) are NOT rate-limited, continue those
+```
+
+---
+
 ## Phase 5 -- Evidence Scan
 
 Scan all detailed_info cells and description for quality signals:
@@ -743,6 +935,16 @@ Qualifier (append to score):
    -> Then run cross-attribute checks
    -> Remove any finding matched by a filter
 
+4b. ENDPOINT SOURCE VERIFICATION (Phase 4b) -- MANDATORY
+   -> Extract GitHub Repository URL from CSV
+   -> Fetch entry point source (index.ts, main.py, main.go, etc.)
+   -> Detect transport imports (STDIO, SSE, StreamableHttp)
+   -> Fetch README for endpoint URL evidence
+   -> Cross-validate: EP-01..EP-07 (endpoint + transport checks)
+   -> Bonus: EP-08..EP-09 (Git Repo Version vs Releases/Tags)
+   -> All curl calls use --connect-timeout 5 --max-time 10
+   -> Network failures are INFO notes, not findings
+
 5. EVIDENCE SCAN (Phase 5)
    -> Scan detailed_info cells for quality signals
 
@@ -856,14 +1058,16 @@ produces a CSV, BEFORE the report is considered final.
 
 **The validator does NOT:**
 - Modify the CSV (read-only audit)
-- Re-research attributes (no network calls)
-- Access GitHub or probe endpoints
+- Re-research ALL attributes (targeted verification only)
+- Probe MCP endpoints directly (no MCP protocol calls)
 - Overwrite any files
-- Read external files (all rules are in this SKILL.md)
 
 **The validator DOES:**
 - Read the CSV file
 - Apply all validation rules from this SKILL.md (self-contained)
+- **Fetch source code from the GitHub repo** listed in the CSV (Phase 4b) to verify
+  Endpoint URL and Transport Protocol accuracy
+- **Check GitHub Releases/Tags API** to verify Git Repo Version (Phase 4b bonus)
 - Output a validation report to the terminal
 
 ---
@@ -871,12 +1075,17 @@ produces a CSV, BEFORE the report is considered final.
 ## Security
 
 - **Read-only operation** -- never writes to CSV or methodology files
-- **No network access** -- all validation is offline against local files
+- **Targeted network access** -- Phase 4b fetches public source files from GitHub
+  (raw.githubusercontent.com) and public GitHub API (api.github.com/repos) only.
+  No authenticated requests. No private repo access. All curl calls use
+  `--connect-timeout 5 --max-time 10`
 - **No credential handling** -- does not process or display any secrets
 - **Path validation** -- rejects CSV paths outside user home directory
+- **No endpoint probing** -- does NOT call or probe the MCP server endpoint itself
 
 ---
 
-**v1.2.0 | Created: 2026-03-28 | Updated: 2026-03-30**
+**v1.3.0 | Created: 2026-03-28 | Updated: 2026-03-31**
 **Status:** Production Ready
-**Self-contained:** All validation rules, error patterns, and SDK mappings are inlined in this file. No external file dependencies.
+**Self-contained:** All validation rules, error patterns, and SDK mappings are inlined in this file.
+**Network access:** Phase 4b fetches public GitHub source files and API to verify Endpoint URL and transport accuracy.
