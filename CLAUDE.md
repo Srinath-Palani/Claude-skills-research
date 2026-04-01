@@ -171,7 +171,8 @@ For feedback on Claude Code, visit: https://github.com/anthropics/claude-code/is
 All remaining AWS servers in the `awslabs/mcp` monorepo are STDIO-only (no managed endpoint):
 Aurora DSQL, Aurora PostgreSQL, Bedrock AgentCore, Bedrock KB, CloudWatch App Signals,
 Q Business (Anon), Q Index, Redshift, SNS/SQS, Timestream, Bedrock Data Automation,
-Billing & Cost, CDK, Cloud Control API (deprecated), CloudFormation (deprecated).
+Billing & Cost, CDK, Cloud Control API (deprecated), CloudFormation (deprecated),
+**AWS API MCP Server** (verified 2026-04-01 — Endpoint URL = N/A; supports optional self-hosted StreamableHttp at configurable HOST:PORT, and AgentCore deployment with user-specific ARN-based URL, but no fixed vendor-managed endpoint).
 
 **Bedrock AgentCore — Gateway false positive (verified 2026-03-31, Steps A–E):**
 AgentCore **Gateway** is an AWS service that converts users' own APIs/Lambda functions into
