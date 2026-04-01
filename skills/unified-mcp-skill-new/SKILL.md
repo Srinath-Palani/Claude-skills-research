@@ -605,8 +605,8 @@ If either source is missing → continue searching until found or confirmed non-
 
 #### SDK Mapping — Python mcp
 - `mcp ≥1.24` → Protocol `2025-11-25`
-- `mcp 1.15–1.23` → Protocol `2025-06-18`
-- `mcp 1.5–1.14` → Protocol `2025-03-26`
+- `mcp 1.11–1.23` → Protocol `2025-06-18`
+- `mcp 1.5–1.10` → Protocol `2025-03-26`
 - `mcp <1.5` → Protocol `2024-11-05`
 
 #### SDK Mapping — TypeScript (@modelcontextprotocol/sdk)
@@ -620,7 +620,7 @@ If either source is missing → continue searching until found or confirmed non-
 - `go-sdk 1.4–1.11` → Protocol `2025-06-18` ← **COMMON MISS: Don't assume latest**
 - `go-sdk <1.4` → Protocol `2024-11-05`
 
-**NOTE:** Protocol `2025-03-26` applies to: FastMCP 0.3.x, TypeScript SDK 1.5–1.7, Python mcp SDK 1.5–1.14. Go SDK has no equivalent band for this version — if only Go SDK is found, `2025-03-26` does NOT apply.
+**NOTE:** Protocol `2025-03-26` applies to: FastMCP 0.3.x, TypeScript SDK 1.5–1.7, Python mcp SDK 1.5–1.10. Go SDK has no equivalent band for this version — if only Go SDK is found, `2025-03-26` does NOT apply.
 
 #### Verification Checklist (before marking protocol version final)
 ```
@@ -841,7 +841,7 @@ All 5 threads must have returned results or confirmed-empty. If any thread is in
 | 1 | Name | GitHub repo name or vendor docs | Exact name only |
 | 2 | Description | README first paragraph | 3–4 sentences as a single continuous line (NO embedded newlines), MUST start with "[Server Name] MCP Server…", functional purpose and capabilities ONLY — NEVER include transport, TLS, auth, hosting, or endpoint details (those have dedicated rows) (L8) |
 | 3 | Category | mcp.md or vendor classification | Choose: File and Document Management / Developer and Coding Tools / Data and Information Retrieval / Productivity and Communication |
-| 4 | GitHub Repository | GitHub URL | Full URL or N/A |
+| 4 | GitHub Repository | GitHub URL | Full URL or N/A. **Monorepo rule:** always use the specific subdirectory path, NEVER the repo root. Format: `https://github.com/<org>/<repo>/tree/main/src/<server-name>/`. For deprecated/removed servers, replace `main` with the last known commit SHA: `https://github.com/<org>/<repo>/tree/<sha>/src/<server-name>/` |
 | 5 | Endpoint URL | README or probe result | Full URL or N/A |
 
 **L8 — Description Format Rule:**
@@ -1795,8 +1795,15 @@ MCP Info
 │   Use version EXACTLY as shown in source (NO notes, NO transformation)
 │   If no version found after checking all 3 sources → use "No"
 │   Monorepo rule: If releases/tags are monorepo-wide (not server-specific) → use the monorepo release tag as-is (e.g., 2026.03.20260327170559); do NOT fall through to package.json
+│   Deprecated/removed server rule: If the server was REMOVED from its repo, apply this fallback chain to find the last known version AND dependency info:
+│     1. PyPI (Python) → pypi.org/pypi/<package-name>/json → get requires_dist for SDK version
+│     2. npm (TypeScript) → registry.npmjs.org/<package-name> → get dependencies
+│     3. Git history → /repos/ORG/REPO/commits?path=<server-dir> → get last commit SHA before removal
+│     4. Raw file at SHA → raw.githubusercontent.com/ORG/REPO/<SHA>/path/pyproject.toml (or package.json)
+│     5. Apply SDK → Protocol mapping from Step 1 tables to the extracted dependency version
+│     6. Git Repo Version = last monorepo release tag before the removal date (from the "bump packages for release/..." commit message)
 ├── Category (pick ONE based on server functionality: File and Document Management / Developer and Coding Tools / Data and Information Retrieval / Productivity and Communication)
-├── GitHub Repository (URL or N/A)
+├── GitHub Repository (URL or N/A — Monorepo rule: use specific subdirectory path, NEVER repo root. Active: `/tree/main/src/<server-name>/`. Removed/deprecated: `/tree/<last-sha>/src/<server-name>/`)
 └── Endpoint URL (URL or N/A)
 
 Distribution Type (Official / Community)
