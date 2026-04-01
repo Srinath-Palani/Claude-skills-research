@@ -841,7 +841,7 @@ All 5 threads must have returned results or confirmed-empty. If any thread is in
 | 1 | Name | GitHub repo name or vendor docs | Exact name only |
 | 2 | Description | README first paragraph | 3–4 sentences as a single continuous line (NO embedded newlines), MUST start with "[Server Name] MCP Server…", functional purpose and capabilities ONLY — NEVER include transport, TLS, auth, hosting, or endpoint details (those have dedicated rows) (L8) |
 | 3 | Category | mcp.md or vendor classification | Choose: File and Document Management / Developer and Coding Tools / Data and Information Retrieval / Productivity and Communication |
-| 4 | GitHub Repository | GitHub URL | Full URL or N/A |
+| 4 | GitHub Repository | GitHub URL | Full URL or N/A. **Monorepo rule:** always use the specific subdirectory path, NEVER the repo root. Format: `https://github.com/<org>/<repo>/tree/main/src/<server-name>/`. For deprecated/removed servers, replace `main` with the last known commit SHA: `https://github.com/<org>/<repo>/tree/<sha>/src/<server-name>/` |
 | 5 | Endpoint URL | README or probe result | Full URL or N/A |
 
 **L8 — Description Format Rule:**
@@ -1803,7 +1803,7 @@ MCP Info
 │     5. Apply SDK → Protocol mapping from Step 1 tables to the extracted dependency version
 │     6. Git Repo Version = last monorepo release tag before the removal date (from the "bump packages for release/..." commit message)
 ├── Category (pick ONE based on server functionality: File and Document Management / Developer and Coding Tools / Data and Information Retrieval / Productivity and Communication)
-├── GitHub Repository (URL or N/A)
+├── GitHub Repository (URL or N/A — Monorepo rule: use specific subdirectory path, NEVER repo root. Active: `/tree/main/src/<server-name>/`. Removed/deprecated: `/tree/<last-sha>/src/<server-name>/`)
 └── Endpoint URL (URL or N/A)
 
 Distribution Type (Official / Community)
