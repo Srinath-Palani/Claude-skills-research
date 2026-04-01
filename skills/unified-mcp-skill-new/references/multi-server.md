@@ -91,6 +91,7 @@ Limit: 5 servers max per batch. If more → ask user to split into batches of �
 Launch one Research Agent per server simultaneously.
 Pass each agent: server URL + attribute schema + JSON output format.
 Do NOT wait for one to finish before starting others.
+**Model:** Each Agent tool call MUST use `model: claude-sonnet-4-6` (Default — Sonnet 4.6) ONLY. No other model is permitted. Omitting the model parameter causes fallback to an unavailable model ID and fails every dispatch.
 
 **Step M3: Finalize**
 Once ALL Layer 1 results received → render individual CSVs + comparison table.
